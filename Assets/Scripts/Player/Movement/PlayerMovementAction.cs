@@ -134,25 +134,29 @@ public class PlayerMovementAction : MonoBehaviour
     /// </summary>
     [SerializeField] private float brakeDecel;
     /// <summary>
-    /// The acceleration of the player when actively moving horizontally in the air under a max speed
+    /// The acceleration of the player when actively moving horizontally in the air over a minimum speed
     /// </summary>
-    [SerializeField] private float slowAirMoveAccel;
+    [SerializeField] private float looseAirMoveAccel;
     /// <summary>
-    /// The decceleration of the player when actively moving horizontally in the air under a max speed against their velocity
+    /// The deceleration of the player when actively moving horizontally in the air over a minimum speed against their velocity
     /// </summary>
-    [SerializeField] private float slowAirMoveBrakeDecel;
+    [SerializeField] private float looseAirMoveBrakeDecel;
     /// <summary>
-    /// The acceleration of the player when actively moving horizontally in the air above a minimum speed
+    /// The acceleration of the player when actively moving horizontally in the air under a minimum speed
     /// </summary>
-    [SerializeField] private float fastAirMoveAccel;
+    [SerializeField] private float preciseAirMoveAccel;
     /// <summary>
-    /// The threshold of horizontal air speed to determine which acceleration to use (slow if under, fast if over)
+    /// The deceleration of the player when actively moving horizontally in the air over a minimum speed against their velocity
+    /// </summary>
+    [SerializeField] private float preciseAirMoveBrakeDecel;
+    /// <summary>
+    /// The threshold of horizontal air speed to determine which acceleration to use (precise if under, loose if over)
     /// </summary>
     [SerializeField] private float airSpeedThreshold;
     /// <summary>
     /// The max horizontal speed a player can achieve by actively moving in the air alone
     /// </summary>
-    [SerializeField] private float airMaxSpeed;
+    [SerializeField] private float airMoveMaxSpeed;
     /// <summary>
     /// The "up" (perpendicular to the current slope) speed at which the player jumps off the ground
     /// </summary>
@@ -191,7 +195,7 @@ public class PlayerMovementAction : MonoBehaviour
         
         //Temporary, see SetFacingDirection()
         #region Temporary
-        root = transform.parent.Find("Root").gameObject;
+        root = transform.parent.Find("Model Root").gameObject;
         facingDirection = +1;
         #endregion
     }
@@ -207,11 +211,12 @@ public class PlayerMovementAction : MonoBehaviour
         autoRunKickOffSlopeThreshold = 14;
         runMaxSpeed = 18;
         brakeDecel = 40;
-        slowAirMoveAccel = 14;
-        slowAirMoveBrakeDecel = 18;
-        fastAirMoveAccel = 30;
-        airSpeedThreshold = 18;
-        airMaxSpeed = 4;
+        looseAirMoveAccel = 14;
+        looseAirMoveBrakeDecel = 18;
+        preciseAirMoveAccel = 30;
+        preciseAirMoveBrakeDecel = 30;
+        airMoveMaxSpeed = 18;
+        airSpeedThreshold = 4;
         jumpSpeed = 15;
         jumpCancelSpeed = 4;
         jumpCancelSpeedThreshold = 15;
@@ -275,149 +280,210 @@ public class PlayerMovementAction : MonoBehaviour
     #endregion
 
     /// <summary>
-    /// Adds appropriate run ecceleration to the player 
+    /// Adds appropriate run acceleration to the player 
     /// </summary>
     /// <param name="currentVelocity"> Reference to the player's velocity</param>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="gravityDirection"> The direction of gravity</param>
     /// <param name="physicsOverride"> Determines overrides to player physics values </param>
     /// <param name="deltaTime"> Motor update time</param>
-    private void Run(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsOverride physicsOverride, float deltaTime)
+    private void Run(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
     {
-        if (motor.IsGroundedThisUpdate)
-        {
-            // Ensure friction does not activate
-            physicsOverride.kineticAndStaticFrictionNegated = true;
+        // Ensure friction does not activate
+        physicsNegations.kineticAndStaticFrictionNegated = true;
 
-            // Calculate current speed and intended running direction
-            float speed = currentVelocity.magnitude;
-            Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized;
-            
-            if(input.doubleTapRun && speed < runKickOffSpeed)
-                RunKickOff(ref currentVelocity, runDirection, false);
-            else if (speed < autoRunKickOffSpeed && Vector3.SignedAngle(runDirection, -gravityDirection, motor.PlanarConstraintAxis) >= autoRunKickOffSlopeThreshold)
-                RunKickOff(ref currentVelocity, runDirection, true);
-            else
-            {
-                if (Vector3.Dot(currentVelocity, runDirection) < 0)
-                {
-                    currentVelocity += runDirection * brakeDecel * deltaTime;
-                }
-                else
-                {
-                    if (speed >= runMaxSpeed)
-                        return;
-                    else
-                        currentVelocity += runDirection * runAccel * deltaTime;
-                    
-                    //Temporary, see SetFacingDirection()
-                    SetFacingDirection(Mathf.Sign(input.run));
-                }
-            }
-        }
-        else 
-        {
-            Vector3 flattenedVelocity = Vector3.ProjectOnPlane(currentVelocity, gravityDirection);
-            float flattenedSpeed = flattenedVelocity.magnitude;
-            Vector3 airMoveDirection = Quaternion.FromToRotation(Vector3.forward, motor.PlanarConstraintAxis) * Vector3.right * input.run;
-                        
-            if (flattenedSpeed >= airSpeedThreshold)
-            {
-                if (Vector3.Dot(airMoveDirection,flattenedVelocity) > 0)
-                    return;
-                else
-                {
-                    physicsOverride.airDragNegated = true;
-                    currentVelocity += airMoveDirection * slowAirMoveAccel * deltaTime;
-                }
-            }
-            else if (flattenedSpeed >= airMaxSpeed)
-            {
-                physicsOverride.airDragNegated = true;
-                if (Vector3.Dot(airMoveDirection,flattenedVelocity) < 0)
-                    currentVelocity += airMoveDirection * slowAirMoveBrakeDecel * deltaTime;
-                else
-                    currentVelocity += airMoveDirection * slowAirMoveAccel * deltaTime;
-            }
-            else
-            {
-                currentVelocity += airMoveDirection * fastAirMoveAccel * deltaTime;
-            }
-        }
-    }
-
-    
-    private void RunKickOff(ref Vector3 currentVelocity, Vector3 runDirection, bool auto)
-    {
-        float speed;
-        if (auto)
-            speed = autoRunKickOffSpeed;
+        // Calculate current square speed
+        float sqrSpeed = currentVelocity.sqrMagnitude;
+        // Direction attempting to run in
+        Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal());
+        
+        float autoRunKickOffBuffer = 0.25f;
+        // If manual run kick off was activated successfully
+        if (input.doubleTapRun && sqrSpeed < (runKickOffSpeed-autoRunKickOffBuffer) * (runKickOffSpeed-autoRunKickOffBuffer))
+            RunKickOff(ref currentVelocity, runDirection, physicsNegations, false);
+        // If automatic run kick off was triggered
+        else if (sqrSpeed == 0 && Vector3.Dot(runDirection, gravityDirection) < 0 && Vector3.Angle(motor.GetEffectiveGroundNormal(), -gravityDirection) >= autoRunKickOffSlopeThreshold)
+            RunKickOff(ref currentVelocity, runDirection, physicsNegations, true);
         else
-            speed = runKickOffSpeed;
+        {
+            // If running against velocity
+            if (Vector3.Dot(currentVelocity, runDirection) < 0)
+            {
+                // Brake via deceleration
+                currentVelocity += runDirection * brakeDecel * deltaTime;
+            }
+            // If possible run along ground via acceleration
+            else if (sqrSpeed < runMaxSpeed * runMaxSpeed)
+            {
+                currentVelocity += runDirection * runAccel * deltaTime;
+            
+                #region temporary
+                //Temporary, see SetFacingDirection()
+                SetFacingDirection(Mathf.Sign(input.run));
+                #endregion
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Activates run kick off
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="runDirection"> The direction to run kick off in</param>
+    /// <param name="physicsOverride"> Determines overrides to player physics values </param>
+    /// <param name="auto"> Was the run kick off automatically activated? </param>
+    private void RunKickOff(ref Vector3 currentVelocity, Vector3 runDirection, PlayerMovementPhysics.PhysicsNegations physicsNegations, bool auto)
+    {
+        if (auto)
+            physicsNegations.gravityNegated = true;
 
-            currentVelocity = speed * runDirection;
+        // Determine whether to use auto or manula run kick off speed
+        float speed = (auto) ? autoRunKickOffSpeed : runKickOffSpeed;
+        
+        // Set velocity
+        currentVelocity = speed * runDirection;
     }
 
-    private void Jump(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection)
+    /// <summary>
+    /// Adds appropriate air move acceleration to the player 
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="motor"> The player's kinematic motor </param>
+    /// <param name="gravityDirection"> The direction of gravity </param>
+    /// <param name="physicsOverride"> Determines overrides to player physics values </param>
+    /// <param name="deltaTime"> Motor update time</param>
+    private void AirMove(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
     {
-        if (motor.GroundingStatus.IsStableOnGround && !motor.MustUnground())
+        // The velocity perpendicular to gravity 
+        Vector3 flattenedVelocity = Vector3.ProjectOnPlane(currentVelocity, gravityDirection);
+        // The squared speed perpendicular to gravity 
+        float flattenedSqrSpeed = flattenedVelocity.sqrMagnitude;
+        // Direction attempting to move in
+        Vector3 airMoveDirection = Vector3.Cross(-gravityDirection, motor.PlanarConstraintAxis) * input.run;
+
+        // Ensure drag does not activate
+        physicsNegations.airDragNegated = true;
+
+        // Determine which air move values to use
+        float airMoveAccel = (flattenedSqrSpeed >= airSpeedThreshold * airSpeedThreshold) ? looseAirMoveAccel : preciseAirMoveAccel;
+        float airMoveBrakeAccel = (flattenedSqrSpeed >= airSpeedThreshold * airSpeedThreshold) ? looseAirMoveBrakeDecel : preciseAirMoveBrakeDecel;
+
+        // If moving against horizontal velocity
+        if (Vector3.Dot(flattenedVelocity, airMoveDirection) < 0)
         {
-            currentVelocity += jumpSpeed * motor.GetEffectiveGroundNormal();
-            motor.ForceUnground();
-            isJumping = true;
+            // Brake via deceleration
+            currentVelocity += airMoveDirection * airMoveBrakeAccel * deltaTime;
+        }
+        // If possible move in air via acceleration
+        else if (flattenedSqrSpeed < airMoveMaxSpeed * airMoveMaxSpeed)
+        {
+            currentVelocity += airMoveDirection * airMoveAccel * deltaTime;
         }
     }
 
+    /// <summary>
+    /// Activates jump
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="motor"> The player's kinematic motor </param>
+    private void Jump(ref Vector3 currentVelocity, KinematicCharacterMotor motor)
+    {
+        // Jump perpendicular to the current slope
+        currentVelocity += jumpSpeed * motor.GetEffectiveGroundNormal();
+
+        // Unground the motor
+        motor.ForceUnground();
+
+        isJumping = true;
+    }
+
+    /// <summary>
+    /// Checks to see if the player is still moving against gravity due to an activate jump
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="motor"> The player's kinematic motor </param>
+    /// <param name="gravityDirection"> The direction of gravity </param>
+    /// <returns></returns>
     private bool CheckIsStillJumping(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection)
     {
-        return !(motor.GroundingStatus.IsStableOnGround || Vector3.Dot(currentVelocity, gravityDirection) > 0);
+        // If the player is mid-air and not falling, return true 
+        return !motor.GroundingStatus.IsStableOnGround && Vector3.Dot(currentVelocity, gravityDirection) < 0;
     }
 
+    /// <summary>
+    /// Attempts to cancel a jump if activate, ensures attempt will be made again next motor update if unable to
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="motor"> The player's kinematic motor </param>
+    /// <param name="gravityDirection"> The direction of gravity </param>
     private void JumpCancel(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection)
     {
-
+        // Get the velocity in the direction of gravity
         Vector3 velocityAlongGravity = Vector3.Project(currentVelocity, gravityDirection);
 
-        if (velocityAlongGravity.magnitude <= jumpCancelSpeedThreshold)
+        // If jump cancel is valid
+        if (velocityAlongGravity.sqrMagnitude <= jumpCancelSpeedThreshold * jumpCancelSpeedThreshold)
         {
+            // Perform jump cancel
             currentVelocity = (currentVelocity - velocityAlongGravity) + (-gravityDirection * jumpCancelSpeed);
             waitingToJumpCancel = false;
         }
-        else
+        else // Remember to check next motor update
             waitingToJumpCancel = true;
-
     }
 
+    /// <summary>
+    /// Updates the reference rotation based on intended player actions
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity</param>
+    /// <param name="motor"> The player's kinematic motor</param>
+    /// <param name="deltaTime"> Motor update time</param>
     public void UpdateRotation(ref Quaternion currentRotation, KinematicCharacterMotor motor, float deltaTime)
     {
             
     }
 
-    public void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsOverride physicsOverride, float deltaTime)
+    /// <summary>
+    /// Updates the reference velocity based on intended player actions
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity</param>
+    /// <param name="motor"> The player's kinematic motor</param>
+    /// <param name="gravityDirection"> The direction of gravity </param>
+    /// <param name="physicsOverride"> Determines overrides to player physics values </param>
+    /// <param name="deltaTime"> Motor update time</param>
+    public void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
     {
-        if(isJumping)
+        // If the player is jumping
+        if(isJumping && CheckIsStillJumping(ref currentVelocity, motor, gravityDirection))
         {
-            if(CheckIsStillJumping(ref currentVelocity, motor, gravityDirection))
-            {
-                if(waitingToJumpCancel)
-                {
-                    JumpCancel(ref currentVelocity, motor, gravityDirection);
-                }
-                else if (input.jumpCancel)
-                    JumpCancel(ref currentVelocity, motor, gravityDirection);
-            }
-            else
-                isJumping = false;
+            // If the player is trying to jump cancel
+            if(input.jumpCancel || waitingToJumpCancel)
+                JumpCancel(ref currentVelocity, motor, gravityDirection);
         }
-        else
+        else 
+        {   
+            // Make sure player isn't still trying to jump cancel
             waitingToJumpCancel = false;
+            isJumping = false;
+        }
 
-        if(input.jump)
-            Jump(ref currentVelocity, motor, gravityDirection);
+        // if the player is trying to and able to jump
+        if(input.jump && motor.IsGroundedThisUpdate)
+            Jump(ref currentVelocity, motor);
+
+        // if the player is trying to run
         if(input.run != 0)
-            Run(ref currentVelocity, motor, gravityDirection, ref physicsOverride, deltaTime);
+        {
+            if (motor.IsGroundedThisUpdate)
+                Run(ref currentVelocity, motor, gravityDirection, ref physicsNegations, deltaTime);
+            else
+                AirMove(ref currentVelocity, motor, gravityDirection, ref physicsNegations, deltaTime);
+        }
     }
 
+    /// <summary>
+    /// Resets the input state
+    /// </summary>
     public void ResetInput()
     {
         input.Reset();

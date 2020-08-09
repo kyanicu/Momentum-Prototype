@@ -99,6 +99,7 @@
      <Compile Include="Assets\Scripts\Old Attempt\KinematicObjectMover.cs" />
      <Compile Include="Assets\Scripts\Old Attempt\SimpleTranslate.cs" />
      <Compile Include="Assets\Scripts\Player\Movement\PlayerMovement.cs" />
+     <Compile Include="Assets\Scripts\Player\Movement\PlayerMovementAbility\PlayerMovementAbility.cs" />
      <Compile Include="Assets\Scripts\Player\Movement\PlayerMovementAction.cs" />
      <Compile Include="Assets\Scripts\Player\Movement\PlayerMovementPhysics.cs" />
      <Compile Include="Assets\Scripts\Player\Player.cs" />
