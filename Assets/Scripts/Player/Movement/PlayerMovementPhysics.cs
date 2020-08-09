@@ -10,9 +10,9 @@ public class PlayerMovementPhysics : MonoBehaviour
 {
 
     /// <summary>
-    /// Contains information on potential overrides to physics values/mechanics
+    /// Contains information on potential update specific negations to physics values/mechanics
     /// </summary>
-    public struct PhysicsOverride
+    public struct PhysicsNegations
     {    
         /// <summary>
         /// Are kinetic and static friction negated?
@@ -26,10 +26,6 @@ public class PlayerMovementPhysics : MonoBehaviour
         /// Is gravity negated?
         /// </summary>
         public bool gravityNegated;
-        /// <summary>
-        /// Is the value of gravity overridden?
-        /// </summary>
-        public bool gravityOverridden;
         
         /// <summary>
         /// The overridden value of gravity
@@ -44,11 +40,7 @@ public class PlayerMovementPhysics : MonoBehaviour
             kineticAndStaticFrictionNegated = false;
             airDragNegated = false;
             gravityNegated = false;
-            gravityOverridden = false;
-
-            gravityOverride = Vector3.zero;
         }
-
     }
 
     /// <summary>
@@ -88,27 +80,36 @@ public class PlayerMovementPhysics : MonoBehaviour
     /// The deceleration of air drag on the player when they are not activily moving perpendicular to gravity 
     /// </summary>
     [SerializeField] private float airDrag;
+    /// <summary>
+    /// The extra non-overridable deceleration of air drag on the player when they pass a max speed
+    /// </summary>
+    [SerializeField] private float extraAirDrag;
+    /// <summary>
+    /// The minimum speed required for extraAirDrag to activate
+    /// </summary>
+    [SerializeField] private float extraAirDragSpeedThreshold;
 
     /// <summary>
     /// The acceleration of gravity on the player
     /// </summary>
-    [SerializeField] private Vector3 _gravity;
+    [SerializeField] private Vector3 gravity;
+
     /// <summary>
-    /// Encapsulated gravity property to ensure active gravity (possibly overridden) is returned
+    /// The current direction of gravity
     /// </summary>
-    public Vector3 gravity { get { return ((overrides.gravityOverridden) ? overrides.gravityOverride : _gravity); } private set { _gravity = value; } }
+    public Vector3 gravityDirection { get { return gravity.normalized; } }
 
     /// <summary>
     /// The currently overriden physics values for the current motor update
     /// </summary>
-    public PhysicsOverride overrides;
+    public PhysicsNegations negations;
 
     /// <summary>
     /// Initializes script
     /// </summary>
     void Awake()
     {
-        overrides = new PhysicsOverride();
+        negations = new PhysicsNegations();
     }
 
     /// <summary>
@@ -116,15 +117,17 @@ public class PlayerMovementPhysics : MonoBehaviour
     /// </summary>
     void Reset()
     {
-        extraKineticFriction = 2;
-        extraKineticFrictionSpeedThreshold = 16;
         kineticFriction = 9;
         staticFrictionMaxSlope = 30;
         staticFrictionVelThreshold = 0.5f;
+        extraKineticFriction = 2;
+        extraKineticFrictionSpeedThreshold = 18;
         upsideDownExtraKineticFriction = 9;
         slopeConstantDown = 1.5f;
         slopeConstantUp = 0.5f;
         airDrag = 1;
+        extraAirDrag = 1;
+        extraAirDragSpeedThreshold = 18;
         gravity = Vector3.down * 36;
     }
 
@@ -138,10 +141,6 @@ public class PlayerMovementPhysics : MonoBehaviour
     {
         if (motor.IsGroundedThisUpdate)
         {
-            // If slope is a flat floor with respect to gravity
-            if (motor.GetEffectiveGroundNormal() == -gravity.normalized)
-                return;
-
             // Get appropriate gravity factor for either up hill or down hill slope
             float slopeConstant = 
                 (Vector3.Dot(currentVelocity, gravity) >= 0)
@@ -163,29 +162,13 @@ public class PlayerMovementPhysics : MonoBehaviour
     private void AddKineticFriction(ref Vector3 currentVelocity, float deltaTime)
     {        
         // Apply kinetic friction ensuring velocity doesn't invert direction, stopping at 0
-        if (Mathf.Abs(currentVelocity.magnitude) <= kineticFriction * deltaTime)
+        if (currentVelocity.sqrMagnitude <= (kineticFriction * kineticFriction * deltaTime * deltaTime))
         {
             ActivateStaticFriction(ref currentVelocity);
         }
         else
             currentVelocity -= currentVelocity.normalized * kineticFriction * deltaTime;
 
-    }
-
-    /// <summary>
-    /// Adds the deceleration of air drag onto the player
-    /// </summary>
-    /// <param name="currentVelocity"> Reference to the player's velocity</param>
-    /// <param name="flattenedVelocity"> The velocity perpendicular to gravity</param>
-    /// <param name="deltaTime"> Motor update time</param>
-    private void AddAirDrag(ref Vector3 currentVelocity, Vector3 flattenedVelocity, float deltaTime)
-    {
-        // Apply air drag ensuring flattened velocity doesn't invert direction, stopping at 0
-        if (flattenedVelocity.magnitude <= airDrag * deltaTime)
-            currentVelocity -= flattenedVelocity;
-        else
-            currentVelocity += -flattenedVelocity * airDrag * deltaTime;
-        
     }
 
     /// <summary>
@@ -223,7 +206,34 @@ public class PlayerMovementPhysics : MonoBehaviour
         currentVelocity = Vector3.zero;
 
         // Ensure gravity does not effect velocity
-        overrides.gravityNegated = true;
+        negations.gravityNegated = true;
+    }
+
+    /// <summary>
+    /// Adds the deceleration of air drag onto the player
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity</param>
+    /// <param name="flattenedVelocity"> The velocity perpendicular to gravity</param>
+    /// <param name="deltaTime"> Motor update time</param>
+    private void AddAirDrag(ref Vector3 currentVelocity, Vector3 flattenedVelocity, float deltaTime)
+    {
+        // Apply air drag ensuring flattened velocity doesn't invert direction, stopping at 0
+        if (flattenedVelocity.sqrMagnitude <= airDrag * airDrag * deltaTime * deltaTime)
+            currentVelocity -= flattenedVelocity;
+        else
+            currentVelocity -= flattenedVelocity.normalized * airDrag * deltaTime;
+    }
+
+    /// <summary>
+    /// Adds the deceleration of extra air drag to the player
+    /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity</param>
+    /// <param name="flattenedVelocity"> The velocity perpendicular to gravity</param>
+    /// <param name="deltaTime"> Motor update time</param>
+    private void AddExtraAirDrag(ref Vector3 currentVelocity, Vector3 flattenedVelocity, float deltaTime)
+    {
+        // Apply extra air drag
+        currentVelocity -= flattenedVelocity.normalized * extraAirDrag * deltaTime;
     }
 
     /// <summary>
@@ -249,20 +259,21 @@ public class PlayerMovementPhysics : MonoBehaviour
             
             // Get angle of slope in relation to gravity
             float slopeAngle = Vector3.Angle(motor.GetEffectiveGroundNormal(), -gravity);
+            float sqrSpeed = currentVelocity.sqrMagnitude;
 
-            if (!overrides.kineticAndStaticFrictionNegated) {
+            if (!negations.kineticAndStaticFrictionNegated) {
 
                 // If there is static friction to apply
-                if (slopeAngle < staticFrictionMaxSlope && currentVelocity.magnitude < staticFrictionVelThreshold)
+                if (slopeAngle < staticFrictionMaxSlope && sqrSpeed < staticFrictionVelThreshold * staticFrictionVelThreshold)
                     ActivateStaticFriction(ref currentVelocity);
 
                 // If there is kinetic friction to apply
-                else if (currentVelocity != Vector3.zero)
+                else if (sqrSpeed > 0 )
                     AddKineticFriction(ref currentVelocity, deltaTime);
             }
 
             // If there is extra kinetic friction to apply  
-            if (currentVelocity.magnitude > extraKineticFrictionSpeedThreshold)
+            if (sqrSpeed > extraKineticFrictionSpeedThreshold * extraKineticFrictionSpeedThreshold)
                 AddExtraKineticFriction(ref currentVelocity, deltaTime);
 
             // If there is upside-down extra kinetic friction to apply  
@@ -273,18 +284,24 @@ public class PlayerMovementPhysics : MonoBehaviour
         {
             // Velocity perpendicular to gravity
             Vector3 flattenedVelocity;
-            
-            // If there is air drag to apply
-            if (!overrides.airDragNegated && (flattenedVelocity = Vector3.ProjectOnPlane(currentVelocity, gravity)) != Vector3.zero)
-                AddAirDrag(ref currentVelocity, flattenedVelocity, deltaTime);
+            if ((flattenedVelocity = Vector3.ProjectOnPlane(currentVelocity, gravity)) != Vector3.zero)
+            {
+                // If there is air drag to apply
+                if (!negations.airDragNegated)
+                    AddAirDrag(ref currentVelocity, flattenedVelocity, deltaTime);
+
+                // If there is extra air drag to apply  
+                if (flattenedVelocity.sqrMagnitude > extraAirDragSpeedThreshold * extraAirDragSpeedThreshold)
+                    AddExtraKineticFriction(ref currentVelocity, deltaTime);
+            }
         }
 
-        if(!overrides.gravityNegated)
+        if(!negations.gravityNegated)
             AddGravity(ref currentVelocity, motor, deltaTime);
 
         // Reset update based negations
-        overrides.kineticAndStaticFrictionNegated = false;
-        overrides.airDragNegated = false;
-        overrides.gravityNegated = false;
+        negations.kineticAndStaticFrictionNegated = false;
+        negations.airDragNegated = false;
+        negations.gravityNegated = false;
     }
 }

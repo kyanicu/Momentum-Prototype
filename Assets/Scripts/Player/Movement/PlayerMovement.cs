@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using KinematicCharacterController;
 
-public class PlayerMovement
- : MonoBehaviour, ICharacterController
+public class PlayerMovement : MonoBehaviour, ICharacterController
 {
 
     private KinematicCharacterMotor motor;
-    PlayerMovementPhysics physics;
-    PlayerMovementAction action;
+    private PlayerMovementPhysics physics;
+    private PlayerMovementAction action;
+    private PlayerMovementAbility ability;
 
-    Vector3 internalAngularVelocity = Vector3.zero;
+    private Vector3 internalAngularVelocity = Vector3.zero;
+
+    public Vector3 externalVelocityAddition { private get; set; }
 
     [SerializeField]
     private float attachThreshold;
@@ -50,7 +52,10 @@ public class PlayerMovement
     {
         motor.CharacterController = this;
         
+        // Debug
+        #region debug
         startState = motor.GetState();
+        #endregion
 
         action = GetComponent<PlayerMovementAction>();
         physics = GetComponent<PlayerMovementPhysics>();
@@ -61,14 +66,21 @@ public class PlayerMovement
         action.RegisterInput();
     }
 
+    /// <summary>
+    /// Sets the tracked previous ground normal and resets the timer
+    /// </summary>
+    /// <param name="groundNormal"> The ground normal </param>
     private void SetPreviousStableGroundNormal(Vector3 groundNormal)
     {
+        /// Sets the previous ground normal
         previousStableGroundNormal = groundNormal;
 
+        // Force stop time if no ground given
         if(groundNormal == Vector3.zero)
             previousStableGroundTimer = 0;
         else
-           previousStableGroundTimer = previousStableGroundTime;
+            // Start/restart timer
+            previousStableGroundTimer = previousStableGroundTime;
     }
 
 #region CharacterControllerInterface
@@ -76,14 +88,15 @@ public class PlayerMovement
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
     /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="deltaTime"> Motor update time </param>
     public void UpdateRotation(ref Quaternion currentRotation, float deltaTime)
     {
         if (motor.CharacterForward != motor.PlanarConstraintAxis)
         {
-
             Vector3 smoothedForward;
                 if(Vector3.Dot(motor.CharacterForward, -motor.PlanarConstraintAxis) > 0.95f)
-                    smoothedForward = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravity.normalized, 1 - Mathf.Exp(-10 * deltaTime));
+                    smoothedForward = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-10 * deltaTime));
                 else 
                     smoothedForward = Vector3.Slerp(motor.CharacterForward, motor.PlanarConstraintAxis, 1 - Mathf.Exp(-30 * deltaTime));
                 currentRotation = Quaternion.FromToRotation(motor.CharacterForward, smoothedForward) * currentRotation;
@@ -115,7 +128,7 @@ public class PlayerMovement
             else
             {
                 slerpFactor = 3;
-                Vector3 smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravity.normalized, 1 - Mathf.Exp(-slerpFactor * deltaTime));
+                Vector3 smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
                 currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
             }
         }
@@ -127,10 +140,10 @@ public class PlayerMovement
                     slerpFactor = 3;
 
                 Vector3 smoothedUp;
-                if(Vector3.Dot(motor.CharacterUp, physics.gravity.normalized) > 0.95f)
-                    smoothedUp = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravity.normalized, 1 - Mathf.Exp(-slerpFactor * deltaTime));
+                if(Vector3.Dot(motor.CharacterUp, physics.gravityDirection) > 0.95f)
+                    smoothedUp = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
                 else
-                    smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravity.normalized, 1 - Mathf.Exp(-slerpFactor * deltaTime));
+                    smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
                 
                 currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
             }
@@ -143,58 +156,54 @@ public class PlayerMovement
         }
         action.UpdateRotation(ref currentRotation, motor, deltaTime);
         physics.UpdateRotation(ref currentRotation, motor, deltaTime);
-
     }
     
     /// <summary>
     /// This is called when the motor wants to know what its velocity should be right now
     /// </summary>
+    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="deltaTime"> Motor update time </param>
     public void UpdateVelocity(ref Vector3 currentVelocity, float deltaTime)
     {
-
-        if (motor.GroundingStatus.IsStableOnGround && !motor.MustUnground())
+        // Handle velocity projection if grounded
+        if (motor.IsGroundedThisUpdate)
         {
-            if (motor.LastGroundingStatus.IsStableOnGround)
-                currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.GetEffectiveGroundNormal()).normalized * currentVelocity.magnitude;
+            // The dot between the ground normal and the external velocity addition
+            float dot = Vector3.Dot(externalVelocityAddition, motor.GetEffectiveGroundNormal());
+            // The velocity off the ground
+            Vector3 projection = dot * motor.GetEffectiveGroundNormal();
+            // If external velocity off ground is strong enough
+            if(dot > 0  && projection.sqrMagnitude >= pushOffGroundThreshold * pushOffGroundThreshold)
+                motor.ForceUnground();
             else
-                currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.GetEffectiveGroundNormal());
-        }
-        /*
-        #region debug
-        float speed = 16;
-        float direction = 0;
-        if(Input.GetKey(KeyCode.A))
-            direction = -1;
-        else if(Input.GetKey(KeyCode.D))
-            direction = +1;
-        if (motor.GroundingStatus.IsStableOnGround && !motor.MustUnground())
-        {
-            currentVelocity = direction * speed * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized;
-        }
-        else 
-        {
-            currentVelocity = direction * speed * Vector3.right + currentVelocity.y * Vector3.up;
-        }
-        float jump = 15;
-        if(motor.GroundingStatus.IsStableOnGround && !motor.MustUnground() && Input.GetKey(KeyCode.Space))
-        {
-            currentVelocity += jump * Vector3.up;
-            motor.ForceUnground();
-        }
-        else if(!motor.GroundingStatus.IsStableOnGround)
-            currentVelocity += physics.gravity * deltaTime;
-        #endregion
-        */
+            {
+                // if just landed
+                if (motor.LastGroundingStatus.IsStableOnGround)
+                    // Project velocity onto ground
+                    currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.GetEffectiveGroundNormal()).normalized * currentVelocity.magnitude;
+                else
+                    // Reorient without losing momentum
+                    currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.GetEffectiveGroundNormal());
 
-        action.UpdateVelocity(ref currentVelocity, motor, physics.gravity.normalized, ref physics.overrides, deltaTime);
+                // Snap external velocity to ground
+                 externalVelocityAddition -= projection;
+            }
+        }
+
+        // Add external velocity and reset back to zero
+        currentVelocity += externalVelocityAddition;
+        externalVelocityAddition = Vector3.zero;
+
+        // Update velocity from components 
+        //ability.UpdateVelocity();
+        action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
         physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
-
-
     }
 
     /// <summary>
     /// This is called before the motor does anything
     /// </summary>
+    /// <param name="deltaTime"> Motor update time </param>
     public void BeforeCharacterUpdate(float deltaTime)
     {
 
@@ -203,11 +212,12 @@ public class PlayerMovement
     /// <summary>
     /// This is called after the motor has finished its ground probing, but before PhysicsMover/Velocity/etc.... handling
     /// </summary>
+    /// <param name="deltaTime"> Motor update time </param>
     public void PostGroundingUpdate(float deltaTime)
     {
         if(motor.GroundingStatus.IsStableOnGround)
         {
-            if(Vector3.ProjectOnPlane(motor.BaseVelocity, motor.GetEffectiveGroundNormal()).magnitude < attachThreshold && Vector3.Angle(-physics.gravity, motor.GetEffectiveGroundNormal()) > motor.MaxStableSlopeAngle)
+            if(Vector3.ProjectOnPlane(motor.BaseVelocity, motor.GetEffectiveGroundNormal()).magnitude < attachThreshold && Vector3.Angle(-physics.gravityDirection, motor.GetEffectiveGroundNormal()) > motor.MaxStableSlopeAngle)
                 motor.ForceUnground();
 
             if(!motor.MustUnground())
@@ -250,14 +260,18 @@ public class PlayerMovement
     /// <summary>
     /// This is called after the motor has finished everything in its update
     /// </summary>
+    /// <param name="deltaTime"> Motor update time </param>
     public void AfterCharacterUpdate(float deltaTime)
     {
+        // Reset Action Input
+        //ability.ResetInput();
         action.ResetInput();
     }
 
     /// <summary>
     /// This is called after when the motor wants to know if the collider can be collided with (or if we just go through it)
     /// </summary>
+    /// <param name="coll"> The collider being checked </param>
     public bool IsColliderValidForCollisions(Collider coll)
     {
         return true;
@@ -266,6 +280,10 @@ public class PlayerMovement
     /// <summary>
     /// This is called when the motor's ground probing detects a ground hit
     /// </summary>
+    /// <param name="hitCollider">The ground collider </param>
+    /// <param name="hitNormal"> The ground normal </param>
+    /// <param name="hitPoint"> The ground point </param>
+    /// <param name="hitStabilityReport"> The ground stability </param>
     public void OnGroundHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {
 
@@ -274,9 +292,13 @@ public class PlayerMovement
     /// <summary>
     /// This is called when the motor's movement logic detects a hit
     /// </summary>
+    /// <param name="hitCollider"> The hit collider </param>
+    /// <param name="hitNormal"> The hit normal </param>
+    /// <param name="hitPoint"> The hit point </param>
+    /// <param name="hitStabilityReport"> The hit stability </param>
     public void OnMovementHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {   
-        if (!motor.GroundingStatus.IsStableOnGround && motor.StableGroundLayers.value == (motor.StableGroundLayers.value | (1 << hitCollider.gameObject.layer)) && Vector3.Angle(-physics.gravity, hitNormal) <= motor.MaxStableSlopeAngle)
+        if (!motor.GroundingStatus.IsStableOnGround && motor.StableGroundLayers.value == (motor.StableGroundLayers.value | (1 << hitCollider.gameObject.layer)) && Vector3.Angle(-physics.gravityDirection, hitNormal) <= motor.MaxStableSlopeAngle)
         {
             foundFloorToReorientTo = true;
         }
@@ -285,6 +307,13 @@ public class PlayerMovement
     /// <summary>
     /// This is called after every move hit, to give you an opportunity to modify the HitStabilityReport to your liking
     /// </summary>
+    /// <param name="hitCollider"> The hit collider </param>
+    /// <param name="hitNormal"> The hit normal </param>
+    /// <param name="hitPoint"> The hit point </param>
+    /// <param name="hitPoint"></param>
+    /// <param name="atCharacterPosition"> The character position on hit </param>
+    /// <param name="atCharacterRotation"> The character rotation on hit </param>
+    /// <param name="hitStabilityReport"> The hit stability </param>
     public void ProcessHitStabilityReport(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport)
     {
         
@@ -293,28 +322,37 @@ public class PlayerMovement
     /// <summary>
     /// This is called when the character detects discrete collisions (collisions that don't result from the motor's capsuleCasts when moving)
     /// </summary>
+    /// <param name="hitCollider"> The detected collider </param>
     public void OnDiscreteCollisionDetected(Collider hitCollider)
     {
 
     }
 
-
 #endregion
 
-    // Update is called once per frame
+    /// <summary>
+    /// Manages slope change timer 
+    /// Also currently used for debugging inputs
+    /// </summary>
     void Update()
     {
+        // If the timer is active 
         if(previousStableGroundTimer > 0)
         {
+            // Handle timer and previous stable ground tracker
             previousStableGroundTimer -= Time.deltaTime;
             if(previousStableGroundTimer <= 0)
                 SetPreviousStableGroundNormal(Vector3.zero);
         }
 
         // Debug
+        #region debug
+        // Resets the the motor state (used as a makeshift "level restart")
         if (Input.GetKeyDown(KeyCode.Return))
         {
             motor.ApplyState(startState);
         }
+
+        #endregion
     }
 }
