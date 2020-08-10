@@ -1318,7 +1318,7 @@ namespace KinematicCharacterController
         /// </summary>
         public Vector3 GetEffectiveGroundNormal()
         {
-            return GroundingStatus.GroundNormal;//EffectiveGroundNormal;
+            return Vector3.ProjectOnPlane(GroundingStatus.GroundNormal, PlanarConstraintAxis);
         }
 
         private Vector3 LastEffectiveGroundNormal = Vector3.zero;
@@ -1328,7 +1328,7 @@ namespace KinematicCharacterController
         /// </summary>
         public Vector3 GetLastEffectiveGroundNormal()
         {
-            return LastGroundingStatus.GroundNormal;//LastEffectiveGroundNormal;
+            return Vector3.ProjectOnPlane(LastGroundingStatus.GroundNormal, PlanarConstraintAxis);;
         }
 
         private void SetEffectiveGroundNormal(ref HitStabilityReport stabilityReport)

@@ -162,6 +162,10 @@ public class PlayerMovementAction : MonoBehaviour
     /// </summary>
     [SerializeField] private float jumpSpeed;
     /// <summary>
+    /// The factor on the player's angular velocity when jumping with internalAngularVelocity stored;
+    /// </summary>
+    [SerializeField] private float jumpRotationFactor;
+    /// <summary>
     /// The "up" (opposite to the direction of gravity) speed the the player is set at when jump canceling
     /// </summary>
     [SerializeField] private float jumpCancelSpeed;
@@ -218,6 +222,7 @@ public class PlayerMovementAction : MonoBehaviour
         airMoveMaxSpeed = 18;
         airSpeedThreshold = 4;
         jumpSpeed = 15;
+        jumpRotationFactor = 1.5f;
         jumpCancelSpeed = 4;
         jumpCancelSpeedThreshold = 15;
     }
@@ -382,7 +387,7 @@ public class PlayerMovementAction : MonoBehaviour
     }
 
     /// <summary>
-    /// Activates jump
+    /// Adds velocity from activated jump 
     /// </summary>
     /// <param name="currentVelocity"> Reference to the player's velocity </param>
     /// <param name="motor"> The player's kinematic motor </param>
@@ -395,6 +400,11 @@ public class PlayerMovementAction : MonoBehaviour
         motor.ForceUnground();
 
         isJumping = true;
+    }
+
+    private void HandleJumpRotation(ref Vector3 internalAngularVelocity)
+    {
+        internalAngularVelocity *= jumpRotationFactor;
     }
 
     /// <summary>
@@ -438,9 +448,11 @@ public class PlayerMovementAction : MonoBehaviour
     /// <param name="currentVelocity"> Reference to the player's velocity</param>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time</param>
-    public void UpdateRotation(ref Quaternion currentRotation, KinematicCharacterMotor motor, float deltaTime)
+    public void UpdateRotation(ref Quaternion currentRotation, KinematicCharacterMotor motor, ref Vector3 internalAngularVelocity, float deltaTime)
     {
-            
+        if(motor.WasGroundedLastUpdate && isJumping && internalAngularVelocity != Vector3.zero)
+            HandleJumpRotation(ref internalAngularVelocity);
+
     }
 
     /// <summary>

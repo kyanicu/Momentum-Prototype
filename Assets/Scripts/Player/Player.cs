@@ -18,6 +18,11 @@ public class Player : MonoBehaviour
         movement.HandleInput(); 
     }
 
+    void OnTriggerEnter(Collider col)
+    {
+        movement.HandleTriggerEnter(col);
+    }
+
     // Update is called once per frame
     void Update()
     {
