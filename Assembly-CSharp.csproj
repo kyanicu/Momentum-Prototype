@@ -95,15 +95,12 @@
      <Compile Include="Assets\KinematicCharacterController\Walkthrough\9- Custom collision filtering\Scripts\MyPlayer.cs" />
      <Compile Include="Assets\Scripts\DynamicPlane.cs" />
      <Compile Include="Assets\Scripts\GameManager\GameManager.cs" />
-     <Compile Include="Assets\Scripts\Old Attempt\KinematicCharacterController.cs" />
-     <Compile Include="Assets\Scripts\Old Attempt\KinematicObjectMover.cs" />
-     <Compile Include="Assets\Scripts\Old Attempt\SimpleTranslate.cs" />
      <Compile Include="Assets\Scripts\Player\Movement\PlayerMovement.cs" />
      <Compile Include="Assets\Scripts\Player\Movement\PlayerMovementAbility\PlayerMovementAbility.cs" />
      <Compile Include="Assets\Scripts\Player\Movement\PlayerMovementAction.cs" />
      <Compile Include="Assets\Scripts\Player\Movement\PlayerMovementPhysics.cs" />
      <Compile Include="Assets\Scripts\Player\Player.cs" />
-     <Compile Include="Assets\Scripts\PlayerCamera.cs" />
+     <Compile Include="Assets\Scripts\Player\PlayerCamera.cs" />
     <Reference Include="UnityEngine">
         <HintPath>/Applications/2019.4.1f1/Unity.app/Contents/Managed/UnityEngine/UnityEngine.dll</HintPath>
     </Reference>

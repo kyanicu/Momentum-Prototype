@@ -6,6 +6,81 @@ using KinematicCharacterController;
 public class PlayerMovement : MonoBehaviour, ICharacterController
 {
 
+    private struct SlopeList
+    {
+        private (Vector3, float)[] slopeList;
+        private int capacity;
+        private int count;
+
+        private float slopeTimer;
+
+        public SlopeList(int size)
+        {
+            slopeList = new (Vector3, float)[size];
+            capacity = size;
+            count = 0;
+            slopeTimer = 0;
+        }
+
+        public void Reset()
+        {
+            this = new SlopeList(capacity);
+        }
+
+        public void IncrementTimer(float deltaTime, float maxTime)
+        {
+            slopeTimer += deltaTime;
+        
+            if (slopeTimer > maxTime && count != 0)
+            {
+                Reset();
+            }
+        }
+
+        public void Add(Vector3 slopeNormal)
+        {
+            if (count < capacity)
+            {
+                slopeList[count] = (slopeNormal,slopeTimer);
+                count++;
+            }
+            else 
+            {
+                for(int i = 0; i < count-1; i++)
+                {
+                    slopeList[i] = slopeList[i+1];
+                }
+                slopeList[count-1] = (slopeNormal, slopeTimer);
+            }
+            slopeTimer = 0;
+        }
+
+        public Vector3 GetAngularVelocity(Vector3 linearVelocity, Vector3 axis, float rotationFactor, float minRotationSpeed, float maxRotationSpeed)
+        {
+            if(count <= 1) 
+                return Vector3.zero;
+
+            Vector3 angularVelocity = Vector3.zero;
+
+            float rotationSpeed = 0;
+
+            for (int i = 0; i < count-1; i++)
+            {
+                rotationSpeed += Vector3.SignedAngle(slopeList[i].Item1, slopeList[i+1].Item1, axis) / (slopeList[i].Item2 + slopeList[i+1].Item2);
+            }
+            rotationSpeed /= count - 1;
+
+            angularVelocity = rotationSpeed * axis * rotationFactor;
+
+            if (Mathf.Abs(rotationSpeed) > maxRotationSpeed)
+                rotationSpeed = maxRotationSpeed * Mathf.Sign(rotationSpeed);
+            else if (Mathf.Abs(rotationSpeed) < minRotationSpeed)
+                rotationSpeed = 0;
+            
+            return angularVelocity;
+        }
+    }
+
     private KinematicCharacterMotor motor;
     private PlayerMovementPhysics physics;
     private PlayerMovementAction action;
@@ -20,10 +95,16 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     [SerializeField]
     private float pushOffGroundThreshold;
 
-    private Vector3 previousStableGroundNormal;
+    private SlopeList slopeList;
+    
     [SerializeField]
-    private float previousStableGroundTime;
-    private float previousStableGroundTimer;
+    private float maxSlopeTrackTime;
+    [SerializeField]
+    private float ungroundRotationFactor;
+    [SerializeField]
+    private float ungroundRotationMinSpeed;
+    [SerializeField]
+    private float ungroundRotationMaxSpeed;
 
     private bool foundFloorToReorientTo;
 
@@ -31,12 +112,19 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     {
         attachThreshold = 8;
         pushOffGroundThreshold = 1;
-        previousStableGroundTime = 0.5f;
+        maxSlopeTrackTime = 0.5f;
+        ungroundRotationFactor = 1.25f;
+        ungroundRotationMinSpeed = 15;
+        ungroundRotationMaxSpeed = 1000;
     }
 
     void Awake()
     {
         motor = GetComponentInParent<KinematicCharacterMotor>();
+        action = GetComponent<PlayerMovementAction>();
+        physics = GetComponent<PlayerMovementPhysics>();
+
+        slopeList = new SlopeList(5);
     }
 
     void OnValidate()
@@ -57,8 +145,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         startState = motor.GetState();
         #endregion
 
-        action = GetComponent<PlayerMovementAction>();
-        physics = GetComponent<PlayerMovementPhysics>();
     }
 
     public void HandleInput()
@@ -66,29 +152,12 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         action.RegisterInput();
     }
 
-    /// <summary>
-    /// Sets the tracked previous ground normal and resets the timer
-    /// </summary>
-    /// <param name="groundNormal"> The ground normal </param>
-    private void SetPreviousStableGroundNormal(Vector3 groundNormal)
-    {
-        /// Sets the previous ground normal
-        previousStableGroundNormal = groundNormal;
-
-        // Force stop time if no ground given
-        if(groundNormal == Vector3.zero)
-            previousStableGroundTimer = 0;
-        else
-            // Start/restart timer
-            previousStableGroundTimer = previousStableGroundTime;
-    }
-
 #region CharacterControllerInterface
 
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
     /// </summary>
-    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="currentRotation"> Reference to the player's </param>
     /// <param name="deltaTime"> Motor update time </param>
     public void UpdateRotation(ref Quaternion currentRotation, float deltaTime)
     {
@@ -111,7 +180,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         }
         
         float slerpFactor = 30;
-        if(motor.GroundingStatus.IsStableOnGround && !motor.MustUnground())
+        if(motor.IsGroundedThisUpdate)
         {
             internalAngularVelocity = Vector3.zero;
 
@@ -149,13 +218,13 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
             }
         }
 
+        action.UpdateRotation(ref currentRotation, motor, ref internalAngularVelocity, deltaTime);
+        physics.UpdateRotation(ref currentRotation, motor, deltaTime);
+
         if(internalAngularVelocity != Vector3.zero)
         {
-            internalAngularVelocity = Vector3.Project(internalAngularVelocity, motor.PlanarConstraintAxis);
             currentRotation *= Quaternion.Euler(internalAngularVelocity * deltaTime);
         }
-        action.UpdateRotation(ref currentRotation, motor, deltaTime);
-        physics.UpdateRotation(ref currentRotation, motor, deltaTime);
     }
     
     /// <summary>
@@ -178,7 +247,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
             else
             {
                 // if just landed
-                if (motor.LastGroundingStatus.IsStableOnGround)
+                if (motor.WasGroundedLastUpdate)
                     // Project velocity onto ground
                     currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.GetEffectiveGroundNormal()).normalized * currentVelocity.magnitude;
                 else
@@ -215,45 +284,41 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// <param name="deltaTime"> Motor update time </param>
     public void PostGroundingUpdate(float deltaTime)
     {
-        if(motor.GroundingStatus.IsStableOnGround)
+        slopeList.IncrementTimer(deltaTime, maxSlopeTrackTime);
+        bool setAngularVelocity = false;
+        if(motor.IsGroundedThisUpdate)
         {
             if(Vector3.ProjectOnPlane(motor.BaseVelocity, motor.GetEffectiveGroundNormal()).magnitude < attachThreshold && Vector3.Angle(-physics.gravityDirection, motor.GetEffectiveGroundNormal()) > motor.MaxStableSlopeAngle)
+            {
                 motor.ForceUnground();
-
-            if(!motor.MustUnground())
+                setAngularVelocity = true;
+            }
+            else
             {
                 // Just Grounded
-                if(!motor.LastGroundingStatus.IsStableOnGround)
+                if(!motor.WasGroundedLastUpdate)
                 {
-                    
                 }
-                else if(motor.GetEffectiveGroundNormal() != motor.GetLastEffectiveGroundNormal() )
+                // Slope changed
+                else if(motor.GetEffectiveGroundNormal() != motor.GetLastEffectiveGroundNormal())
                 {
-                    SetPreviousStableGroundNormal(motor.GetLastEffectiveGroundNormal());
+                    slopeList.Add(motor.GetLastEffectiveGroundNormal());
                 }
             }
         }
-        
-        if(!motor.GroundingStatus.IsStableOnGround)
+        else
         {
             // Just Ungrounded
-            if(motor.LastGroundingStatus.IsStableOnGround || motor.MustUnground())
+            if(motor.WasGroundedLastUpdate)
             {
-                if(previousStableGroundNormal != Vector3.zero && Vector3.ProjectOnPlane(motor.BaseVelocity,motor.GetEffectiveGroundNormal()).magnitude > attachThreshold)
-                {
-                    Vector3 rotationDirection = Quaternion.FromToRotation(previousStableGroundNormal, motor.GetLastEffectiveGroundNormal()).eulerAngles.normalized;
-                    float rotationSpeed = -Vector3.SignedAngle(previousStableGroundNormal, motor.GetLastEffectiveGroundNormal(), rotationDirection) / ((previousStableGroundTimer - previousStableGroundTime) + 0.05f);
-                    float minRotationSpeed = 150;
-                    float maxRotationSpeed = 1000;
-                    if(Mathf.Abs(rotationSpeed) > maxRotationSpeed)
-                        rotationSpeed = maxRotationSpeed * Mathf.Sign(rotationSpeed);
-                    else if(Mathf.Abs(rotationSpeed) < minRotationSpeed)
-                        rotationSpeed = minRotationSpeed * Mathf.Sign(rotationSpeed);
-                    
-                    internalAngularVelocity = rotationDirection * rotationSpeed;
-                }
-                SetPreviousStableGroundNormal(Vector3.zero);
+                slopeList.Add(motor.GetLastEffectiveGroundNormal());
+                setAngularVelocity = true;
             }
+        }
+        if(setAngularVelocity)
+        {
+            internalAngularVelocity = slopeList.GetAngularVelocity(motor.BaseVelocity, motor.PlanarConstraintAxis, ungroundRotationFactor, ungroundRotationMinSpeed, ungroundRotationMaxSpeed);
+            slopeList.Reset();
         }
     }
 
@@ -263,7 +328,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// <param name="deltaTime"> Motor update time </param>
     public void AfterCharacterUpdate(float deltaTime)
     {
-        // Reset Action Input
+        // Reset Ability and Action Input
         //ability.ResetInput();
         action.ResetInput();
     }
@@ -330,21 +395,28 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 
 #endregion
 
+    private void SetPlane(Plane plane)
+    {
+        motor.PlanarConstraintAxis = plane.normal;
+        motor.SetTransientPosition(plane.ClosestPointOnPlane(motor.Transform.position));
+        Debug.Log("SetPlane");
+    }
+
+
+    #region debug
+    public void HandleTriggerEnter(Collider col)
+    {
+        if (col.tag == "Plane")
+            SetPlane(new Plane(col.transform.forward,col.transform.position));
+        Debug.Log("Trigger");
+    }
+    #endregion
+
     /// <summary>
-    /// Manages slope change timer 
-    /// Also currently used for debugging inputs
+    /// Currently used for debugging inputs
     /// </summary>
     void Update()
     {
-        // If the timer is active 
-        if(previousStableGroundTimer > 0)
-        {
-            // Handle timer and previous stable ground tracker
-            previousStableGroundTimer -= Time.deltaTime;
-            if(previousStableGroundTimer <= 0)
-                SetPreviousStableGroundNormal(Vector3.zero);
-        }
-
         // Debug
         #region debug
         // Resets the the motor state (used as a makeshift "level restart")
