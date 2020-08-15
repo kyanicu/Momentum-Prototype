@@ -16,7 +16,7 @@ public class PlayerMovementAction : MonoBehaviour
     private struct MovementInput 
     {
         // Properties encapsulate their respective variable to prevent overwriting by a zeroed value
-        
+
         /// <summary>
         /// Player run input using GetAxis()
         /// -1 for "left", +1 for "right" (with respect to current orientation of motor.CharacterRight)
@@ -185,8 +185,10 @@ public class PlayerMovementAction : MonoBehaviour
     private bool waitingToJumpCancel;
 
     // Temporary, see SetFacingDirection()
+    #region Temporary
     private float facingDirection;
     private GameObject root;
+    #endregion
 
     /// <summary>
     /// Initialize script
@@ -300,7 +302,7 @@ public class PlayerMovementAction : MonoBehaviour
         // Calculate current square speed
         float sqrSpeed = currentVelocity.sqrMagnitude;
         // Direction attempting to run in
-        Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal());
+        Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized;
         
         float autoRunKickOffBuffer = 0.25f;
         // If manual run kick off was activated successfully
@@ -394,7 +396,7 @@ public class PlayerMovementAction : MonoBehaviour
     private void Jump(ref Vector3 currentVelocity, KinematicCharacterMotor motor)
     {
         // Jump perpendicular to the current slope
-        currentVelocity += jumpSpeed * motor.GetEffectiveGroundNormal();
+        currentVelocity += Vector3.ProjectOnPlane(jumpSpeed * motor.GetEffectiveGroundNormal(), motor.PlanarConstraintAxis);
 
         // Unground the motor
         motor.ForceUnground();

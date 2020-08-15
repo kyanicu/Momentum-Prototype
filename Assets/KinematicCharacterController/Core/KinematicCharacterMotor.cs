@@ -1318,7 +1318,7 @@ namespace KinematicCharacterController
         /// </summary>
         public Vector3 GetEffectiveGroundNormal()
         {
-            return Vector3.ProjectOnPlane(GroundingStatus.GroundNormal, PlanarConstraintAxis);
+            return Vector3.ProjectOnPlane(GroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
         }
 
         private Vector3 LastEffectiveGroundNormal = Vector3.zero;
@@ -1328,7 +1328,7 @@ namespace KinematicCharacterController
         /// </summary>
         public Vector3 GetLastEffectiveGroundNormal()
         {
-            return Vector3.ProjectOnPlane(LastGroundingStatus.GroundNormal, PlanarConstraintAxis);;
+            return Vector3.ProjectOnPlane(LastGroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
         }
 
         private void SetEffectiveGroundNormal(ref HitStabilityReport stabilityReport)
@@ -1666,6 +1666,9 @@ namespace KinematicCharacterController
         /// </summary>
         public virtual void HandleVelocityProjection(ref Vector3 velocity, Vector3 obstructionNormal, bool stableOnHit)
         {
+
+            // Self Added Code
+            obstructionNormal = Vector3.ProjectOnPlane(obstructionNormal, PlanarConstraintAxis).normalized;
 
             //Debug.Log("Before: " + velocity);
             if (GroundingStatus.IsStableOnGround && !MustUnground())

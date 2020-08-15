@@ -8,6 +8,7 @@ public class PlayerCamera : MonoBehaviour
 
     private Player player;
     private KinematicCharacterMotor playerMotor;
+    private PlayerMovementPhysics playerPhysics;
 
     [SerializeField]
     private float
@@ -49,14 +50,16 @@ public class PlayerCamera : MonoBehaviour
     {
         player = p;
         playerMotor = player.GetComponent<KinematicCharacterMotor>();
+        playerPhysics = player.GetComponentInChildren<PlayerMovementPhysics>();
     }
 
     // Update is called once per frame
     // Need to fix to work with dynamic plane
     void Update()
     {
-        transform.position = player.transform.position + (Vector3.back * cameraDistance);
-        transform.LookAt(player.transform.position);
+        transform.position = player.transform.position + (-playerMotor.PlanarConstraintAxis * cameraDistance);
+        transform.forward = playerMotor.PlanarConstraintAxis;
+        transform.rotation = Quaternion.FromToRotation(transform.up, -playerPhysics.gravityDirection) * transform.rotation;
 
         bool zoom = playerMotor.BaseVelocity.magnitude >= zoomThreshold;
         bool pan = playerMotor.BaseVelocity.magnitude >= panThreshold;
