@@ -130,6 +130,12 @@ public class PlayerMovementPhysics : MonoBehaviour
         extraAirDragSpeedThreshold = 18;
         gravity = Vector3.down * 36;
     }
+    
+    // for debugging
+    public void SetDebugGravity(Vector3 down)
+    {
+        gravity = down * gravity.magnitude;
+    }
 
     /// <summary>
     /// Adds gravitational acceleration onto the player
