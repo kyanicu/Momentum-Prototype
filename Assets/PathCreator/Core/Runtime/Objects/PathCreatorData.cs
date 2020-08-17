@@ -22,6 +22,7 @@ namespace PathCreation {
 
         // bezier display settings
         public bool showTransformTool = true;
+        public bool showLocalHandleTransforms = false;
         public bool showPathBounds;
         public bool showPerSegmentBounds;
         public bool displayAnchorPoints = true;

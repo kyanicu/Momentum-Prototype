@@ -12,8 +12,9 @@ namespace KinematicCharacterController
         void UpdateRotation(ref Quaternion currentRotation, float deltaTime);
         /// <summary>
         /// This is called when the motor wants to know what its velocity should be right now
+        /// Self Added maxMove parameter
         /// </summary>
-        void UpdateVelocity(ref Vector3 currentVelocity, float deltaTime);
+        void UpdateVelocity(ref Vector3 currentVelocity, ref float maxMove, float deltaTime);
         /// <summary>
         /// This is called before the motor does anything
         /// </summary>

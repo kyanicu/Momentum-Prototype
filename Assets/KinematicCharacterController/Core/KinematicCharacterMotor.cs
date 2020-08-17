@@ -1126,9 +1126,15 @@ namespace KinematicCharacterController
                     #endregion
                 }
             }
+            
+            // Self Added
+            float maxMove = float.PositiveInfinity;
 
-            // Handle velocity
-            CharacterController.UpdateVelocity(ref BaseVelocity, deltaTime);
+            // Handle velocity, Self Added maxMove parameter
+            CharacterController.UpdateVelocity(ref BaseVelocity, ref maxMove, deltaTime);
+
+            // Self Added
+            Vector3 beforeMovePos = _transientPosition;
 
             //this.CharacterController.UpdateVelocity(ref BaseVelocity, deltaTime);
             if (BaseVelocity.magnitude < MinVelocityMagnitude)
@@ -1149,6 +1155,10 @@ namespace KinematicCharacterController
                     _transientPosition += BaseVelocity * deltaTime;
                 }
             }
+
+            float distMoved = (_transientPosition - beforeMovePos).magnitude;
+            if (distMoved > maxMove)
+                _transientPosition -= BaseVelocity.normalized * (distMoved - maxMove);
 
             // Process rigidbody hits/overlaps to affect velocity
             if (InteractiveRigidbodyHandling)

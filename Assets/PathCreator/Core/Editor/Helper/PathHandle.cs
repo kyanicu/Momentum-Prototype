@@ -39,8 +39,7 @@ namespace PathCreationEditor
             dstMouseToDragPointStart = float.MaxValue;
         }
 
-        // Self inserted rotation parameter
-        public static Vector3 DrawHandle(Vector3 position, Quaternion rotation, PathSpace space, bool isInteractive, float handleDiameter, Handles.CapFunction capFunc, HandleColours colours, out HandleInputType inputType, int handleIndex)
+        public static Vector3 DrawHandle(Vector3 position, PathSpace space, bool isInteractive, float handleDiameter, Handles.CapFunction capFunc, HandleColours colours, out HandleInputType inputType, int handleIndex)
         {
             int id = GetID(handleIndex);
             Vector3 screenPosition = Handles.matrix.MultiplyPoint(position);
@@ -171,7 +170,7 @@ namespace PathCreationEditor
                     break;
 
                 case EventType.Layout:
-                    Handles.matrix = Matrix4x4.Rotate(rotation); // Self Inserted, Original: Handles.matrix = Matrix4x4.Identity
+                    Handles.matrix = Matrix4x4.identity;
                     HandleUtility.AddControl(id, HandleUtility.DistanceToCircle(screenPosition, handleDiameter / 2f));
                     Handles.matrix = cachedMatrix;
                     break;

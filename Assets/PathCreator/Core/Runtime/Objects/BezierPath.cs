@@ -473,6 +473,16 @@ namespace PathCreation {
             NotifyPathModified ();
         }
 
+        // Align on the Plane(transform.up, transform.position)
+        public void AlignOnPlane()
+        {
+            Plane plane = new Plane(Vector3.up, Vector3.zero);
+            for (int i = 0; i < NumPoints; i++)
+            {
+                SetPoint(i, plane.ClosestPointOnPlane(GetPoint(i)));
+            }
+        }
+
         /// Bounding box containing the path
         public Bounds PathBounds {
             get {

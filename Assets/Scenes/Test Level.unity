@@ -224,7 +224,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh25618
+  m_Name: pb_Mesh15036
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -5291,7 +5291,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh27018
+  m_Name: pb_Mesh16444
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -9956,6 +9956,91 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 974241789}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &976763181
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 976763183}
+  - component: {fileID: 976763182}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &976763182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976763181}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e5ac92bc18f545cc84cd886ece82b4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  editorData:
+    _bezierPath:
+      points:
+      - {x: -2, y: 0, z: 0}
+      - {x: -1, y: 0, z: 0}
+      - {x: 1, y: 0, z: -1.2726326}
+      - {x: 2, y: 0, z: 0}
+      isClosed: 0
+      space: 0
+      controlMode: 0
+      autoControlLength: 0.3
+      boundsUpToDate: 0
+      bounds:
+        m_Center: {x: 0, y: 0, z: 0}
+        m_Extent: {x: 0, y: 0, z: 0}
+      perAnchorNormalsAngle:
+      - 0
+      - 0
+      globalNormalsAngle: 0
+      flipNormals: 0
+    vertexPathUpToDate: 1
+    vertexPathMaxAngleError: 0.3
+    vertexPathMinVertexSpacing: 1
+    showTransformTool: 1
+    showLocalHandleTransforms: 0
+    showPathBounds: 0
+    showPerSegmentBounds: 0
+    displayAnchorPoints: 1
+    displayControlPoints: 1
+    bezierHandleScale: 1
+    globalDisplaySettingsFoldout: 0
+    keepConstantHandleSize: 0
+    showNormalsInVertexMode: 1
+    showBezierPathInVertexMode: 1
+    showDisplayOptions: 0
+    showPathOptions: 1
+    showVertexPathDisplayOptions: 1
+    showVertexPathOptions: 1
+    showNormals: 1
+    showNormalsHelpInfo: 0
+    tabIndex: 0
+  initialized: 1
+--- !u!4 &976763183
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976763181}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -50.52814, y: 34.28473, z: -0.525}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &980039886
 GameObject:
   m_ObjectHideFlags: 0
@@ -10627,7 +10712,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh26458
+  m_Name: pb_Mesh15878
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -22058,6 +22143,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1634200295}
   - component: {fileID: 1634200296}
+  - component: {fileID: 1634200297}
   m_Layer: 9
   m_Name: Arc
   m_TagString: Plane
@@ -22073,7 +22159,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1634200294}
   m_LocalRotation: {x: 0.14418402, y: -0.6615891, z: -0.44189766, w: 0.5884194}
-  m_LocalPosition: {x: 11.69, y: 14.4, z: -5.1}
+  m_LocalPosition: {x: 12.524597, y: 13.751005, z: -4.7529297}
   m_LocalScale: {x: 1.7948527, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1204727488}
@@ -22094,25 +22180,25 @@ MonoBehaviour:
   editorData:
     _bezierPath:
       points:
-      - {x: 5.863407, y: 0, z: -4.001876}
-      - {x: 3.558239, y: 0, z: -0.9994383}
-      - {x: 5.884506, y: 0, z: -3.9898138}
-      - {x: 3.588379, y: 0, z: -0.9364729}
-      - {x: 0.87921906, y: 0, z: 2.66611}
-      - {x: 0.20238972, y: 0, z: 3.996983}
-      - {x: -0.9948273, y: 0, z: 4.8229456}
-      - {x: -2.3173356, y: 0, z: 5.7353473}
-      - {x: -4.043111, y: 0, z: 5.937867}
-      - {x: -4.672367, y: 0, z: 5.813054}
-      - {x: -5.4426203, y: 0, z: 5.660274}
-      - {x: -6.1840973, y: 0, z: 4.137742}
-      - {x: -5.7190742, y: 0, z: 2.6864023}
-      - {x: -5.319269, y: 0, z: 1.4386095}
-      - {x: -4.275197, y: 0, z: 0.12389648}
-      - {x: -2.017292, y: 0, z: -2.6701689}
-      - {x: -0.8083, y: 0, z: -4.1662474}
-      - {x: -0.24661255, y: 0, z: -5.0266676}
-      - {x: 0.39024734, y: 0, z: -5.8464613}
+      - {x: 6.33293, y: 0, z: -4.7144556}
+      - {x: 5.152366, y: 0, z: -3.063227}
+      - {x: 4.232911, y: 0, z: -1.8079633}
+      - {x: 3.2439861, y: 0, z: -0.4122928}
+      - {x: 2.1002927, y: 0, z: 1.2018033}
+      - {x: -0.77829075, y: 0, z: 5.2749166}
+      - {x: -1.8018398, y: 0, z: 6.000808}
+      - {x: -3.1124175, y: 0, z: 6.930257}
+      - {x: -4.5273776, y: 0, z: 6.842816}
+      - {x: -5.1602645, y: 0, z: 6.3420424}
+      - {x: -5.776068, y: 0, z: 5.854786}
+      - {x: -6.554959, y: 0, z: 4.80678}
+      - {x: -6.089936, y: 0, z: 3.3554409}
+      - {x: -5.6901307, y: 0, z: 2.107648}
+      - {x: -4.5147004, y: 0, z: 0.79379}
+      - {x: -2.4290166, y: 0, z: -2.1310787}
+      - {x: -1.3025655, y: 0, z: -3.7107627}
+      - {x: -0.39119124, y: 0, z: -4.8869553}
+      - {x: 0.22733262, y: 0, z: -5.7750173}
       isClosed: 0
       space: 0
       controlMode: 0
@@ -22131,10 +22217,11 @@ MonoBehaviour:
       - 0
       globalNormalsAngle: 0
       flipNormals: 1
-    vertexPathUpToDate: 0
-    vertexPathMaxAngleError: 12.3
+    vertexPathUpToDate: 1
+    vertexPathMaxAngleError: 0
     vertexPathMinVertexSpacing: 1
     showTransformTool: 1
+    showLocalHandleTransforms: 1
     showPathBounds: 0
     showPerSegmentBounds: 0
     displayAnchorPoints: 1
@@ -22152,6 +22239,19 @@ MonoBehaviour:
     showNormalsHelpInfo: 0
     tabIndex: 0
   initialized: 1
+--- !u!65 &1634200297
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1634200294}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 10.918608, y: 13.765049, z: 20.546581}
+  m_Center: {x: 0.17605375, y: 6.382517, z: 2.3049247}
 --- !u!1 &1637174449
 GameObject:
   m_ObjectHideFlags: 0
