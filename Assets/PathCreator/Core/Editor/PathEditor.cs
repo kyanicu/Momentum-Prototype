@@ -112,7 +112,7 @@ namespace PathCreationEditor {
 
                     bezierPath.IsClosed = EditorGUILayout.Toggle ("Closed Path", bezierPath.IsClosed);
                     data.showTransformTool = EditorGUILayout.Toggle (new GUIContent ("Enable Transforms"), data.showTransformTool);
-
+                    data.showLocalHandleTransforms = EditorGUILayout.Toggle (new GUIContent ("Enable Local Handle Transforms"), data.showLocalHandleTransforms);
                     Tools.hidden = !data.showTransformTool;
 
                     // Check if out of bounds (can occur after undo operations)
@@ -180,6 +180,10 @@ namespace PathCreationEditor {
 
                     GUILayout.Space (inspectorSectionSpacing);
                 }
+                if (GUILayout.Button ("Align on Plane")) {
+                            Undo.RecordObject (creator, "Align on Plane");
+                            bezierPath.AlignOnPlane();
+                        }
 
                 data.showNormals = EditorGUILayout.Foldout (data.showNormals, new GUIContent ("Normals Options"), true, boldFoldoutStyle);
                 if (data.showNormals) {
@@ -524,8 +528,7 @@ namespace PathCreationEditor {
             }
             var cap = capFunctions[(isAnchorPoint) ? globalDisplaySettings.anchorShape : globalDisplaySettings.controlShape];
             PathHandle.HandleInputType handleInputType;
-            // Self inserted transformRot parameter
-            handlePosition = PathHandle.DrawHandle(handlePosition, transformRot, bezierPath.Space, isInteractive, handleSize, cap, handleColours, out handleInputType, i);
+            handlePosition = PathHandle.DrawHandle (handlePosition, bezierPath.Space, isInteractive, handleSize, cap, handleColours, out handleInputType, i);
 
             if (doTransformHandle) {
                 // Show normals rotate tool 
@@ -555,7 +558,8 @@ namespace PathCreationEditor {
                     }
 
                 } else {
-                    handlePosition = Handles.DoPositionHandle (handlePosition, Quaternion.identity);
+                    //Self inserted "(creator.bezierPath.showLocalHandleTransforms) : creator.transform.rotation ?"
+                    handlePosition = Handles.DoPositionHandle (handlePosition, (data.showLocalHandleTransforms) ? creator.transform.rotation : Quaternion.identity);
                 }
 
             }

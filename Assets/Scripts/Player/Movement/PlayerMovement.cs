@@ -107,9 +107,9 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     public Vector3 externalVelocity { private get; set; }
 
     private Plane currentPlane;
-    private VertexPath currentDynamicPlane;
-    private VertexPath currentPlaneBreaker;
-    
+    private PathCreator currentDynamicPlane;
+    private PathCreator currentPlaneBreaker;
+
     // Debug
     #region debug
     KinematicCharacterMotorState startState;
@@ -262,9 +262,8 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// </summary>
     /// <param name="currentVelocity"> Reference to the player's velocity </param>
     /// <param name="deltaTime"> Motor update time </param>
-    public void UpdateVelocity(ref Vector3 currentVelocity, float deltaTime)
+    public void UpdateVelocity(ref Vector3 currentVelocity, ref float maxMove, float deltaTime)
     {
-        currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
         
         // Handle velocity projection if grounded
         if (motor.IsGroundedThisUpdate)
@@ -288,7 +287,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 
                 // Snap external velocity to ground
                 externalVelocity -= projection;
-                externalVelocity = Vector3.ProjectOnPlane(externalVelocity, motor.PlanarConstraintAxis);
             }
         }
 
@@ -300,6 +298,24 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         //ability.UpdateVelocity();
         action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
         physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
+
+        currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
+
+        // If on Dynamic Plane, handle movement  
+        if(currentDynamicPlane != null)
+        {
+            VertexPath vertexPath = currentDynamicPlane.path;
+            float closestPointTime = vertexPath.GetClosestTimeOnPath(motor.Transform.position);
+            Vector3 closestPoint = vertexPath.GetPointAtTime(closestPointTime, EndOfPathInstruction.Stop);
+            Vector3 closestPointNormal = vertexPath.GetNormal(closestPointTime, EndOfPathInstruction.Stop);
+
+            int closestPointIndex = vertexPath.rotat
+
+            Vector3 toPoint;
+            Vector3 alongNormal; 
+            maxMove = .magnitude;
+
+        }
     }
 
     /// <summary>
@@ -360,6 +376,12 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// <param name="deltaTime"> Motor update time </param>
     public void AfterCharacterUpdate(float deltaTime)
     {
+        // Handle Dynamic Plane Shifting
+        if (currentDynamicPlane != null)
+        {
+            
+        }
+
         // Reset Ability and Action Input
         //ability.ResetInput();
         action.ResetInput();
@@ -431,6 +453,8 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 
 #endregion
 
+
+
     private void SetCurrentPlane(Plane plane)
     {
         currentPlane = plane;
@@ -439,33 +463,44 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         motor.SetTransientPosition(plane.ClosestPointOnPlane(motor.Transform.position));
     }
 
-    private void SetDynamicPlane(Collider col)
+
+    private void EnterDynamicPlane(PathCreator pathCreator)
     {
-        currentDynamicPlane = col.GetComponent<PathCreator>().path;
-        float shortestProjSqrDist = float.PositiveInfinity;
-        int closestProjPointIndex = 0;
-        Vector3 closestProjPoint;
-        for(int i = 0; i < currentDynamicPlane.NumPoints; i++)
-        {
-            Vector3 point = currentDynamicPlane.GetPoint(i);
-            float projSqrDist = Vector3.ProjectOnPlane(point - motor.Transform.position, col.transform.up).sqrMagnitude;
+        currentDynamicPlane = pathCreator;
+        VertexPath vertexPath = currentDynamicPlane.path;
+        Plane pathFloorPlane = new Plane(currentDynamicPlane.transform.up, currentDynamicPlane.transform.position);
 
-            if (projSqrDist < shortestProjSqrDist)
-            {
-                shortestProjSqrDist = projSqrDist;
-                closestProjPointIndex = i;
-            }
-        }
-        closestProjPoint = currentDynamicPlane.GetPoint(closestProjPointIndex);
+        float closestPointTime = vertexPath.GetClosestTimeOnPath(pathFloorPlane.ClosestPointOnPlane(motor.Transform.position));
+        Vector3 closestPoint = vertexPath.GetPointAtTime(closestPointTime, EndOfPathInstruction.Stop);
+        Vector3 closestPointNormal = vertexPath.GetNormal(closestPointTime, EndOfPathInstruction.Stop);
 
-        //if (plane.normal != currentPlane.normal && plane.distance != currentPlane.distance)
-        //    SetCurrentPlane(plane);
+        SetCurrentPlane(new Plane(closestPointNormal, closestPoint));
+
+        Debug.DrawLine(motor.Transform.position, closestPoint, Color.yellow);
+        Debug.DrawLine(motor.Transform.position, motor.TransientPosition, Color.red);
+        Debug.DrawRay(closestPoint, closestPointNormal, Color.blue);
+        Debug.DrawLine(closestPoint, pathCreator.GetComponent<Collider>().ClosestPoint(closestPoint + pathCreator.transform.up * 10000), Color.green);
+        Debug.DrawLine(closestPoint, pathCreator.GetComponent<Collider>().ClosestPoint(closestPoint - pathCreator.transform.up * 10000), Color.green);
+        
+        Debug.Break();
+    }
+
+    private void ExitDynamicPlane(Collider col)
+    {
+        currentDynamicPlane = null;
     }
 
     public void HandleTriggerEnter(Collider col)
     {
         if (col.tag == "Plane")
-            SetDynamicPlane(col);
+            EnterDynamicPlane(col.GetComponent<PathCreator>());
+    } 
+
+    public void HandleTriggerExit(Collider col)
+    {
+        if (col.tag == "Plane")
+            ExitDynamicPlane(col);
+            
     } 
 
     /// <summary>

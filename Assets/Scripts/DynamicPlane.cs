@@ -5,27 +5,30 @@ using PathCreation;
 
 public class DynamicPlane : PathCreator
 {
-    Vector3 prevPosition;
-    Quaternion prevRotation;
-    Vector3 prevScale;
-
-    
+    private float forwardDirection;
 
     /// <summary>
     /// Initializes tri and plane info
     /// </summary>
     void Awake()
     {
-        prevPosition = transform.position;
-        prevRotation = transform.rotation;
-        prevScale = transform.lossyScale;
+        DetermineForwardDirection();
     }
 
-    public Plane GetClosestPlane(Vector3 point)
+    void OnValidate()
     {
-        float shortestSquareDistance = float.PositiveInfinity;
-        Plane closestPlane = new Plane();
+        bezierPath.GlobalNormalsAngle = 0;
+        bezierPath.AlignOnPlane();
+        for (int i = 0; i < bezierPath.NumAnchorPoints; i++)
+        {
+            bezierPath.SetAnchorNormalAngle(i, 0);
+        }
 
-        return closestPlane;
     }
+
+    private void DetermineForwardDirection()
+    {
+        Vector3 startNormal = path.GetNormal(0);
+    }
+
 }
