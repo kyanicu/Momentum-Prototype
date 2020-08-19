@@ -22,6 +22,10 @@ public class Player : MonoBehaviour
     {
         movement.HandleTriggerEnter(col);
     }
+    void OnTriggerExit(Collider col)
+    {
+        movement.HandleTriggerExit(col);
+    }
 
     // Update is called once per frame
     void Update()

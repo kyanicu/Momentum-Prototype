@@ -4,6 +4,8 @@ using UnityEngine;
 namespace PathCreation {
     /// Stores state data for the path creator editor
 
+    public enum HandleTransform { Global, ObjectLocal, PointLocal }
+
     [System.Serializable]
     public class PathCreatorData {
         public event System.Action bezierOrVertexPathModified;
@@ -22,7 +24,7 @@ namespace PathCreation {
 
         // bezier display settings
         public bool showTransformTool = true;
-        public bool showLocalHandleTransforms = false;
+        public HandleTransform HandleTransforms = HandleTransform.ObjectLocal;
         public bool showPathBounds;
         public bool showPerSegmentBounds;
         public bool displayAnchorPoints = true;
