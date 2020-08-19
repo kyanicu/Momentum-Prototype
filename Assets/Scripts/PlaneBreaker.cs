@@ -5,42 +5,43 @@ using UnityEditor;
 using PathCreation;
 
 [RequireComponent(typeof(PathCreator))]
-public class DynamicPlane : MonoBehaviour
+public class PlaneBreaker : MonoBehaviour
 {
 
     [HideInInspector]
     public PathCreator pathCreator;
-    public Collider col;
-
-    [SerializeField]
-    private bool drawPlaneExtents;
-
-    [SerializeField]
-    private bool _prioritize;
-    public bool prioritize { get { return _prioritize; } private set { _prioritize = value; } }
 
     private BezierPath bezierPath { get { return pathCreator.bezierPath; } }
     public VertexPath path { get { return pathCreator.path; } }
-    public Vector3 up { get { return transform.up; } }
 
-    Plane pathFloor;
+    [SerializeField]
+    private bool drawPointUps;
+    [SerializeField]
+    private bool drawPointNormals;
+
+    
+    [SerializeField]
+    private bool snapPointsToFloor;
 
     private bool forwardIsRight;
     private float[] pointTimes;
+    private Vector3[] pointUps;
 
     /// <summary>
     /// Initializes tri and plane info
     /// </summary>
     void Awake()
     {
+        pathCreator = GetComponent<PathCreator>();
         DetermineForwardDirection();
-        SetPointTimes(); 
+        SetPointInfo();
     }
 
     void Reset()
     {
         pathCreator = GetComponent<PathCreator>();
-        col = GetComponent<Collider>();
+        DetermineForwardDirection();
+        SetPointInfo();
 
         bezierPath.AddSegmentToStart(bezierPath.GetPoint(0) - path.GetDirection(0f, EndOfPathInstruction.Stop));
         bezierPath.SetPoint(1, bezierPath.GetPoint(3));
@@ -57,17 +58,9 @@ public class DynamicPlane : MonoBehaviour
     {
         if (pathCreator == null)
             pathCreator = gameObject.AddComponent<PathCreator>();
-        if (col == null && GetComponent<Collider>() != null)
-            col = GetComponent<Collider>();
-
-        bezierPath.GlobalNormalsAngle = 0;
-        bezierPath.AlignOnPlane();
-        for (int i = 0; i < bezierPath.NumAnchorPoints; i++)
-        {
-            bezierPath.SetAnchorNormalAngle(i, 0);
-        }
-
-        pathFloor = new Plane(up, transform.position);
+        
+        if (snapPointsToFloor)
+            SnapPointsToFloor();
 
         bezierPath.SetPoint(1, bezierPath.GetPoint(3));
         bezierPath.SetPoint(2, bezierPath.GetPoint(0));
@@ -80,22 +73,21 @@ public class DynamicPlane : MonoBehaviour
         if (Selection.Contains(gameObject))
             OnValidate();
 
-        if (drawPlaneExtents)
+        if(drawPointNormals)
         {
-            for (int i = 0; i < pathCreator.path.NumPoints; i++)
+            for (int i = 0; i < path.NumPoints; i++)
             {
-                if (col != null)
-                {
-                    Debug.DrawLine(path.GetPoint(i), col.ClosestPoint(path.GetPoint(i) + transform.up * 10000), Color.green);
-                    Debug.DrawLine(path.GetPoint(i), col.ClosestPoint(path.GetPoint(i) - transform.up * 10000), Color.green);
-                }
-                else
-                {
-                    Debug.DrawLine(path.GetPoint(i), transform.up, Color.green);
-                    Debug.DrawLine(path.GetPoint(i), -transform.up, Color.green);
-                }
+                Debug.DrawRay(path.GetPoint(i), path.GetNormal(i), Color.blue);
             }
         }
+        if(drawPointUps)
+        {
+            for (int i = 0; i < path.NumPoints; i++)
+            {
+                Debug.DrawRay(path.GetPoint(i), pointUps[i], Color.green);
+            }
+        }
+
     }
 
     /// <summary>
@@ -108,48 +100,54 @@ public class DynamicPlane : MonoBehaviour
         Vector3 startPathNormal = path.GetNormal(0);
         Vector3 startPathRight = Vector3.Cross(transform.up, startPathNormal);
         forwardIsRight = Vector3.Dot(startPathRight, path.GetDirectionAtDistance(0, EndOfPathInstruction.Stop)) > 0;
-        
-        /*
-        Debug.DrawRay(path.GetPoint(0), startPathNormal, Color.blue, 5);
-        Debug.DrawRay(path.GetPoint(0), transform.up, Color.green, 5);
-        Debug.DrawRay(path.GetPoint(0) + transform.up * 0.5f, startPathRight, Color.red, 5);
-        Debug.DrawRay(path.GetPoint(0) + transform.up, path.GetDirectionAtDistance(0.01f, EndOfPathInstruction.Stop), Color.yellow, 5);
-        Debug.Log(path.GetNormal(0));
-        Debug.Log(forwardIsRight);
-        Debug.Break();
-        */
     }
 
-    private void SetPointTimes()
+    private void SetPointInfo()
     {
         pointTimes = new float[path.NumPoints];
+        pointUps = new Vector3[path.NumPoints];
         
-        pointTimes[0] = 0;
-        for (int i = 1; i < path.NumPoints-1; i++)
+        for (int i = 0; i < path.NumPoints; i++)
         {
-            pointTimes[i] = path.GetClosestTimeOnPath(path.GetPoint(i));
+            if(i == 0)
+                pointTimes[i] = 0;
+            else if ( i == path.NumPoints-1)
+                pointTimes[i] = 1;
+            else
+                pointTimes[i] = path.GetClosestTimeOnPath(path.GetPoint(i));
+            pointUps[i] = Vector3.Cross(path.GetNormal(i), path.GetDirection(pointTimes[i] + ((forwardIsRight) ? +0.001f : -0.001f) * ((forwardIsRight) ? +1 : -1), EndOfPathInstruction.Stop));
         }
-        pointTimes[path.NumPoints-1] = 1;
     }
 
-    public Plane GetClosestPlane(Vector3 point)
+    private void SnapPointsToFloor()
     {
-        float closestPointTime = path.GetClosestTimeOnPath(pathFloor.ClosestPointOnPlane(point));
+        /*
+        for (int i = 0; i < bezierPath.NumPoints; i++)
+        {
+            RaycastHit hit;
+            Vector3 up = Vector3.Cross(path.GetNormal(i), bezierPath.get(pointTimes[i] + ((forwardIsRight) ? +0.001f : -0.001f) * ((forwardIsRight) ? +1 : -1), EndOfPathInstruction.Stop));;
+            if (Physics.Raycast(bezierPath.GetPoint(i), -pointUps[i], 1))
+            {
+                pat
+            }
+        }
+        */
+        SetPointInfo();
+        snapPointsToFloor = false;
+    }
+
+    public Plane GetClosestPlane(Vector3 flooredPoint)
+    {
+        float closestPointTime = path.GetClosestTimeOnPath(flooredPoint);
         Vector3 closestPoint = path.GetPointAtTime(closestPointTime, EndOfPathInstruction.Stop);
         Vector3 closestPointNormal = path.GetNormal(closestPointTime, EndOfPathInstruction.Stop);
-
-        //Debug.DrawLine(point, closestPoint, Color.yellow);
-        //Debug.DrawRay(closestPoint, closestPointNormal, Color.blue);
-        //Debug.DrawLine(closestPoint, col.ClosestPoint(closestPoint + transform.up * 10000), Color.green);
-        //Debug.DrawLine(closestPoint, col.ClosestPoint(closestPoint - transform.up * 10000), Color.green);
 
         return new Plane(closestPointNormal, closestPoint);
     }
 
-    public Plane GetApproachingPlaneTransition(Vector3 position, Vector3 moveDirection, bool movingRight, out Plane traversalPlane)
+    public Plane GetApproachingPlaneTransition(Vector3 flooredPosition, Vector3 moveDirection, bool movingRight, out Plane traversalPlane)
     {
-        Plane pathFloor = new Plane(up, transform.position);
-        float closestPointTime = path.GetClosestTimeOnPath(pathFloor.ClosestPointOnPlane(position));
+        float closestPointTime = path.GetClosestTimeOnPath(flooredPosition);
         Vector3 closestPoint = path.GetPointAtTime(closestPointTime, EndOfPathInstruction.Stop);
         bool movingForward = movingRight == forwardIsRight;
 
@@ -176,7 +174,7 @@ public class DynamicPlane : MonoBehaviour
             }
         }
 
-        Vector3 pointApproaching = (movingForward) ? path.GetPoint(pointAhead) : path.GetPoint(pointBehind) ;
+        Vector3 pointApproaching = (movingForward) ? path.GetPoint(pointAhead) : path.GetPoint(pointBehind);
 
         Vector3 normal;
         if (!onPoint)

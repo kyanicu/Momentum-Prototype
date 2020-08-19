@@ -111,8 +111,8 @@ namespace PathCreationEditor {
                     }
 
                     bezierPath.IsClosed = EditorGUILayout.Toggle ("Closed Path", bezierPath.IsClosed);
-                    data.showTransformTool = EditorGUILayout.Toggle (new GUIContent ("Enable Transforms"), data.showTransformTool);
-                    data.showLocalHandleTransforms = EditorGUILayout.Toggle (new GUIContent ("Enable Local Handle Transforms"), data.showLocalHandleTransforms);
+                    data.showTransformTool = EditorGUILayout.Toggle (new GUIContent ("Enable Object Transforms"), data.showTransformTool);
+                    data.HandleTransforms = (HandleTransform) EditorGUILayout.EnumPopup (new GUIContent ("Handle Transform Type"), data.HandleTransforms);
                     Tools.hidden = !data.showTransformTool;
 
                     // Check if out of bounds (can occur after undo operations)
@@ -558,8 +558,24 @@ namespace PathCreationEditor {
                     }
 
                 } else {
-                    //Self inserted "(creator.bezierPath.showLocalHandleTransforms) : creator.transform.rotation ?"
-                    handlePosition = Handles.DoPositionHandle (handlePosition, (data.showLocalHandleTransforms) ? creator.transform.rotation : Quaternion.identity);
+                    // Self inserted "(creator.bezierPath.showLocalHandleTransforms) : creator.transform.rotation ?"
+                    Quaternion handleRotation;
+                    switch(data.HandleTransforms)
+                    {
+                        case (HandleTransform.ObjectLocal) :
+                            handleRotation = creator.transform.rotation;
+                            break;
+                        case (HandleTransform.PointLocal) :
+                            handleRotation = creator.transform.rotation;
+                        //    int iAnchor = (isAnchorPoint) ? i : i/3;
+                        //    handleRotation = Quaternion.LookRotation(creator.bezierPath., creator.transform.up);
+                            break;
+                        default :
+                            handleRotation = Quaternion.identity;
+                            break;
+                        
+                    }
+                    handlePosition = Handles.DoPositionHandle (handlePosition, handleRotation);
                 }
 
             }

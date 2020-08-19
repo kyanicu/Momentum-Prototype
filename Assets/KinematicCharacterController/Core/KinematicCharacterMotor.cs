@@ -1133,9 +1133,6 @@ namespace KinematicCharacterController
             // Handle velocity, Self Added maxMove parameter
             CharacterController.UpdateVelocity(ref BaseVelocity, ref maxMove, deltaTime);
 
-            // Self Added
-            Vector3 beforeMovePos = _transientPosition;
-
             //this.CharacterController.UpdateVelocity(ref BaseVelocity, deltaTime);
             if (BaseVelocity.magnitude < MinVelocityMagnitude)
             {
@@ -1148,17 +1145,19 @@ namespace KinematicCharacterController
             {
                 if (_solveMovementCollisions)
                 {
-                    InternalCharacterMove(ref BaseVelocity, deltaTime);
+                    // Self inserted maxMove
+                    InternalCharacterMove(ref BaseVelocity, deltaTime, maxMove);
                 }
                 else
                 {
-                    _transientPosition += BaseVelocity * deltaTime;
+                    // Self Inserted
+                    Vector3 moveBy = BaseVelocity * deltaTime;
+                    if (moveBy.magnitude > maxMove)
+                        moveBy = moveBy.normalized * maxMove;
+
+                    _transientPosition += moveBy;
                 }
             }
-
-            float distMoved = (_transientPosition - beforeMovePos).magnitude;
-            if (distMoved > maxMove)
-                _transientPosition -= BaseVelocity.normalized * (distMoved - maxMove);
 
             // Process rigidbody hits/overlaps to affect velocity
             if (InteractiveRigidbodyHandling)
@@ -1396,9 +1395,10 @@ namespace KinematicCharacterController
         /// <summary>
         /// Moves the character's position by given movement while taking into account all physics simulation, step-handling and 
         /// velocity projection rules that affect the character motor
+        /// Self iserted maxMove
         /// </summary>
         /// <returns> Returns false if movement could not be solved until the end </returns>
-        private bool InternalCharacterMove(ref Vector3 transientVelocity, float deltaTime)
+        private bool InternalCharacterMove(ref Vector3 transientVelocity, float deltaTime, float maxMove = float.PositiveInfinity)
         {
             if (deltaTime <= 0f)
                 return false;
@@ -1407,6 +1407,9 @@ namespace KinematicCharacterController
             bool wasCompleted = true;
             Vector3 remainingMovementDirection = transientVelocity.normalized;
             float remainingMovementMagnitude = transientVelocity.magnitude * deltaTime;
+            //Self inserted
+            if (remainingMovementMagnitude > maxMove)
+                remainingMovementMagnitude = maxMove;
             Vector3 originalVelocityDirection = remainingMovementDirection;
             int sweepsMade = 0;
             bool hitSomethingThisSweepIteration = true;

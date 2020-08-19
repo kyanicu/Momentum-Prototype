@@ -107,8 +107,9 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     public Vector3 externalVelocity { private get; set; }
 
     private Plane currentPlane;
-    private PathCreator currentDynamicPlane;
-    private PathCreator currentPlaneBreaker;
+    private Plane brokenPlane;
+    private DynamicPlane[] currentDynamicPlanes;
+    private PlaneBreaker currentPlaneBreaker;
 
     // Debug
     #region debug
@@ -138,6 +139,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         action = GetComponent<PlayerMovementAction>();
         physics = GetComponent<PlayerMovementPhysics>();
 
+        currentDynamicPlanes = new DynamicPlane[2];
         slopeList = new SlopeList(5);
     }
 
@@ -301,20 +303,38 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 
         currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
 
-        // If on Dynamic Plane, handle movement  
-        if(currentDynamicPlane != null)
+        // If active on PlaneBreaker
+        if (currentPlaneBreaker != null && motor.IsGroundedThisUpdate)
         {
-            VertexPath vertexPath = currentDynamicPlane.path;
-            float closestPointTime = vertexPath.GetClosestTimeOnPath(motor.Transform.position);
-            Vector3 closestPoint = vertexPath.GetPointAtTime(closestPointTime, EndOfPathInstruction.Stop);
-            Vector3 closestPointNormal = vertexPath.GetNormal(closestPointTime, EndOfPathInstruction.Stop);
-
-            int closestPointIndex = vertexPath.rotat
-
-            Vector3 toPoint;
-            Vector3 alongNormal; 
-            maxMove = .magnitude;
-
+            float dot = Vector3.Dot(currentVelocity, Vector3.Cross(motor.CharacterUp, currentPlane.normal));
+            Plane traversalPlane;
+            Plane approachingPlaneTransition = currentPlaneBreaker.GetApproachingPlaneTransition(motor.Transform.position, currentVelocity.normalized, dot > 0, out traversalPlane);
+            if (traversalPlane.normal != currentPlane.normal || traversalPlane.distance != currentPlane.distance)
+                SetCurrentPlane(traversalPlane);
+            
+            if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
+            {
+                float dist;
+                if (approachingPlaneTransition.Raycast(new Ray(motor.Transform.position, currentVelocity), out dist))
+                    maxMove = dist;
+            }
+        }
+        // If on Dynamic Plane, handle movement  
+        else if(currentDynamicPlanes[0] != null)
+        {
+            Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
+            float dot = Vector3.Dot(currentVelocity, planeRight);
+            Plane traversalPlane;
+            Plane approachingPlaneTransition = currentDynamicPlanes[0].GetApproachingPlaneTransition(motor.Transform.position, currentVelocity.normalized, dot > 0, out traversalPlane);
+            if (traversalPlane.normal != currentPlane.normal || traversalPlane.distance != currentPlane.distance)
+                SetCurrentPlane(traversalPlane);
+            
+            if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
+            {
+                float dist;
+                if (approachingPlaneTransition.Raycast(new Ray(motor.Transform.position, currentVelocity), out dist))
+                    maxMove = dist;
+            }
         }
     }
 
@@ -376,12 +396,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// <param name="deltaTime"> Motor update time </param>
     public void AfterCharacterUpdate(float deltaTime)
     {
-        // Handle Dynamic Plane Shifting
-        if (currentDynamicPlane != null)
-        {
-            
-        }
-
         // Reset Ability and Action Input
         //ability.ResetInput();
         action.ResetInput();
@@ -460,47 +474,71 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         currentPlane = plane;
         motor.BaseVelocity = Vector3.ProjectOnPlane(motor.BaseVelocity, currentPlane.normal).normalized * motor.BaseVelocity.magnitude; 
         motor.PlanarConstraintAxis = plane.normal;
-        motor.SetTransientPosition(plane.ClosestPointOnPlane(motor.Transform.position));
+        motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
     }
 
 
-    private void EnterDynamicPlane(PathCreator pathCreator)
+    private void EnterDynamicPlane(DynamicPlane dynamicPlane)
     {
-        currentDynamicPlane = pathCreator;
-        VertexPath vertexPath = currentDynamicPlane.path;
-        Plane pathFloorPlane = new Plane(currentDynamicPlane.transform.up, currentDynamicPlane.transform.position);
+        if (currentDynamicPlanes[0] != null && currentDynamicPlanes[0].prioritize)
+        {
+            currentDynamicPlanes[1] = dynamicPlane;
+        }
+        else
+        {    
+            if (currentDynamicPlanes[0] != null)
+                currentDynamicPlanes[1] = currentDynamicPlanes[0];
 
-        float closestPointTime = vertexPath.GetClosestTimeOnPath(pathFloorPlane.ClosestPointOnPlane(motor.Transform.position));
-        Vector3 closestPoint = vertexPath.GetPointAtTime(closestPointTime, EndOfPathInstruction.Stop);
-        Vector3 closestPointNormal = vertexPath.GetNormal(closestPointTime, EndOfPathInstruction.Stop);
+            currentDynamicPlanes[0] = dynamicPlane;
 
-        SetCurrentPlane(new Plane(closestPointNormal, closestPoint));
-
-        Debug.DrawLine(motor.Transform.position, closestPoint, Color.yellow);
-        Debug.DrawLine(motor.Transform.position, motor.TransientPosition, Color.red);
-        Debug.DrawRay(closestPoint, closestPointNormal, Color.blue);
-        Debug.DrawLine(closestPoint, pathCreator.GetComponent<Collider>().ClosestPoint(closestPoint + pathCreator.transform.up * 10000), Color.green);
-        Debug.DrawLine(closestPoint, pathCreator.GetComponent<Collider>().ClosestPoint(closestPoint - pathCreator.transform.up * 10000), Color.green);
-        
-        Debug.Break();
+            if (currentPlaneBreaker == null || !motor.IsGroundedThisUpdate)
+                SetCurrentPlane(dynamicPlane.GetClosestPlane(motor.Transform.position));
+        }
     }
 
     private void ExitDynamicPlane(Collider col)
     {
-        currentDynamicPlane = null;
+        if (currentDynamicPlanes[0].gameObject == col.gameObject)
+        {
+            currentDynamicPlanes[0] = currentDynamicPlanes[1];
+            currentDynamicPlanes[1] = null;
+        }
+        else if (currentDynamicPlanes[1].gameObject == col.gameObject)
+        {
+            currentDynamicPlanes[1] = null;
+        }
+    }
+
+    private void EnterPlaneBreaker(PlaneBreaker planeBreaker)
+    {
+        currentPlaneBreaker = planeBreaker;
+        brokenPlane = currentPlane;
+        if(motor.IsGroundedThisUpdate)
+            SetCurrentPlane(planeBreaker.GetClosestPlane(motor.Transform.position));
+        
+    }
+
+    private void ExitPlaneBreaker()
+    {
+        currentPlaneBreaker = null;
+        if (currentDynamicPlanes[0] == null)
+            currentPlane = brokenPlane;
     }
 
     public void HandleTriggerEnter(Collider col)
     {
         if (col.tag == "Plane")
-            EnterDynamicPlane(col.GetComponent<PathCreator>());
+            EnterDynamicPlane(col.GetComponent<DynamicPlane>());
+        else if (col.tag == "Plane Breaker")
+            EnterPlaneBreaker(col.GetComponent<PlaneBreaker>());
     } 
 
     public void HandleTriggerExit(Collider col)
     {
         if (col.tag == "Plane")
             ExitDynamicPlane(col);
-            
+        else if (col.tag == "Plane Breaker")
+            ExitPlaneBreaker();
     } 
 
     /// <summary>

@@ -36,7 +36,6 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-     <Compile Include="Assets\KinematicCharacterController\Examples\Scripts\Editor\PauseStateHandler.cs" />
      <Compile Include="Assets\PathCreator\Examples\Scripts\Editor\PathSceneToolEditor.cs" />
      <Compile Include="Assets\KinematicCharacterController\Core\Editor\ReadOnlyPropertyDrawer.cs" />
      <Compile Include="Assets\KinematicCharacterController\Core\Editor\KinematicCharacterMotorEditor.cs" />
