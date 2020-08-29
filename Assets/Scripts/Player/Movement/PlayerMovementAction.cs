@@ -2,18 +2,254 @@
 using System.Collections.Generic;
 using UnityEngine;
 using KinematicCharacterController;
+using System;
+
+[System.Serializable]
+public class PlayerMovementActionValues : PlayerMovementOverridableValues
+{
+    /// <summary>
+    /// The acceleration of the player when actively running on the ground
+    /// </summary>
+    public float runAccel;
+    /// <summary>
+    /// The instantaneous speed the player achieves when manually performing a run kick off
+    /// </summary>
+    public float runKickOffSpeed;
+    /// <summary>
+    /// The instantaneous speed the player achieves when automatically performing a run kick off
+    /// </summary>
+    public float autoRunKickOffSpeed;
+    /// <summary>
+    /// The min slope required for auto run kick off to be triggered
+    /// </summary>
+    public float autoRunKickOffSlopeThreshold;
+    /// <summary>
+    /// The max speed a player can achieve by actively running on the ground alone
+    /// </summary>
+    public float runMaxSpeed;
+    /// <summary>
+    /// The deceleration of the player when actively running on the ground against their velocity
+    /// </summary>
+    public float brakeDecel;
+    /// <summary>
+    /// The acceleration of the player when actively moving horizontally in the air over a minimum speed
+    /// </summary>
+    public float looseAirMoveAccel;
+    /// <summary>
+    /// The deceleration of the player when actively moving horizontally in the air over a minimum speed against their velocity
+    /// </summary>
+    public float looseAirMoveBrakeDecel;
+    /// <summary>
+    /// The acceleration of the player when actively moving horizontally in the air under a minimum speed
+    /// </summary>
+    public float preciseAirMoveAccel;
+    /// <summary>
+    /// The deceleration of the player when actively moving horizontally in the air over a minimum speed against their velocity
+    /// </summary>
+    public float preciseAirMoveBrakeDecel;
+    /// <summary>
+    /// The threshold of horizontal air speed to determine which acceleration to use (precise if under, loose if over)
+    /// </summary>
+    public float airSpeedThreshold;
+    /// <summary>
+    /// The max horizontal speed a player can achieve by actively moving in the air alone
+    /// </summary>
+    public float airMoveMaxSpeed;
+    /// <summary>
+    /// The "up" (perpendicular to the current slope) speed at which the player jumps off the ground
+    /// </summary>
+    public float jumpSpeed;
+    /// <summary>
+    /// The factor on the player's angular velocity when jumping with internalAngularVelocity stored;
+    /// </summary>
+    public float jumpRotationFactor;
+    /// <summary>
+    /// The "up" (opposite to the direction of gravity) speed the the player is set at when jump canceling
+    /// </summary>
+    public float jumpCancelSpeed;
+    /// <summary>
+    /// The maximum "up" (opposite to the direction of gravity) speed allowed for jump canceling to activate 
+    /// </summary>
+    public float jumpCancelThreshold;
+
+    /// <summary>
+    /// Should right be inverted for player actions?
+    /// Uses int as a count of true bools as bool is not supported in overridable values
+    /// Use invertRight > 0 == true
+    /// </summary>
+    public int invertRight;
+
+    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
+    {
+        runAccel = DefaultFloat(overrideType);
+        runKickOffSpeed = DefaultFloat(overrideType);
+        autoRunKickOffSpeed = DefaultFloat(overrideType);
+        autoRunKickOffSlopeThreshold = DefaultFloat(overrideType);
+        runMaxSpeed = DefaultFloat(overrideType);
+        brakeDecel = DefaultFloat(overrideType);
+        looseAirMoveAccel = DefaultFloat(overrideType);
+        looseAirMoveBrakeDecel = DefaultFloat(overrideType);
+        preciseAirMoveAccel = DefaultFloat(overrideType);
+        preciseAirMoveBrakeDecel = DefaultFloat(overrideType);
+        airSpeedThreshold = DefaultFloat(overrideType);
+        airMoveMaxSpeed = DefaultFloat(overrideType);
+        jumpSpeed = DefaultFloat(overrideType);
+        jumpRotationFactor = DefaultFloat(overrideType);
+        jumpCancelSpeed = DefaultFloat(overrideType);
+        jumpCancelThreshold = DefaultFloat(overrideType);
+        invertRight = DefaultInt(overrideType);
+    }
+    
+    public override void AddBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
+
+        runAccel = Add(runAccel, v.runAccel);
+        runKickOffSpeed = Add(runKickOffSpeed, v.runKickOffSpeed);
+        autoRunKickOffSpeed = Add(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
+        autoRunKickOffSlopeThreshold = Add(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
+        runMaxSpeed = Add(runMaxSpeed, v.runMaxSpeed);
+        brakeDecel = Add(brakeDecel, v.brakeDecel);
+        looseAirMoveAccel = Add(looseAirMoveAccel, v.looseAirMoveAccel);
+        looseAirMoveBrakeDecel = Add(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
+        preciseAirMoveAccel = Add(preciseAirMoveAccel, v.preciseAirMoveAccel);
+        preciseAirMoveBrakeDecel = Add(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
+        airSpeedThreshold = Add(airSpeedThreshold, v.airSpeedThreshold);
+        airMoveMaxSpeed = Add(airMoveMaxSpeed, v.airMoveMaxSpeed);
+        jumpSpeed = Add(jumpSpeed, v.jumpSpeed);
+        jumpRotationFactor = Add(jumpRotationFactor, v.jumpRotationFactor);
+        jumpCancelSpeed = Add(jumpCancelSpeed, v.jumpCancelSpeed);
+        jumpCancelThreshold = Add(jumpCancelThreshold, v.jumpCancelThreshold);
+        invertRight = Add(invertRight, v.invertRight);
+    }
+
+    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
+
+        runAccel = Subtract(runAccel, v.runAccel);
+        runKickOffSpeed = Subtract(runKickOffSpeed, v.runKickOffSpeed);
+        autoRunKickOffSpeed = Subtract(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
+        autoRunKickOffSlopeThreshold = Subtract(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
+        runMaxSpeed = Subtract(runMaxSpeed, v.runMaxSpeed);
+        brakeDecel = Subtract(brakeDecel, v.brakeDecel);
+        looseAirMoveAccel = Subtract(looseAirMoveAccel, v.looseAirMoveAccel);
+        looseAirMoveBrakeDecel = Subtract(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
+        preciseAirMoveAccel = Subtract(preciseAirMoveAccel, v.preciseAirMoveAccel);
+        preciseAirMoveBrakeDecel = Subtract(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
+        airSpeedThreshold = Subtract(airSpeedThreshold, v.airSpeedThreshold);
+        airMoveMaxSpeed = Subtract(airMoveMaxSpeed, v.airMoveMaxSpeed);
+        jumpSpeed = Subtract(jumpSpeed, v.jumpSpeed);
+        jumpRotationFactor = Subtract(jumpRotationFactor, v.jumpRotationFactor);
+        jumpCancelSpeed = Subtract(jumpCancelSpeed, v.jumpCancelSpeed);
+        jumpCancelThreshold = Subtract(jumpCancelThreshold, v.jumpCancelThreshold);
+        invertRight = Subtract(invertRight, v.invertRight);
+    }
+
+    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
+
+        runAccel = Multiply(runAccel, v.runAccel);
+        runKickOffSpeed = Multiply(runKickOffSpeed, v.runKickOffSpeed);
+        autoRunKickOffSpeed = Multiply(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
+        autoRunKickOffSlopeThreshold = Multiply(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
+        runMaxSpeed = Multiply(runMaxSpeed, v.runMaxSpeed);
+        brakeDecel = Multiply(brakeDecel, v.brakeDecel);
+        looseAirMoveAccel = Multiply(looseAirMoveAccel, v.looseAirMoveAccel);
+        looseAirMoveBrakeDecel = Multiply(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
+        preciseAirMoveAccel = Multiply(preciseAirMoveAccel, v.preciseAirMoveAccel);
+        preciseAirMoveBrakeDecel = Multiply(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
+        airSpeedThreshold = Multiply(airSpeedThreshold, v.airSpeedThreshold);
+        airMoveMaxSpeed = Multiply(airMoveMaxSpeed, v.airMoveMaxSpeed);
+        jumpSpeed = Multiply(jumpSpeed, v.jumpSpeed);
+        jumpRotationFactor = Multiply(jumpRotationFactor, v.jumpRotationFactor);
+        jumpCancelSpeed = Multiply(jumpCancelSpeed, v.jumpCancelSpeed);
+        jumpCancelThreshold = Multiply(jumpCancelThreshold, v.jumpCancelThreshold);
+        invertRight = Multiply(invertRight, v.invertRight);
+    }
+
+    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
+
+        runAccel = Divide(runAccel, v.runAccel);
+        runKickOffSpeed = Divide(runKickOffSpeed, v.runKickOffSpeed);
+        autoRunKickOffSpeed = Divide(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
+        autoRunKickOffSlopeThreshold = Divide(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
+        runMaxSpeed = Divide(runMaxSpeed, v.runMaxSpeed);
+        brakeDecel = Divide(brakeDecel, v.brakeDecel);
+        looseAirMoveAccel = Divide(looseAirMoveAccel, v.looseAirMoveAccel);
+        looseAirMoveBrakeDecel = Divide(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
+        preciseAirMoveAccel = Divide(preciseAirMoveAccel, v.preciseAirMoveAccel);
+        preciseAirMoveBrakeDecel = Divide(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
+        airSpeedThreshold = Divide(airSpeedThreshold, v.airSpeedThreshold);
+        airMoveMaxSpeed = Divide(airMoveMaxSpeed, v.airMoveMaxSpeed);
+        jumpSpeed = Divide(jumpSpeed, v.jumpSpeed);
+        jumpRotationFactor = Divide(jumpRotationFactor, v.jumpRotationFactor);
+        jumpCancelSpeed = Divide(jumpCancelSpeed, v.jumpCancelSpeed);
+        jumpCancelThreshold = Divide(jumpCancelThreshold, v.jumpCancelThreshold);
+        invertRight = Divide(invertRight, v.invertRight);
+    }
+
+    public override void OrBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
+
+        runAccel = Or(runAccel, v.runAccel);
+        runKickOffSpeed = Or(runKickOffSpeed, v.runKickOffSpeed);
+        autoRunKickOffSpeed = Or(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
+        autoRunKickOffSlopeThreshold = Or(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
+        runMaxSpeed = Or(runMaxSpeed, v.runMaxSpeed);
+        brakeDecel = Or(brakeDecel, v.brakeDecel);
+        looseAirMoveAccel = Or(looseAirMoveAccel, v.looseAirMoveAccel);
+        looseAirMoveBrakeDecel = Or(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
+        preciseAirMoveAccel = Or(preciseAirMoveAccel, v.preciseAirMoveAccel);
+        preciseAirMoveBrakeDecel = Or(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
+        airSpeedThreshold = Or(airSpeedThreshold, v.airSpeedThreshold);
+        airMoveMaxSpeed = Or(airMoveMaxSpeed, v.airMoveMaxSpeed);
+        jumpSpeed = Or(jumpSpeed, v.jumpSpeed);
+        jumpRotationFactor = Or(jumpRotationFactor, v.jumpRotationFactor);
+        jumpCancelSpeed = Or(jumpCancelSpeed, v.jumpCancelSpeed);
+        jumpCancelThreshold = Or(jumpCancelThreshold, v.jumpCancelThreshold);
+        invertRight = Or(invertRight, v.invertRight);
+    }
+
+    public override void AndBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
+
+        runAccel = And(runAccel, v.runAccel);
+        runKickOffSpeed = And(runKickOffSpeed, v.runKickOffSpeed);
+        autoRunKickOffSpeed = And(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
+        autoRunKickOffSlopeThreshold = And(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
+        runMaxSpeed = And(runMaxSpeed, v.runMaxSpeed);
+        brakeDecel = And(brakeDecel, v.brakeDecel);
+        looseAirMoveAccel = And(looseAirMoveAccel, v.looseAirMoveAccel);
+        looseAirMoveBrakeDecel = And(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
+        preciseAirMoveAccel = And(preciseAirMoveAccel, v.preciseAirMoveAccel);
+        preciseAirMoveBrakeDecel = And(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
+        airSpeedThreshold = And(airSpeedThreshold, v.airSpeedThreshold);
+        airMoveMaxSpeed = And(airMoveMaxSpeed, v.airMoveMaxSpeed);
+        jumpSpeed = And(jumpSpeed, v.jumpSpeed);
+        jumpRotationFactor = And(jumpRotationFactor, v.jumpRotationFactor);
+        jumpCancelSpeed = And(jumpCancelSpeed, v.jumpCancelSpeed);
+        jumpCancelThreshold = And(jumpCancelThreshold, v.jumpCancelThreshold);
+        invertRight = And(invertRight, v.invertRight);
+    }
+}
 
 /// <summary>
 /// Handles application of internally intended actions focused on moving the player
 /// </summary>
-public class PlayerMovementAction : MonoBehaviour
+[System.Serializable]
+public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMovementActionValues>, IPlayerMovementActionCommunication
 {
-
     /// <summary>
     /// Struct that holds information on player input
     /// Ensures any value found on Monobehavior.Update() will be handled when appropriate for the motor without being overwritten by a zeroed value
     /// </summary>
-    private struct MovementInput 
+    private struct MovementActionInput : IPlayerMovementInput
     {
         // Properties encapsulate their respective variable to prevent overwriting by a zeroed value
 
@@ -42,22 +278,16 @@ public class PlayerMovementAction : MonoBehaviour
         private bool _doubleTapRun;
         public bool doubleTapRun { get { return _doubleTapRun; } set {  if (!_doubleTapRun) _doubleTapRun = value; } }
 
-        /// <summary>
-        /// The direction of double tapping, overwritten if opposite direction is pressed
-        /// </summary>
-        public float doubleTapRunDirection;
-        /// <summary>
-        /// Time allowed for double tap to be registered
-        /// </summary>
-        public float doubleTapTime;
-        /// <summary>
-        /// Are we waiting for a double tap in the same direction?
-        /// </summary>
-        public bool doubleTapWaiting;
-        /// <summary>
-        /// The coroutine that handles the double tap values while waiting for a double tap input
-        /// </summary>
-        private Coroutine doubleTapTimerCoroutine;
+        public void RegisterInput(PlayerController.PlayerActions controllerActions)
+    {
+        jump = controllerActions.Jump.triggered;
+
+        jumpCancel = controllerActions.JumpCancel.triggered;
+        
+        run = controllerActions.Run.ReadValue<float>();
+
+        doubleTapRun = controllerActions.RunKickOff.triggered;
+    }
 
         /// <summary>
         /// Reset to default values
@@ -69,110 +299,16 @@ public class PlayerMovementAction : MonoBehaviour
             _jumpCancel = false;
             _doubleTapRun = false;
         }
-
-        /// <summary>
-        /// Called on first run input to start waiting for double tap
-        /// </summary>
-        /// <param name="s">The script that will handle the coroutine</param>
-        public void SetDoubleTapDirection(PlayerMovementAction s)
-        {
-            // Set initial input
-            doubleTapRunDirection = run;
-            
-            // Start waiting for new double tap
-            if(doubleTapTimerCoroutine != null)
-                s.StopCoroutine(doubleTapTimerCoroutine);
-            doubleTapTimerCoroutine = s.StartCoroutine(s.DoubleTapWait());
-        }
-
-        /// <summary>
-        /// Sets the double tap input if double tap is registered
-        /// </summary>
-        /// <param name="s">The script that will handle the coroutine</param>
-        public void ActivateDoubleTap(PlayerMovementAction s)
-        {
-            // Trigger double tap input
-            doubleTapRun = true;
-
-            // Reset wait values
-            doubleTapWaiting = false;
-            doubleTapRunDirection = 0;
-
-            // Stop waiting
-            if(doubleTapTimerCoroutine != null)
-                s.StopCoroutine(doubleTapTimerCoroutine);
-        }
     }
+
+    #region Events
+    public event EventHandler facingDirectionChanged;
+    #endregion
 
     /// <summary>
     /// Holds and maintains input info
     /// </summary>
-    private MovementInput input;
-
-    /// <summary>
-    /// The acceleration of the player when actively running on the ground
-    /// </summary>
-    [SerializeField] private float runAccel;
-    /// <summary>
-    /// The instantaneous speed the player achieves when manually performing a run kick off
-    /// </summary>
-    [SerializeField] private float runKickOffSpeed;
-    /// <summary>
-    /// The instantaneous speed the player achieves when automatically performing a run kick off
-    /// </summary>
-    [SerializeField] private float autoRunKickOffSpeed;
-    /// <summary>
-    /// The min slope required for auto run kick off to be triggered
-    /// </summary>
-    [SerializeField] private float autoRunKickOffSlopeThreshold;
-    /// <summary>
-    /// The max speed a player can achieve by actively running on the ground alone
-    /// </summary>
-    [SerializeField] private float runMaxSpeed;
-    /// <summary>
-    /// The deceleration of the player when actively running on the ground against their velocity
-    /// </summary>
-    [SerializeField] private float brakeDecel;
-    /// <summary>
-    /// The acceleration of the player when actively moving horizontally in the air over a minimum speed
-    /// </summary>
-    [SerializeField] private float looseAirMoveAccel;
-    /// <summary>
-    /// The deceleration of the player when actively moving horizontally in the air over a minimum speed against their velocity
-    /// </summary>
-    [SerializeField] private float looseAirMoveBrakeDecel;
-    /// <summary>
-    /// The acceleration of the player when actively moving horizontally in the air under a minimum speed
-    /// </summary>
-    [SerializeField] private float preciseAirMoveAccel;
-    /// <summary>
-    /// The deceleration of the player when actively moving horizontally in the air over a minimum speed against their velocity
-    /// </summary>
-    [SerializeField] private float preciseAirMoveBrakeDecel;
-    /// <summary>
-    /// The threshold of horizontal air speed to determine which acceleration to use (precise if under, loose if over)
-    /// </summary>
-    [SerializeField] private float airSpeedThreshold;
-    /// <summary>
-    /// The max horizontal speed a player can achieve by actively moving in the air alone
-    /// </summary>
-    [SerializeField] private float airMoveMaxSpeed;
-    /// <summary>
-    /// The "up" (perpendicular to the current slope) speed at which the player jumps off the ground
-    /// </summary>
-    [SerializeField] private float jumpSpeed;
-    /// <summary>
-    /// The factor on the player's angular velocity when jumping with internalAngularVelocity stored;
-    /// </summary>
-    [SerializeField] private float jumpRotationFactor;
-    /// <summary>
-    /// The "up" (opposite to the direction of gravity) speed the the player is set at when jump canceling
-    /// </summary>
-    [SerializeField] private float jumpCancelSpeed;
-    /// <summary>
-    /// The maximum "up" (opposite to the direction of gravity) speed allowed for jump canceling to activate 
-    /// </summary>
-    [SerializeField] private float jumpCancelSpeedThreshold;
+    private MovementActionInput input;
 
     /// <summary>
     /// Is the player currently moving "up" due to an initiated jump?
@@ -184,107 +320,44 @@ public class PlayerMovementAction : MonoBehaviour
     /// </summary>
     private bool waitingToJumpCancel;
 
-    // Temporary, see SetFacingDirection()
-    #region Temporary
     private float facingDirection;
-    private GameObject root;
-    #endregion
 
     /// <summary>
-    /// Initialize script
+    /// Constructor
     /// </summary>
-    void Awake()
+    public PlayerMovementAction()
     {
         // Set input values
-        input = new MovementInput();
-        input.doubleTapTime = 0.5f;
-        
-        //Temporary, see SetFacingDirection()
-        #region Temporary
-        root = transform.parent.Find("Model Root").gameObject;
+        input = new MovementActionInput();
         facingDirection = +1;
-        #endregion
     }
 
-    /// <summary>
-    /// Set default values 
-    /// </summary>
-    void Reset()
+    public void SetCommunication(PlayerInternalCommunicator communicator)
     {
-        runAccel = 10;
-        runKickOffSpeed = 5;
-        autoRunKickOffSpeed= 2;
-        autoRunKickOffSlopeThreshold = 14;
-        runMaxSpeed = 18;
-        brakeDecel = 40;
-        looseAirMoveAccel = 14;
-        looseAirMoveBrakeDecel = 18;
-        preciseAirMoveAccel = 30;
-        preciseAirMoveBrakeDecel = 30;
-        airMoveMaxSpeed = 18;
-        airSpeedThreshold = 4;
-        jumpSpeed = 15;
-        jumpRotationFactor = 1.5f;
-        jumpCancelSpeed = 4;
-        jumpCancelSpeedThreshold = 15;
+        communicator.SetCommunication(this);
     }
 
-    /// <summary>
-    /// Gather input this Monobehavior.Update()
-    /// </summary>
-    public void RegisterInput()
+    protected override void SetDefaultBaseValues()
     {
-        input.jump = Input.GetKeyDown(KeyCode.Space);
-
-        input.jumpCancel = Input.GetKeyUp(KeyCode.Space);
-        
-        float run = 0;
-        if (Input.GetKey(KeyCode.A))
-            run += -1;
-        if (Input.GetKey(KeyCode.D))
-            run += +1;
-        input.run = run;
-
-        // Handle double tap input
-        
-        // If a run input was just pressed
-        if (run != 0 && (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.A)))
-        {
-            // If input was expected for a double tap
-            if(input.doubleTapWaiting && input.doubleTapRunDirection == input.run)
-                input.ActivateDoubleTap(this);
-            else
-            {
-                input.SetDoubleTapDirection(this);
-            }
-        }
+        // Set default values
+        baseValues.runAccel = 10;
+        baseValues.runKickOffSpeed = 5;
+        baseValues.autoRunKickOffSpeed = 2;
+        baseValues.autoRunKickOffSlopeThreshold = 14;
+        baseValues.runMaxSpeed = 18;
+        baseValues.brakeDecel = 40;
+        baseValues.looseAirMoveAccel = 14;
+        baseValues.looseAirMoveBrakeDecel = 18;
+        baseValues.preciseAirMoveAccel = 30;
+        baseValues.preciseAirMoveBrakeDecel = 30; 
+        baseValues.airMoveMaxSpeed = 18;
+        baseValues.airSpeedThreshold = 4;
+        baseValues.jumpSpeed = 15;
+        baseValues.jumpRotationFactor = 1.25f; 
+        baseValues.jumpCancelSpeed = 4;
+        baseValues.jumpCancelThreshold = 15;
+        baseValues.invertRight = 0;
     }
-    
-    /// <summary>
-    /// Coroutine that handles waiting for a double tap input 
-    /// </summary>
-    public IEnumerator DoubleTapWait()
-    {
-        // Start waiting
-        input.doubleTapWaiting = true;
-        yield return new WaitForSeconds(input.doubleTapTime);
-
-        // End waiting
-        input.doubleTapWaiting = false;
-        input.doubleTapRunDirection = 0;
-    }
-
-    // Temporary until better design is decided
-    #region Temporary
-    private void SetFacingDirection(float direction)
-    {
-        if (direction != facingDirection)
-        {
-            facingDirection = direction;
-            root.transform.Rotate(Vector3.up*180);
-        }
-    }
-    #endregion
 
     /// <summary>
     /// Adds appropriate run acceleration to the player 
@@ -302,14 +375,14 @@ public class PlayerMovementAction : MonoBehaviour
         // Calculate current square speed
         float sqrSpeed = currentVelocity.sqrMagnitude;
         // Direction attempting to run in
-        Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized;
+        Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized * (values.invertRight > 0 ? -1 : +1);
         
         float autoRunKickOffBuffer = 0.25f;
         // If manual run kick off was activated successfully
-        if (input.doubleTapRun && sqrSpeed < (runKickOffSpeed-autoRunKickOffBuffer) * (runKickOffSpeed-autoRunKickOffBuffer))
+        if (input.doubleTapRun && sqrSpeed < (values.runKickOffSpeed-autoRunKickOffBuffer) * (values.runKickOffSpeed-autoRunKickOffBuffer))
             RunKickOff(ref currentVelocity, runDirection, physicsNegations, false);
         // If automatic run kick off was triggered
-        else if (sqrSpeed == 0 && Vector3.Dot(runDirection, gravityDirection) < 0 && Vector3.Angle(motor.GetEffectiveGroundNormal(), -gravityDirection) >= autoRunKickOffSlopeThreshold)
+        else if (sqrSpeed == 0 && Vector3.Dot(runDirection, gravityDirection) < 0 && Vector3.Angle(motor.GetEffectiveGroundNormal(), -gravityDirection) >= values.autoRunKickOffSlopeThreshold)
             RunKickOff(ref currentVelocity, runDirection, physicsNegations, true);
         else
         {
@@ -317,17 +390,18 @@ public class PlayerMovementAction : MonoBehaviour
             if (Vector3.Dot(currentVelocity, runDirection) < 0)
             {
                 // Brake via deceleration
-                currentVelocity += runDirection * brakeDecel * deltaTime;
+                currentVelocity += runDirection * values.brakeDecel * deltaTime;
             }
             // If possible run along ground via acceleration
-            else if (sqrSpeed < runMaxSpeed * runMaxSpeed)
+            else if (sqrSpeed < values.runMaxSpeed * values.runMaxSpeed)
             {
-                currentVelocity += runDirection * runAccel * deltaTime;
-            
-                #region temporary
-                //Temporary, see SetFacingDirection()
-                SetFacingDirection(Mathf.Sign(input.run));
-                #endregion
+                currentVelocity += runDirection * values.runAccel * deltaTime;
+                float faceDir = Mathf.Sign(input.run) * (values.invertRight > 0 ? -1 : +1);
+                if (faceDir != facingDirection)
+                {
+                    facingDirection = faceDir;
+                    facingDirectionChanged?.Invoke(this, EventArgs.Empty);
+                }                
             }
         }
     }
@@ -345,7 +419,7 @@ public class PlayerMovementAction : MonoBehaviour
             physicsNegations.gravityNegated = true;
 
         // Determine whether to use auto or manula run kick off speed
-        float speed = (auto) ? autoRunKickOffSpeed : runKickOffSpeed;
+        float speed = (auto) ? values.autoRunKickOffSpeed : values.runKickOffSpeed;
         
         // Set velocity
         currentVelocity = speed * runDirection;
@@ -366,14 +440,14 @@ public class PlayerMovementAction : MonoBehaviour
         // The squared speed perpendicular to gravity 
         float flattenedSqrSpeed = flattenedVelocity.sqrMagnitude;
         // Direction attempting to move in
-        Vector3 airMoveDirection = Vector3.Cross(-gravityDirection, motor.PlanarConstraintAxis) * input.run;
+        Vector3 airMoveDirection = Vector3.Cross(-gravityDirection, motor.PlanarConstraintAxis) * input.run * (values.invertRight > 0 ? -1 : +1);
 
         // Ensure drag does not activate
         physicsNegations.airDragNegated = true;
 
         // Determine which air move values to use
-        float airMoveAccel = (flattenedSqrSpeed >= airSpeedThreshold * airSpeedThreshold) ? looseAirMoveAccel : preciseAirMoveAccel;
-        float airMoveBrakeAccel = (flattenedSqrSpeed >= airSpeedThreshold * airSpeedThreshold) ? looseAirMoveBrakeDecel : preciseAirMoveBrakeDecel;
+        float airMoveAccel = (flattenedSqrSpeed >= values.airSpeedThreshold * values.airSpeedThreshold) ? values.looseAirMoveAccel : values.preciseAirMoveAccel;
+        float airMoveBrakeAccel = (flattenedSqrSpeed >= values.airSpeedThreshold * values.airSpeedThreshold) ? values.looseAirMoveBrakeDecel : values.preciseAirMoveBrakeDecel;
 
         // If moving against horizontal velocity
         if (Vector3.Dot(flattenedVelocity, airMoveDirection) < 0)
@@ -382,7 +456,7 @@ public class PlayerMovementAction : MonoBehaviour
             currentVelocity += airMoveDirection * airMoveBrakeAccel * deltaTime;
         }
         // If possible move in air via acceleration
-        else if (flattenedSqrSpeed < airMoveMaxSpeed * airMoveMaxSpeed)
+        else if (flattenedSqrSpeed < values.airMoveMaxSpeed * values.airMoveMaxSpeed)
         {
             currentVelocity += airMoveDirection * airMoveAccel * deltaTime;
         }
@@ -396,7 +470,7 @@ public class PlayerMovementAction : MonoBehaviour
     private void Jump(ref Vector3 currentVelocity, KinematicCharacterMotor motor)
     {
         // Jump perpendicular to the current slope
-        currentVelocity += Vector3.ProjectOnPlane(jumpSpeed * motor.GetEffectiveGroundNormal(), motor.PlanarConstraintAxis);
+        currentVelocity += Vector3.ProjectOnPlane(values.jumpSpeed * motor.GetEffectiveGroundNormal(), motor.PlanarConstraintAxis);
 
         // Unground the motor
         motor.ForceUnground();
@@ -406,7 +480,7 @@ public class PlayerMovementAction : MonoBehaviour
 
     private void HandleJumpRotation(ref Vector3 internalAngularVelocity)
     {
-        internalAngularVelocity *= jumpRotationFactor;
+        internalAngularVelocity *= values.jumpRotationFactor;
     }
 
     /// <summary>
@@ -434,10 +508,10 @@ public class PlayerMovementAction : MonoBehaviour
         Vector3 velocityAlongGravity = Vector3.Project(currentVelocity, gravityDirection);
 
         // If jump cancel is valid
-        if (velocityAlongGravity.sqrMagnitude <= jumpCancelSpeedThreshold * jumpCancelSpeedThreshold)
+        if (velocityAlongGravity.sqrMagnitude <= values.jumpCancelThreshold * values.jumpCancelThreshold)
         {
             // Perform jump cancel
-            currentVelocity = (currentVelocity - velocityAlongGravity) + (-gravityDirection * jumpCancelSpeed);
+            currentVelocity = (currentVelocity - velocityAlongGravity) + (-gravityDirection * values.jumpCancelSpeed);
             waitingToJumpCancel = false;
         }
         else // Remember to check next motor update
@@ -447,13 +521,14 @@ public class PlayerMovementAction : MonoBehaviour
     /// <summary>
     /// Updates the reference rotation based on intended player actions
     /// </summary>
-    /// <param name="currentVelocity"> Reference to the player's velocity</param>
+    /// <param name="currentRotation"> Reference to the player's rotation</param>
+    /// <param name="currentAngularVelocity"> Reference to the player's angular velocity</param>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time</param>
-    public void UpdateRotation(ref Quaternion currentRotation, KinematicCharacterMotor motor, ref Vector3 internalAngularVelocity, float deltaTime)
+    public void UpdateRotation(ref Quaternion currentRotation, ref Vector3 currentAngularVelocity, KinematicCharacterMotor motor, float deltaTime)
     {
-        if(motor.WasGroundedLastUpdate && isJumping && internalAngularVelocity != Vector3.zero)
-            HandleJumpRotation(ref internalAngularVelocity);
+        if(motor.WasGroundedLastUpdate && isJumping && currentAngularVelocity != Vector3.zero)
+            HandleJumpRotation(ref currentAngularVelocity);
 
     }
 
@@ -493,6 +568,25 @@ public class PlayerMovementAction : MonoBehaviour
             else
                 AirMove(ref currentVelocity, motor, gravityDirection, ref physicsNegations, deltaTime);
         }
+        
+        #if UNITY_EDITOR
+        if (!baseValues.Equals(prevBase))
+            CalculateValues();
+
+        prevBase = baseValues;
+        #endif
+    }
+    
+    #if UNITY_EDITOR
+    PlayerMovementActionValues prevBase;
+    #endif
+
+    /// <summary>
+    /// Gather input this Monobehavior.Update()
+    /// </summary>
+    public void RegisterInput(PlayerController.PlayerActions controllerActions)
+    {
+        input.RegisterInput(controllerActions);
     }
 
     /// <summary>

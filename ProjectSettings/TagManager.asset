@@ -9,6 +9,7 @@ TagManager:
   - Super Crystal
   - Plane
   - Plane Breaker
+  - Movement Effector
   layers:
   - Default
   - TransparentFX
@@ -21,7 +22,7 @@ TagManager:
   - Surface
   - Plane
   - Player
-  - 
+  - Movement Effector
   - 
   - 
   - 

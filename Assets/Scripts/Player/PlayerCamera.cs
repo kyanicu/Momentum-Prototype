@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using KinematicCharacterController;
 
-public class PlayerCamera : MonoBehaviour
+public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
 {
 
-    private Player player;
+    private PlayerCharacter player;
     private KinematicCharacterMotor playerMotor;
-    private PlayerMovementPhysics playerPhysics;
+    private Vector3 playerDown;
 
     [SerializeField]
     private float
@@ -29,7 +29,7 @@ public class PlayerCamera : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        SetPlayerToFollow(GameObject.FindGameObjectWithTag("Player").GetComponent<Player>());
+        SetPlayerToFollow(GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerCharacter>());
     }
 
     void Reset()
@@ -43,23 +43,34 @@ public class PlayerCamera : MonoBehaviour
         tiltScale = 0.5f;
         manualPanDistanceVertical = 4;
         manualPanDistanceHorizontal = 8;
-
     }
 
-    public void SetPlayerToFollow(Player p)
+    public void SetPlayerExternalCommunication(PlayerExternalCommunicator communicator)
+    {
+        communicator.SetPlayerExternalCommunication(this);
+    }
+
+    public void Foo()
+    {
+        
+    }
+
+    public void SetPlayerToFollow(PlayerCharacter p)
     {
         player = p;
         playerMotor = player.GetComponent<KinematicCharacterMotor>();
-        playerPhysics = player.GetComponentInChildren<PlayerMovementPhysics>();
+        playerDown = -playerMotor.CharacterUp;
     }
 
     // Update is called once per frame
     // Need to fix to work with dynamic plane
     void Update()
     {
-        transform.position = player.transform.position + (-playerMotor.PlanarConstraintAxis * cameraDistance);
-        transform.forward = playerMotor.PlanarConstraintAxis;
-        transform.rotation = Quaternion.FromToRotation(transform.up, -playerPhysics.gravityDirection) * transform.rotation;
+        Vector3 smoothedForward = Vector3.Slerp(transform.forward, playerMotor.PlanarConstraintAxis, 1 - Mathf.Exp(-10 * Time.deltaTime));
+        smoothedForward = Vector3.ProjectOnPlane(smoothedForward, -playerDown).normalized;
+        transform.position = player.transform.position + (-smoothedForward * cameraDistance);
+        transform.forward = smoothedForward;
+        transform.rotation = Quaternion.FromToRotation(transform.up, -playerDown) * transform.rotation;
 
         bool zoom = playerMotor.BaseVelocity.magnitude >= zoomThreshold;
         bool pan = playerMotor.BaseVelocity.magnitude >= panThreshold;

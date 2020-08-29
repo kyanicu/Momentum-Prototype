@@ -1,11 +1,394 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using KinematicCharacterController;
 using PathCreation;
 
-public class PlayerMovement : MonoBehaviour, ICharacterController
+public interface IPlayerMovementInput
 {
+    void RegisterInput(PlayerController.PlayerActions controllerActions);
+    void Reset();
+}
+
+[System.Serializable]
+public abstract class PlayerMovementOverridableValues
+{
+
+    public abstract void SetDefaultValues(PlayerMovementOverrideType overrideType);
+
+    protected static float DefaultFloat(PlayerMovementOverrideType type)
+    {
+        switch (type)
+        {
+            case PlayerMovementOverrideType.Addition :
+                return 0;
+            case PlayerMovementOverrideType.Multiplier :
+                return 1;
+            case PlayerMovementOverrideType.Set :
+                return float.PositiveInfinity;
+            default :
+                return 0;
+        }
+    }
+    protected static Vector3 DefaultVector3(PlayerMovementOverrideType type)
+    {
+        switch (type)
+        {
+            case PlayerMovementOverrideType.Addition :
+                return Vector3.zero;
+            case PlayerMovementOverrideType.Multiplier :
+                return Vector3.one;
+            case PlayerMovementOverrideType.Set :
+                return Vector3.positiveInfinity;
+            default :
+                return Vector3.zero;
+        }
+    }
+
+    protected static int DefaultInt(PlayerMovementOverrideType type)
+    {
+        switch (type)
+        {
+            case PlayerMovementOverrideType.Addition :
+                return 0;
+            case PlayerMovementOverrideType.Multiplier :
+                return 1;
+            case PlayerMovementOverrideType.Set :
+                return int.MaxValue;
+            default :
+                return 0;
+        }
+    }
+
+    protected static float Add(float v1, float v2)
+    {
+        return v1 + v2;
+    }
+
+    protected static float Subtract(float v1, float v2)
+    {
+        return v1 - v2;
+    }
+    
+    protected static float Multiply(float v1, float v2)
+    {
+        return v1 * v2;
+    }
+    
+    protected static float Divide(float v1, float v2)
+    {
+        return v1 / v2;
+    }
+    
+    protected static float Or(float v1, float v2)
+    {
+        return (!float.IsInfinity(v2)) ? v2 : v1;
+    }
+    
+    protected static float And(float v1, float v2)
+    {
+        return (!float.IsInfinity(v2)) ? float.PositiveInfinity : v1;
+    }
+    
+    protected static int Add(int v1, int v2)
+    {
+        return v1 + v2;
+    }
+
+    protected static int Subtract(int v1, int v2)
+    {
+        return v1 - v2;
+    }
+    
+    protected static int Multiply(int v1, int v2)
+    {
+        return v1 * v2;
+    }
+    
+    protected static int Divide(int v1, int v2)
+    {
+        return v1 / v2;
+    }
+    
+    protected static int Or(int v1, int v2)
+    {
+        return (v2 != int.MaxValue) ? v2 : v1;
+    }
+    
+    protected static int And(int v1, int v2)
+    {
+        return (v2 != int.MaxValue) ? int.MaxValue : v1;
+    }
+
+    protected static Vector3 Add(Vector3 v1, Vector3 v2)
+    {
+        return v1 + v2;
+    }
+    
+    protected static Vector3 Subtract(Vector3 v1, Vector3 v2)
+    {
+        return v1 + v2;
+    }
+    
+    protected static Vector3 Multiply(Vector3 v1, Vector3 v2)
+    {
+        return Vector3.Scale(v1, v2);
+    }
+    
+    protected static Vector3 Divide(Vector3 v1, Vector3 v2)
+    {
+        return Vector3.Scale(v1, new Vector3(1/v2.x, 1/v2.y, 1/v2.z));
+    }
+    
+    protected static Vector3 Or(Vector3 v1, Vector3 v2)
+    {
+        return (!float.IsInfinity(v2.x)) ? v2 : v1;
+    }
+    
+    protected static Vector3 And(Vector3 v1, Vector3 v2)
+    {
+        return (!float.IsInfinity(v2.x)) ? Vector3.positiveInfinity : v1;;
+    }
+
+    public abstract void AddBy(PlayerMovementOverridableValues v);
+    public abstract void SubtractBy(PlayerMovementOverridableValues v);
+    public abstract void MultiplyBy(PlayerMovementOverridableValues v);
+    public abstract void DivideBy(PlayerMovementOverridableValues v);
+    public abstract void OrBy(PlayerMovementOverridableValues v);
+    public abstract void AndBy(PlayerMovementOverridableValues v);
+}
+
+[System.Serializable]
+public abstract class PlayerMovementOverridableAttribute<Values> where Values : PlayerMovementOverridableValues, new()
+{
+    /// <summary>
+    /// The default physics values for the player
+    /// </summary>
+    [SerializeField]
+    protected Values baseValues;
+
+    /// <summary>
+    /// The added physics values for the player
+    /// </summary>
+    private Values addedValues;
+
+    /// <summary>
+    /// The multiplied physics values for the player
+    /// </summary>
+    private Values multipliedValues;
+
+    /// <summary>
+    /// The multiplied physics values for the player
+    /// </summary>
+    private List<Values> setValues;
+
+    /// <summary>
+    /// The current physics values for the player, including overrides
+    /// </summary>
+    //[SerializeField]
+    protected Values values;
+
+    public PlayerMovementOverridableAttribute()
+    {
+        baseValues = new Values();
+        addedValues = new Values();
+        multipliedValues = new Values();
+        setValues = new List<Values>() { new Values() };
+        values = new Values();
+
+        baseValues.SetDefaultValues(PlayerMovementOverrideType.Addition);
+        addedValues.SetDefaultValues(PlayerMovementOverrideType.Addition);
+        multipliedValues.SetDefaultValues(PlayerMovementOverrideType.Multiplier);
+        setValues[0].SetDefaultValues(PlayerMovementOverrideType.Set);
+        values.SetDefaultValues(PlayerMovementOverrideType.Addition);
+
+        SetDefaultBaseValues();
+
+        CalculateValues();
+    }
+
+    protected abstract void SetDefaultBaseValues();
+
+    protected void CalculateValues()
+    {
+        Values set = new Values();
+        set.SetDefaultValues(PlayerMovementOverrideType.Set);
+        foreach (Values s in setValues)
+        {
+            set.OrBy(s);
+        }
+
+        values.SetDefaultValues(PlayerMovementOverrideType.Addition);
+        values.AddBy(baseValues);
+        values.OrBy(set);
+        values.MultiplyBy(multipliedValues);
+        values.AddBy(addedValues);
+    }
+
+    public void AddOverride(Values overrideValues, PlayerMovementOverrideType overrideType)
+    {
+        switch (overrideType) 
+        {
+            case (PlayerMovementOverrideType.Addition) :
+                addedValues.AddBy(overrideValues); 
+                break;
+            case (PlayerMovementOverrideType.Multiplier) :
+                multipliedValues.MultiplyBy(overrideValues); 
+                break;
+            case (PlayerMovementOverrideType.Set) :
+                setValues.Add(overrideValues); 
+                break;
+        }
+        CalculateValues();
+    }
+
+    public void RemoveOverride(Values overrideValues, PlayerMovementOverrideType overrideType)
+    {
+        switch (overrideType) 
+        {
+            case (PlayerMovementOverrideType.Addition) :
+               addedValues.SubtractBy(overrideValues); 
+                break;
+            case (PlayerMovementOverrideType.Multiplier) :
+                multipliedValues.DivideBy(overrideValues); 
+                break;
+            case (PlayerMovementOverrideType.Set) :
+                setValues.Remove(overrideValues); 
+                break;
+        }
+        CalculateValues();
+    }
+}
+
+public enum PlayerMovementOverrideType { Set, Addition, Multiplier }
+
+[System.Serializable]
+public class PlayerMovementValues : PlayerMovementOverridableValues
+{
+    [SerializeField]
+    public float attachThreshold;
+    [SerializeField]
+    public float pushOffGroundThreshold;
+    [SerializeField]
+    public float maxSlopeTrackTime;
+    [SerializeField]
+    public float ungroundRotationFactor;
+    [SerializeField]
+    public float ungroundRotationMinSpeed;
+    [SerializeField]
+    public float ungroundRotationMaxSpeed;
+
+    public int negateAction;
+    public int negatePhysics;
+
+    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
+    {
+        attachThreshold = DefaultFloat(overrideType);
+        pushOffGroundThreshold = DefaultFloat(overrideType);
+        maxSlopeTrackTime = DefaultFloat(overrideType);
+        ungroundRotationFactor = DefaultFloat(overrideType);
+        ungroundRotationMinSpeed = DefaultFloat(overrideType);
+        ungroundRotationMaxSpeed = DefaultFloat(overrideType);
+        negateAction = DefaultInt(overrideType);
+        negatePhysics = DefaultInt(overrideType);
+    }
+    
+    public override void AddBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementValues v = ov as PlayerMovementValues;
+
+
+        attachThreshold = Add(attachThreshold, v.attachThreshold);
+        pushOffGroundThreshold = Add(pushOffGroundThreshold, v.pushOffGroundThreshold);
+        maxSlopeTrackTime = Add(maxSlopeTrackTime, v.maxSlopeTrackTime);
+        ungroundRotationFactor = Add(ungroundRotationFactor, v.ungroundRotationFactor);
+        ungroundRotationMinSpeed = Add(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
+        ungroundRotationMaxSpeed = Add(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
+        negateAction = Add(negateAction, v.negateAction);
+        negatePhysics = Add(negatePhysics, v.negatePhysics);
+    }
+
+    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementValues v = ov as PlayerMovementValues;
+
+        attachThreshold = Subtract(attachThreshold, v.attachThreshold);
+        pushOffGroundThreshold = Subtract(pushOffGroundThreshold, v.pushOffGroundThreshold);
+        maxSlopeTrackTime = Subtract(maxSlopeTrackTime, v.maxSlopeTrackTime);
+        ungroundRotationFactor = Subtract(ungroundRotationFactor, v.ungroundRotationFactor);
+        ungroundRotationMinSpeed = Subtract(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
+        ungroundRotationMaxSpeed = Subtract(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
+        negateAction = Subtract(negateAction, v.negateAction);
+        negatePhysics = Subtract(negatePhysics, v.negatePhysics);
+    }
+
+    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementValues v = ov as PlayerMovementValues;
+
+        attachThreshold = Multiply(attachThreshold, v.attachThreshold);
+        pushOffGroundThreshold = Multiply(pushOffGroundThreshold, v.pushOffGroundThreshold);
+        maxSlopeTrackTime = Multiply(maxSlopeTrackTime, v.maxSlopeTrackTime);
+        ungroundRotationFactor = Multiply(ungroundRotationFactor, v.ungroundRotationFactor);
+        ungroundRotationMinSpeed = Multiply(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
+        ungroundRotationMaxSpeed = Multiply(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
+        negateAction = Multiply(negateAction, v.negateAction);
+        negatePhysics = Multiply(negatePhysics, v.negatePhysics);
+    }
+
+    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementValues v = ov as PlayerMovementValues;
+
+        attachThreshold = Divide(attachThreshold, v.attachThreshold);
+        pushOffGroundThreshold = Divide(pushOffGroundThreshold, v.pushOffGroundThreshold);
+        maxSlopeTrackTime = Divide(maxSlopeTrackTime, v.maxSlopeTrackTime);
+        ungroundRotationFactor = Divide(ungroundRotationFactor, v.ungroundRotationFactor);
+        ungroundRotationMinSpeed = Divide(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
+        ungroundRotationMaxSpeed = Divide(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
+        negateAction = Divide(negateAction, v.negateAction);
+        negatePhysics = Divide(negatePhysics, v.negatePhysics);
+    }
+
+    public override void OrBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementValues v = ov as PlayerMovementValues;
+
+        attachThreshold = Or(attachThreshold, v.attachThreshold);
+        pushOffGroundThreshold = Or(pushOffGroundThreshold, v.pushOffGroundThreshold);
+        maxSlopeTrackTime = Or(maxSlopeTrackTime, v.maxSlopeTrackTime);
+        ungroundRotationFactor = Or(ungroundRotationFactor, v.ungroundRotationFactor);
+        ungroundRotationMinSpeed = Or(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
+        ungroundRotationMaxSpeed = Or(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
+        negateAction = Or(negateAction, v.negateAction);
+        negatePhysics = Or(negatePhysics, v.negatePhysics);
+    }
+
+    public override void AndBy(PlayerMovementOverridableValues ov) 
+    {
+        PlayerMovementValues v = ov as PlayerMovementValues;
+
+        attachThreshold = And(attachThreshold, v.attachThreshold);
+        pushOffGroundThreshold = And(pushOffGroundThreshold, v.pushOffGroundThreshold);
+        maxSlopeTrackTime = And(maxSlopeTrackTime, v.maxSlopeTrackTime);
+        ungroundRotationFactor = And(ungroundRotationFactor, v.ungroundRotationFactor);
+        ungroundRotationMinSpeed = And(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
+        ungroundRotationMaxSpeed = And(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
+        negateAction = And(negateAction, v.negateAction);
+        negatePhysics = And(negatePhysics, v.negatePhysics);
+    }
+}
+
+[System.Serializable]
+public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication
+{
+
+    #region MovementEvents
+    public event EventHandler ungrounded;
+    public event EventHandler grounded;
+    #endregion
 
     private struct SlopeList
     {
@@ -82,23 +465,12 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         }
     }
 
-    private KinematicCharacterMotor motor;
+    [SerializeField]
     private PlayerMovementPhysics physics;
+    [SerializeField]
     private PlayerMovementAction action;
-    private PlayerMovementAbility ability;
-
     [SerializeField]
-    private float attachThreshold;
-    [SerializeField]
-    private float pushOffGroundThreshold;
-    [SerializeField]
-    private float maxSlopeTrackTime;
-    [SerializeField]
-    private float ungroundRotationFactor;
-    [SerializeField]
-    private float ungroundRotationMinSpeed;
-    [SerializeField]
-    private float ungroundRotationMaxSpeed;
+    private IPlayerMovementAbility ability;
 
     private SlopeList slopeList;
     private bool foundFloorToReorientTo;
@@ -118,64 +490,107 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     #endregion
 
     /// <summary>
-    /// Resets default Values
+    ///  Constructor
     /// </summary>
-    void Reset()
+    private PlayerMovement()
     {
-        attachThreshold = 8;
-        pushOffGroundThreshold = 1;
-        maxSlopeTrackTime = 0.5f;
-        ungroundRotationFactor = 1.25f;
-        ungroundRotationMinSpeed = 15;
-        ungroundRotationMaxSpeed = 1000;
+        physics = new PlayerMovementPhysics();
+        action = new PlayerMovementAction();
+    } 
+
+    public PlayerMovement(Character character) : this()
+    {
+        switch (character)
+        {
+            case(Character.Alesta) :
+                ability = new AlestaMovementAbility();
+                break;
+            case(Character.Nephui) :
+                ability = new NephuiMovementAbility();
+                break;
+            case(Character.Delethei) :
+                ability = new DeletheiMovementAbility();
+                break;
+            case(Character.Ilphine) :
+                ability = new IlphineMovementAbility();
+                break;
+            default :
+                ability = new AlestaMovementAbility();
+                break;
+        }
+        ability.addingMovementOverrides += AddAbilityOverride;
+        ability.removingMovementOverrides += RemoveAbilityOverride;
+    }
+    
+    protected override void SetDefaultBaseValues()
+    {
+        // Set default field values
+        baseValues.attachThreshold = 8;
+        baseValues.pushOffGroundThreshold = 1;
+        baseValues.maxSlopeTrackTime = 0.5f;
+        baseValues.ungroundRotationFactor = 1.25f;
+        baseValues.ungroundRotationMinSpeed = 15;
+        baseValues.ungroundRotationMaxSpeed = 1000;
+        baseValues.negateAction = 0;
+        baseValues.negatePhysics = 0;
     }
 
-    /// <summary>
-    ///  Initialize Script
-    /// </summary>
-    void Awake()
+    public void SetCommunication(PlayerInternalCommunicator communicator)
     {
-        motor = GetComponentInParent<KinematicCharacterMotor>();
-        action = GetComponent<PlayerMovementAction>();
-        physics = GetComponent<PlayerMovementPhysics>();
+        communicator.SetCommunication(this);
 
-        currentDynamicPlanes = new DynamicPlane[2];
-        slopeList = new SlopeList(5);
-    }
-
-    // Used to make sure script is set up properly
-    void OnValidate()
-    {
-        if (motor != null && motor.CharacterController == null)
-            motor.CharacterController = this;
+        action.SetCommunication(communicator);
+        ability.SetCommunication(communicator);
     }
 
     /// <summary>
     /// Used to initialize motor's reference to this script
     /// Also initializes state info for debugging
     /// </summary>
-    void Start()
+    public void InitializeForPlay(KinematicCharacterMotor motor)
     {
-        // Set motor's reference to this Character Controller Interface
-        motor.CharacterController = this;
-        SetCurrentPlane(new Plane(motor.CharacterForward, motor.Transform.position));
+        currentDynamicPlanes = new DynamicPlane[2];
+        slopeList = new SlopeList(5);
+
+        SetCurrentPlane(motor, new Plane(motor.CharacterForward, motor.Transform.position));
         motor.PlanarConstraintAxis = currentPlane.normal;
         
         // Debug
         #region debug
         startState = motor.GetState();
         startPlane = new Plane(motor.PlanarConstraintAxis, motor.Transform.position);
-        physics.SetDebugGravity(-motor.CharacterUp);
         #endregion
     }
 
     /// <summary>
     /// Handles Input when valid
     /// </summary>
-    public void HandleInput()
+    public void HandleInput(PlayerController.PlayerActions controllerActions)
     {
-        action.RegisterInput();
+        if(values.negateAction == 0)
+            action.RegisterInput(controllerActions);
+            ability.RegisterInput(controllerActions);
     }
+
+    public void HandleTriggerEnter(KinematicCharacterMotor motor, Collider col)
+    {
+        if (col.tag == "Plane")
+            EnterDynamicPlane(motor, col.GetComponent<DynamicPlane>());
+        else if (col.tag == "Plane Breaker")
+            EnterPlaneBreaker(motor, col.GetComponent<PlaneBreaker>());
+        else if (col.tag == "Movement Effector")
+            EnterMovementEffector(col.GetComponent<MovementEffector>());
+    } 
+
+    public void HandleTriggerExit(Collider col)
+    {
+        if (col.tag == "Plane")
+            ExitDynamicPlane(col);
+        else if (col.tag == "Plane Breaker")
+            ExitPlaneBreaker();
+        else if (col.tag == "Movement Effector")
+            ExitMovementEffector(col.GetComponent<MovementEffector>());
+    } 
 
 #region CharacterControllerInterface
 
@@ -183,10 +598,12 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// This is called when the motor wants to know what its rotation should be right now
     /// </summary>
     /// <param name="currentRotation"> Reference to the player's </param>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public void UpdateRotation(ref Quaternion currentRotation, float deltaTime)
+    public void UpdateRotation(ref Quaternion currentRotation, KinematicCharacterMotor motor, float deltaTime)
     {
-        
+        Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius);
+
         if (motor.CharacterForward != motor.PlanarConstraintAxis)
         {
             Vector3 smoothedForward;
@@ -196,7 +613,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
                     smoothedForward = Vector3.Slerp(motor.CharacterForward, motor.PlanarConstraintAxis, 1 - Mathf.Exp(-30 * deltaTime));
                 currentRotation = Quaternion.FromToRotation(motor.CharacterForward, smoothedForward) * currentRotation;
         }
-        
 
         bool reorient = false;
         if(foundFloorToReorientTo)
@@ -211,15 +627,10 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         {
             internalAngularVelocity = Vector3.zero;
 
-            if(motor.BaseVelocity.magnitude > attachThreshold)
+            if(motor.BaseVelocity.magnitude > values.attachThreshold)
             {
-                Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius);
-
                 Vector3 smoothedGroundNormal = Vector3.Slerp(motor.CharacterUp, motor.GetEffectiveGroundNormal(), 1 - Mathf.Exp(-slerpFactor * deltaTime));
                 currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
-
-                // Move the position to create a rotation around the bottom hemi center instead of around the pivot
-                motor.SetTransientPosition(initialCharacterBottomHemiCenter + (currentRotation * Vector3.down * motor.Capsule.radius));
             }
             else
             {
@@ -242,8 +653,11 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
             currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
         }
 
-        action.UpdateRotation(ref currentRotation, motor, ref internalAngularVelocity, deltaTime);
-        physics.UpdateRotation(ref currentRotation, motor, deltaTime);
+        if(values.negateAction == 0)
+            action.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
+            ability.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
+        if(values.negatePhysics == 0)
+            physics.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
 
         if(internalAngularVelocity != Vector3.zero)
         {
@@ -257,14 +671,21 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 
             currentRotation = Quaternion.Euler(internalAngularVelocity * deltaTime) * currentRotation;
         }
+
+        if(motor.IsGroundedThisUpdate)
+        // Move the position to create a rotation around the bottom hemi center instead of around the pivot
+            motor.SetTransientPosition(initialCharacterBottomHemiCenter + (currentRotation * Vector3.down * motor.Capsule.radius));
+
     }
     
     /// <summary>
-    /// This is called when the motor wants to know what its velocity should be right now
+    /// This is called hen the motor wants to know what its velocity should be right now
     /// </summary>
     /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="maxMove"> The max distance the player can move this update</param>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public void UpdateVelocity(ref Vector3 currentVelocity, ref float maxMove, float deltaTime)
+    public void UpdateVelocity(ref Vector3 currentVelocity, ref float maxMove, KinematicCharacterMotor motor, float deltaTime)
     {
         
         // Handle velocity projection if grounded
@@ -275,7 +696,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
             // The velocity off the ground
             Vector3 projection = dot * motor.GetEffectiveGroundNormal();
             // If external velocity off ground is strong enough
-            if(dot > 0  && projection.sqrMagnitude >= pushOffGroundThreshold * pushOffGroundThreshold)
+            if(dot > 0  && projection.sqrMagnitude >= values.pushOffGroundThreshold * values.pushOffGroundThreshold)
                 motor.ForceUnground();
             else
             {
@@ -296,66 +717,74 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         currentVelocity += externalVelocity;
         externalVelocity = Vector3.zero;
 
-        // Update velocity from components 
-        //ability.UpdateVelocity();
-        action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
-        physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
+        // Update velocity from components
+        if(values.negateAction == 0)
+            action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
+        ability.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
+        if(values.negatePhysics == 0)
+            physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
 
         currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
 
         // If active on PlaneBreaker
-        if (currentPlaneBreaker != null && motor.IsGroundedThisUpdate)
+        if (currentPlaneBreaker != null && motor.IsGroundedThisUpdate && motor.BaseVelocity.magnitude > values.attachThreshold)
         {
-            float dot = Vector3.Dot(currentVelocity, Vector3.Cross(motor.CharacterUp, currentPlane.normal));
+            Vector3 planeRight = Vector3.Cross(currentPlaneBreaker.transform.up, currentPlane.normal);
+            float dot = Vector3.Dot(currentVelocity, planeRight);
+            bool movingRight = dot > 0;            
+            /*
             Plane traversalPlane;
             Plane approachingPlaneTransition = currentPlaneBreaker.GetApproachingPlaneTransition(motor.Transform.position, currentVelocity.normalized, dot > 0, out traversalPlane);
-            if (traversalPlane.normal != currentPlane.normal || traversalPlane.distance != currentPlane.distance)
-                SetCurrentPlane(traversalPlane);
+            */    SetCurrentPlane(motor, currentPlaneBreaker.GetClosestPathPlane(motor.Transform.position, movingRight));
             
-            if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
-            {
-                float dist;
-                if (approachingPlaneTransition.Raycast(new Ray(motor.Transform.position, currentVelocity), out dist))
-                    maxMove = dist;
-            }
+            //if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
+            //{
+            //    float dist;
+                //if (approachingPlaneTransition.Raycast(new Ray(motor.Transform.position, currentVelocity), out dist))
+                    //maxMove = dist;
+            //}
         }
         // If on Dynamic Plane, handle movement  
         else if(currentDynamicPlanes[0] != null)
         {
             Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
             float dot = Vector3.Dot(currentVelocity, planeRight);
+            bool movingRight = dot > 0;
+            /*
             Plane traversalPlane;
-            Plane approachingPlaneTransition = currentDynamicPlanes[0].GetApproachingPlaneTransition(motor.Transform.position, currentVelocity.normalized, dot > 0, out traversalPlane);
-            if (traversalPlane.normal != currentPlane.normal || traversalPlane.distance != currentPlane.distance)
-                SetCurrentPlane(traversalPlane);
-            
+            Plane approachingPlaneTransition = currentDynamicPlanes[0].GetApproachingPlaneTransition(motor.Transform.position, movingRight, out traversalPlane);
+            */    SetCurrentPlane(motor, currentDynamicPlanes[0].GetClosestPathPlane(motor.Transform.position, movingRight));
+            /*
             if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
             {
                 float dist;
                 if (approachingPlaneTransition.Raycast(new Ray(motor.Transform.position, currentVelocity), out dist))
                     maxMove = dist;
             }
+            */
         }
     }
 
     /// <summary>
     /// This is called before the motor does anything
     /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public void BeforeCharacterUpdate(float deltaTime)
+    public void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
-
+        ability.BeforeCharacterUpdate(motor, deltaTime);
     }
 
     /// <summary>
     /// This is called after the motor has finished its ground probing, but before PhysicsMover/Velocity/etc.... handling
     /// Primarily used currently to handle the slope tracking for the ungrounding angular momentum mechanic
     /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public void PostGroundingUpdate(float deltaTime)
+    public void PostGroundingUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
         // kKep tracking time on current slope
-        slopeList.IncrementTimer(deltaTime, maxSlopeTrackTime);
+        slopeList.IncrementTimer(deltaTime, values.maxSlopeTrackTime);
         
         // Used to see if angular velocity should be set for angular momentum when ungrounding
         bool setAngularVelocity = false;
@@ -363,7 +792,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         if(motor.IsGroundedThisUpdate)
         {
             // If speed drops enough, detatch from slope
-            if(Vector3.ProjectOnPlane(motor.BaseVelocity, motor.GetEffectiveGroundNormal()).magnitude < attachThreshold && Vector3.Angle(-physics.gravityDirection, motor.GetEffectiveGroundNormal()) > motor.MaxStableSlopeAngle)
+            if(Vector3.ProjectOnPlane(motor.BaseVelocity, motor.GetEffectiveGroundNormal()).magnitude < values.attachThreshold && Vector3.Angle(-physics.gravityDirection, motor.GetEffectiveGroundNormal()) > motor.MaxStableSlopeAngle)
             {
                 motor.ForceUnground();
                 setAngularVelocity = true;
@@ -372,6 +801,13 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
             else if(motor.WasGroundedLastUpdate && motor.GetEffectiveGroundNormal() != motor.GetLastEffectiveGroundNormal())
                 // Start tracking new slope
                 slopeList.Add(motor.GetLastEffectiveGroundNormal());
+
+            // If just grounded
+            if(!motor.WasGroundedLastUpdate)
+            {
+                grounded?.Invoke(this, EventArgs.Empty);
+            }
+
         }
         // If just ungrounded
         else if(motor.WasGroundedLastUpdate)
@@ -379,58 +815,66 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
             // Log new slope that was just ungrounded from
             slopeList.Add(motor.GetLastEffectiveGroundNormal());
             setAngularVelocity = true;
+            ungrounded?.Invoke(this, EventArgs.Empty);
         }
 
         // If ungrounding angular momentum mechanic was triggered
         if(setAngularVelocity)
         {
             // Set angular velocity (if any) using slope tracking info and reset the tracker
-            internalAngularVelocity = slopeList.GetAngularVelocity(motor.BaseVelocity, motor.PlanarConstraintAxis, ungroundRotationFactor, ungroundRotationMinSpeed, ungroundRotationMaxSpeed);
+            internalAngularVelocity = slopeList.GetAngularVelocity(motor.BaseVelocity, motor.PlanarConstraintAxis, values.ungroundRotationFactor, values.ungroundRotationMinSpeed, values.ungroundRotationMaxSpeed);
             slopeList.Reset();
         }
+        ability.PostGroundingUpdate(motor, deltaTime);
     }
 
     /// <summary>
     /// This is called after the motor has finished everything in its update
     /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public void AfterCharacterUpdate(float deltaTime)
+    public void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
+        ability.AfterCharacterUpdate(motor, deltaTime);
+
         // Reset Ability and Action Input
-        //ability.ResetInput();
+        ability.ResetInput();
         action.ResetInput();
     }
 
     /// <summary>
     /// This is called after when the motor wants to know if the collider can be collided with (or if we just go through it)
     /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="coll"> The collider being checked </param>
-    public bool IsColliderValidForCollisions(Collider coll)
+    public bool IsColliderValidForCollisions(KinematicCharacterMotor motor, Collider coll)
     {
         // As of now all colliders are valid
-        return true;
+        return ability.IsColliderValidForCollisions(motor, coll);
     }
 
     /// <summary>
     /// This is called when the motor's ground probing detects a ground hit
     /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider">The ground collider </param>
     /// <param name="hitNormal"> The ground normal </param>
     /// <param name="hitPoint"> The ground point </param>
     /// <param name="hitStabilityReport"> The ground stability </param>
-    public void OnGroundHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
+    public void OnGroundHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {
-
+        ability.OnGroundHit(motor, hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
     }
 
     /// <summary>
     /// This is called when the motor's movement logic detects a hit
     /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider"> The hit collider </param>
     /// <param name="hitNormal"> The hit normal </param>
     /// <param name="hitPoint"> The hit point </param>
     /// <param name="hitStabilityReport"> The hit stability </param>
-    public void OnMovementHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
+    public void OnMovementHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {   
         // If floor it hit when mid air
         if (!motor.IsGroundedThisUpdate
@@ -439,11 +883,15 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         { 
             foundFloorToReorientTo = true;
         }
+
+        ability.OnMovementHit(motor, hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
+
     }
 
     /// <summary>
     /// This is called after every move hit, to give you an opportunity to modify the HitStabilityReport to your liking
     /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider"> The hit collider </param>
     /// <param name="hitNormal"> The hit normal </param>
     /// <param name="hitPoint"> The hit point </param>
@@ -451,34 +899,35 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// <param name="atCharacterPosition"> The character position on hit </param>
     /// <param name="atCharacterRotation"> The character rotation on hit </param>
     /// <param name="hitStabilityReport"> The hit stability </param>
-    public void ProcessHitStabilityReport(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport)
+    public void ProcessHitStabilityReport(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport)
     {
-        
+        ability.ProcessHitStabilityReport(motor, hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref hitStabilityReport);
     }
 
     /// <summary>
     /// This is called when the character detects discrete collisions (collisions that don't result from the motor's capsuleCasts when moving)
     /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider"> The detected collider </param>
-    public void OnDiscreteCollisionDetected(Collider hitCollider)
+    public void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider)
     {
-
+        ability.OnDiscreteCollisionDetected(motor, hitCollider);
     }
 
 #endregion
 
-
-
-    private void SetCurrentPlane(Plane plane)
+    private void SetCurrentPlane(KinematicCharacterMotor motor, Plane plane)
     {
+        if (plane.normal == Vector3.zero || (plane.normal == currentPlane.normal && plane.distance == currentPlane.distance))
+            return;
+
         currentPlane = plane;
         motor.BaseVelocity = Vector3.ProjectOnPlane(motor.BaseVelocity, currentPlane.normal).normalized * motor.BaseVelocity.magnitude; 
         motor.PlanarConstraintAxis = plane.normal;
         motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
     }
 
-
-    private void EnterDynamicPlane(DynamicPlane dynamicPlane)
+    private void EnterDynamicPlane(KinematicCharacterMotor motor, DynamicPlane dynamicPlane)
     {
         if (currentDynamicPlanes[0] != null && currentDynamicPlanes[0].prioritize)
         {
@@ -492,7 +941,12 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
             currentDynamicPlanes[0] = dynamicPlane;
 
             if (currentPlaneBreaker == null || !motor.IsGroundedThisUpdate)
-                SetCurrentPlane(dynamicPlane.GetClosestPlane(motor.Transform.position));
+            {
+                Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
+                float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
+                bool movingRight = dot > 0;
+                SetCurrentPlane(motor, dynamicPlane.GetClosestPathPlane(motor.Transform.position, movingRight));
+            }
         }
     }
 
@@ -509,12 +963,15 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         }
     }
 
-    private void EnterPlaneBreaker(PlaneBreaker planeBreaker)
+    private void EnterPlaneBreaker(KinematicCharacterMotor motor, PlaneBreaker planeBreaker)
     {
         currentPlaneBreaker = planeBreaker;
         brokenPlane = currentPlane;
+        Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
+        float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
+        bool movingRight = dot > 0;
         if(motor.IsGroundedThisUpdate)
-            SetCurrentPlane(planeBreaker.GetClosestPlane(motor.Transform.position));
+            SetCurrentPlane(motor, planeBreaker.GetClosestPathPlane(motor.Transform.position, movingRight));
         
     }
 
@@ -525,36 +982,91 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
             currentPlane = brokenPlane;
     }
 
-    public void HandleTriggerEnter(Collider col)
+    private void EnterMovementEffector(MovementEffector effector)
     {
-        if (col.tag == "Plane")
-            EnterDynamicPlane(col.GetComponent<DynamicPlane>());
-        else if (col.tag == "Plane Breaker")
-            EnterPlaneBreaker(col.GetComponent<PlaneBreaker>());
-    } 
+        for (int i = 0; i < effector.movementOverrides.Count; i++)
+        {
+            AddOverride(effector.movementOverrides[i].item1, effector.movementOverrides[i].item2);
+        }
 
-    public void HandleTriggerExit(Collider col)
+        for (int i = 0; i < effector.physicsOverrides.Count; i++)
+        {
+            physics.AddOverride(effector.physicsOverrides[i].item1, effector.physicsOverrides[i].item2);
+        }
+
+        for (int i = 0; i < effector.actionOverrides.Count; i++)
+        {
+            action.AddOverride(effector.actionOverrides[i].item1, effector.actionOverrides[i].item2);
+        }
+
+        ability.EnterMovementEffector(effector);
+    }
+
+    private void ExitMovementEffector(MovementEffector effector)
     {
-        if (col.tag == "Plane")
-            ExitDynamicPlane(col);
-        else if (col.tag == "Plane Breaker")
-            ExitPlaneBreaker();
-    } 
+        for (int i = 0; i < effector.movementOverrides.Count; i++)
+        {
+            RemoveOverride(effector.movementOverrides[i].item1, effector.movementOverrides[i].item2);
+        }
 
+        for (int i = 0; i < effector.physicsOverrides.Count; i++)
+        {
+            physics.RemoveOverride(effector.physicsOverrides[i].item1, effector.physicsOverrides[i].item2);
+        }
+
+        for (int i = 0; i < effector.actionOverrides.Count; i++)
+        {
+            action.RemoveOverride(effector.actionOverrides[i].item1, effector.actionOverrides[i].item2);
+        }
+
+        ability.ExitMovementEffector(effector);
+    }
+
+    private void AddAbilityOverride(object sender, AbilityOverrideArgs args)
+    {
+        for (int i = 0; i < args.movementOverrides.Count; i++)
+        {
+            AddOverride(args.movementOverrides[i].item1, args.movementOverrides[i].item2);
+        }
+
+        for (int i = 0; i < args.physicsOverrides.Count; i++)
+        {
+            physics.AddOverride(args.physicsOverrides[i].item1, args.physicsOverrides[i].item2);
+        }
+
+        for (int i = 0; i < args.actionOverrides.Count; i++)
+        {
+            action.AddOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
+        }
+    }
+
+    private void RemoveAbilityOverride(object sender, AbilityOverrideArgs args)
+    {
+        for (int i = 0; i < args.movementOverrides.Count; i++)
+        {
+            RemoveOverride(args.movementOverrides[i].item1, args.movementOverrides[i].item2);
+        }
+
+        for (int i = 0; i < args.physicsOverrides.Count; i++)
+        {
+            physics.RemoveOverride(args.physicsOverrides[i].item1, args.physicsOverrides[i].item2);
+        }
+
+        for (int i = 0; i < args.actionOverrides.Count; i++)
+        {
+            action.RemoveOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
+        }
+    }
+
+    #region debug        
     /// <summary>
     /// Currently used for debugging inputs
     /// </summary>
-    void Update()
+    public void ResetState(KinematicCharacterMotor motor)
     {
-        // Debug
-        #region debug
         // Resets the the motor state (used as a makeshift "level restart")
-        if (Input.GetKeyDown(KeyCode.Return))
-        {
-            motor.ApplyState(startState);
-            SetCurrentPlane(startPlane);
-        }
-
-        #endregion
+        motor.ApplyState(startState);
+        SetCurrentPlane(motor, startPlane);
     }
+    #endregion
 }
