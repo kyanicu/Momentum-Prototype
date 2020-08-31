@@ -142,6 +142,11 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
         baseValues.permeationVelocityThreshold = 10;
     }
 
+    protected override void ValidateBaseValues()
+    {
+        
+    }
+
     public override void SetCommunication(PlayerInternalCommunicator communicator)
     {
         (communicator as AlestaInternalCommunicator).SetCommunication(this);

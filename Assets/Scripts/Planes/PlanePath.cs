@@ -21,7 +21,7 @@ public abstract class PlanePath : MonoBehaviour
 
     protected bool forwardIsRight { get; private set; }
     protected float[] pointTimes { get; private set; }
-    protected Plane[] pathPlanes { get; private set; }
+    protected Plane[] pathPlanes { get; /*private*/ set; }
     /*
     private Plane[] pointForwardPlanes;
     private Plane[] pointBackwardPlanes;
@@ -103,7 +103,7 @@ public abstract class PlanePath : MonoBehaviour
         pathPlanes = new Plane[path.NumPoints-1];
         for (int i = 0; i < path.NumPoints-1; i++)
         {
-            Vector3 normal = path.GetNormal(i) + path.GetNormal(i+1) / 2;
+            Vector3 normal = (path.GetNormal(i) + path.GetNormal(i+1)) / 2;
             pathPlanes[i] = new Plane(normal, path.GetPoint(i));
         }
 

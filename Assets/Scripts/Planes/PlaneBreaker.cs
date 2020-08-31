@@ -39,7 +39,22 @@ public class PlaneBreaker : PlanePath
         for (int i = 0; i < path.NumPoints; i++)
         {
             pointUps[i] = Vector3.Cross(path.GetNormal(i), path.GetDirection(pointTimes[i] + ((forwardIsRight) ? +0.001f : -0.001f) * ((forwardIsRight) ? +1 : -1), EndOfPathInstruction.Stop));
+            /*RaycastHit hit;
+            if (Physics.Raycast(path.GetPointAtTime(pointTimes[i]), -pointUps[i], out hit, 1, LayerMask.GetMask("Surface"), QueryTriggerInteraction.Ignore))
+            {
+                pointUps[i] = hit.normal;
+                Debug.DrawRay(path.GetPointAtTime(pointTimes[i]), -pointUps[i], Color.red);
+                Debug.DrawRay(hit.point, hit.normal, Color.black, 5);
+            }*/
         }
+
+        /*pathPlanes = new Plane[path.NumPoints-1];
+        for (int i = 0; i < path.NumPoints-1; i++)
+        {
+            Vector3 normal = (Vector3.ProjectOnPlane(path.GetNormal(i), pointUps[i]).normalized + Vector3.ProjectOnPlane(path.GetNormal(i+1), pointUps[i+1])) / 2;
+
+            pathPlanes[i] = new Plane(normal, path.GetPoint(i));
+        }*/
     }
 
     private void SnapPointsToGround()
@@ -55,6 +70,7 @@ public class PlaneBreaker : PlanePath
             }
         }
         */
+        AdditionalSetPointInfo();
         snapPointsToGround = false;
     }
 }

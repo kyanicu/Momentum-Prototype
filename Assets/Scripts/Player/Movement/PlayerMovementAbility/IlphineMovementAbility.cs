@@ -90,6 +90,11 @@ public class IlphineMovementAbility : PlayerMovementAbility<IlphineMovementAbili
         baseValues.test = 1;
     }
 
+    protected override void ValidateBaseValues()
+    {
+        
+    }
+
     public override void SetCommunication(PlayerInternalCommunicator communicator)
     {
         (communicator as IlphineInternalCommunicator).SetCommunication(this);

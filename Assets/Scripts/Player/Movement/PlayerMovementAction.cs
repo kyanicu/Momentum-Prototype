@@ -359,6 +359,11 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         baseValues.invertRight = 0;
     }
 
+    protected override void ValidateBaseValues()
+    {
+        
+    }
+
     /// <summary>
     /// Adds appropriate run acceleration to the player 
     /// </summary>
@@ -568,18 +573,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
             else
                 AirMove(ref currentVelocity, motor, gravityDirection, ref physicsNegations, deltaTime);
         }
-        
-        #if UNITY_EDITOR
-        if (!baseValues.Equals(prevBase))
-            CalculateValues();
-
-        prevBase = baseValues;
-        #endif
     }
-    
-    #if UNITY_EDITOR
-    PlayerMovementActionValues prevBase;
-    #endif
 
     /// <summary>
     /// Gather input this Monobehavior.Update()

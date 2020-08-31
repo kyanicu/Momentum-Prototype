@@ -211,7 +211,7 @@ public abstract class PlayerMovementOverridableAttribute<Values> where Values : 
 
     protected abstract void SetDefaultBaseValues();
 
-    protected void CalculateValues()
+    public void CalculateValues()
     {
         Values set = new Values();
         set.SetDefaultValues(PlayerMovementOverrideType.Set);
@@ -260,6 +260,15 @@ public abstract class PlayerMovementOverridableAttribute<Values> where Values : 
         }
         CalculateValues();
     }
+
+    public void OnValidate()
+    {
+        ValidateBaseValues();
+        CalculateValues();
+    }
+
+    protected abstract void ValidateBaseValues();
+
 }
 
 public enum PlayerMovementOverrideType { Set, Addition, Multiplier }
@@ -382,12 +391,12 @@ public class PlayerMovementValues : PlayerMovementOverridableValues
 }
 
 [System.Serializable]
-public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication
+public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication where Ability : IPlayerMovementAbility, new()
 {
 
     #region MovementEvents
-    public event EventHandler ungrounded;
-    public event EventHandler grounded;
+    public event EventHandler<PlaneChangeEventArgs> planeChanged;
+    public event EventHandler<KinematicCharacterMotorState> stateUpdated;
     #endregion
 
     private struct SlopeList
@@ -470,7 +479,7 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
     [SerializeField]
     private PlayerMovementAction action;
     [SerializeField]
-    private IPlayerMovementAbility ability;
+    private Ability ability;
 
     private SlopeList slopeList;
     private bool foundFloorToReorientTo;
@@ -492,35 +501,15 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
     /// <summary>
     ///  Constructor
     /// </summary>
-    private PlayerMovement()
+    public PlayerMovement()
     {
         physics = new PlayerMovementPhysics();
         action = new PlayerMovementAction();
-    } 
+        ability = new Ability();
 
-    public PlayerMovement(Character character) : this()
-    {
-        switch (character)
-        {
-            case(Character.Alesta) :
-                ability = new AlestaMovementAbility();
-                break;
-            case(Character.Nephui) :
-                ability = new NephuiMovementAbility();
-                break;
-            case(Character.Delethei) :
-                ability = new DeletheiMovementAbility();
-                break;
-            case(Character.Ilphine) :
-                ability = new IlphineMovementAbility();
-                break;
-            default :
-                ability = new AlestaMovementAbility();
-                break;
-        }
         ability.addingMovementOverrides += AddAbilityOverride;
         ability.removingMovementOverrides += RemoveAbilityOverride;
-    }
+    } 
     
     protected override void SetDefaultBaseValues()
     {
@@ -533,6 +522,13 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
         baseValues.ungroundRotationMaxSpeed = 1000;
         baseValues.negateAction = 0;
         baseValues.negatePhysics = 0;
+    }
+
+    protected override void ValidateBaseValues()
+    {
+        action.OnValidate();
+        physics.OnValidate();
+        ability.OnValidate();
     }
 
     public void SetCommunication(PlayerInternalCommunicator communicator)
@@ -604,14 +600,17 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
     {
         Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius);
 
+        float slerpFactor = 30;
         if (motor.CharacterForward != motor.PlanarConstraintAxis)
         {
+            
             Vector3 smoothedForward;
                 if(Vector3.Dot(motor.CharacterForward, -motor.PlanarConstraintAxis) > 0.95f)
                     smoothedForward = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-10 * deltaTime));
                 else 
-                    smoothedForward = Vector3.Slerp(motor.CharacterForward, motor.PlanarConstraintAxis, 1 - Mathf.Exp(-30 * deltaTime));
-                currentRotation = Quaternion.FromToRotation(motor.CharacterForward, smoothedForward) * currentRotation;
+                    smoothedForward = Vector3.Slerp(motor.CharacterForward, motor.PlanarConstraintAxis, 1 - Mathf.Exp(-slerpFactor * deltaTime));
+            
+            currentRotation = /*Quaternion.FromToRotation(motor.CharacterForward, motor.PlanarConstraintAxis) * currentRotation;*/Quaternion.FromToRotation(motor.CharacterForward, smoothedForward) * currentRotation;
         }
 
         bool reorient = false;
@@ -622,25 +621,27 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
             reorient = true;
         }
         
-        float slerpFactor = 30;
         if(motor.IsGroundedThisUpdate)
         {
             internalAngularVelocity = Vector3.zero;
 
             if(motor.BaseVelocity.magnitude > values.attachThreshold)
             {
+                slerpFactor = 30;
                 Vector3 smoothedGroundNormal = Vector3.Slerp(motor.CharacterUp, motor.GetEffectiveGroundNormal(), 1 - Mathf.Exp(-slerpFactor * deltaTime));
-                currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
+                currentRotation = /*Quaternion.FromToRotation(motor.CharacterUp, motor.GetEffectiveGroundNormal()) * currentRotation;*/Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
             }
             else
             {
                 slerpFactor = 3;
                 Vector3 smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
+                
                 currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
             }
         }
         else if(internalAngularVelocity == Vector3.zero)
         {
+            
             if(!reorient)
                 slerpFactor = 3;
 
@@ -649,7 +650,6 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
                 smoothedUp = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
             else
                 smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
-            
             currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
         }
 
@@ -726,29 +726,40 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
 
         currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
 
+        
+    }
+
+    /// <summary>
+    /// This is called before the motor does anything
+    /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
+    /// <param name="deltaTime"> Motor update time </param>
+    public void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
+    {
+
         // If active on PlaneBreaker
         if (currentPlaneBreaker != null && motor.IsGroundedThisUpdate && motor.BaseVelocity.magnitude > values.attachThreshold)
         {
             Vector3 planeRight = Vector3.Cross(currentPlaneBreaker.transform.up, currentPlane.normal);
-            float dot = Vector3.Dot(currentVelocity, planeRight);
+            float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
             bool movingRight = dot > 0;            
             /*
             Plane traversalPlane;
             Plane approachingPlaneTransition = currentPlaneBreaker.GetApproachingPlaneTransition(motor.Transform.position, currentVelocity.normalized, dot > 0, out traversalPlane);
-            */    SetCurrentPlane(motor, currentPlaneBreaker.GetClosestPathPlane(motor.Transform.position, movingRight));
-            
+            */    SetCurrentPlane(motor, currentPlaneBreaker.GetClosestPathPlane(/*motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius)*/motor.Transform.position, movingRight), true);//SetCurrentPlane(motor, currentPlaneBreaker.GetClosestPathPlane(motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius)/*motor.Transform.position*/, movingRight), true);
             //if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
             //{
             //    float dist;
                 //if (approachingPlaneTransition.Raycast(new Ray(motor.Transform.position, currentVelocity), out dist))
                     //maxMove = dist;
             //}
+            //Debug.Break();
         }
         // If on Dynamic Plane, handle movement  
         else if(currentDynamicPlanes[0] != null)
         {
             Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
-            float dot = Vector3.Dot(currentVelocity, planeRight);
+            float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
             bool movingRight = dot > 0;
             /*
             Plane traversalPlane;
@@ -763,15 +774,10 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
             }
             */
         }
-    }
 
-    /// <summary>
-    /// This is called before the motor does anything
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="deltaTime"> Motor update time </param>
-    public void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
-    {
+        if (settingPlane.normal != Vector3.zero)
+            SetCurrentPlane(motor, settingPlane, settingPlaneBreaker, true);
+
         ability.BeforeCharacterUpdate(motor, deltaTime);
     }
 
@@ -805,7 +811,7 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
             // If just grounded
             if(!motor.WasGroundedLastUpdate)
             {
-                grounded?.Invoke(this, EventArgs.Empty);
+                //grounded?.Invoke(this, EventArgs.Empty);
             }
 
         }
@@ -815,7 +821,7 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
             // Log new slope that was just ungrounded from
             slopeList.Add(motor.GetLastEffectiveGroundNormal());
             setAngularVelocity = true;
-            ungrounded?.Invoke(this, EventArgs.Empty);
+            //ungrounded?.Invoke(this, EventArgs.Empty);
         }
 
         // If ungrounding angular momentum mechanic was triggered
@@ -836,10 +842,14 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
     public void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
         ability.AfterCharacterUpdate(motor, deltaTime);
+        stateUpdated?.Invoke(this, motor.GetState());
 
         // Reset Ability and Action Input
         ability.ResetInput();
         action.ResetInput();
+
+        //if(motor.WasGroundedLastUpdate != motor.IsGroundedThisUpdate)
+            //Debug.Break();
     }
 
     /// <summary>
@@ -876,8 +886,18 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
     /// <param name="hitStabilityReport"> The hit stability </param>
     public void OnMovementHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {   
+        if(motor.IsGroundedThisUpdate && hitStabilityReport.IsStable && motor.BaseVelocity.magnitude > values.attachThreshold)
+        {
+            Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius);
+            /*
+            slerpFactor = 300;
+            Vector3 smoothedGroundNormal = Vector3.Slerp(motor.CharacterUp, motor.GetEffectiveGroundNormal(), 1 - Mathf.Exp(-slerpFactor * deltaTime));
+            */
+            motor.SetRotation(Quaternion.FromToRotation(motor.CharacterUp, hitNormal) * motor.TransientRotation);//Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
+             motor.SetTransientPosition(initialCharacterBottomHemiCenter + (motor.TransientRotation * Vector3.down * motor.Capsule.radius));           
+        }
         // If floor it hit when mid air
-        if (!motor.IsGroundedThisUpdate
+        else if (!motor.IsGroundedThisUpdate
         && motor.StableGroundLayers.value == (motor.StableGroundLayers.value | (1 << hitCollider.gameObject.layer))
         && Vector3.Angle(-physics.gravityDirection, hitNormal) <= motor.MaxStableSlopeAngle)
         { 
@@ -885,7 +905,6 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
         }
 
         ability.OnMovementHit(motor, hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
-
     }
 
     /// <summary>
@@ -915,16 +934,29 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
     }
 
 #endregion
-
-    private void SetCurrentPlane(KinematicCharacterMotor motor, Plane plane)
+    Plane settingPlane = new Plane(Vector3.zero, Vector3.zero);
+    bool settingPlaneBreaker = false;
+    private void SetCurrentPlane(KinematicCharacterMotor motor, Plane plane, bool breaker = false, bool immediate = false)
     {
+        
         if (plane.normal == Vector3.zero || (plane.normal == currentPlane.normal && plane.distance == currentPlane.distance))
-            return;
-
-        currentPlane = plane;
-        motor.BaseVelocity = Vector3.ProjectOnPlane(motor.BaseVelocity, currentPlane.normal).normalized * motor.BaseVelocity.magnitude; 
-        motor.PlanarConstraintAxis = plane.normal;
-        motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
+            return; 
+    
+        if (immediate)
+        {
+            currentPlane = plane;
+            motor.BaseVelocity = Vector3.ProjectOnPlane(motor.BaseVelocity, currentPlane.normal).normalized * motor.BaseVelocity.magnitude; 
+            motor.PlanarConstraintAxis = plane.normal;
+            motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
+            planeChanged?.Invoke(this, new PlaneChangeEventArgs(plane.normal, breaker));
+            settingPlane = new Plane(Vector3.zero, Vector3.zero);
+            settingPlaneBreaker = false;
+        }
+        else
+        {
+            settingPlane = plane;
+            settingPlaneBreaker = breaker;
+        }
     }
 
     private void EnterDynamicPlane(KinematicCharacterMotor motor, DynamicPlane dynamicPlane)
@@ -971,7 +1003,7 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
         float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
         bool movingRight = dot > 0;
         if(motor.IsGroundedThisUpdate)
-            SetCurrentPlane(motor, planeBreaker.GetClosestPathPlane(motor.Transform.position, movingRight));
+            SetCurrentPlane(motor, planeBreaker.GetClosestPathPlane(motor.Transform.position, movingRight), true);
         
     }
 

@@ -6,75 +6,165 @@ using KinematicCharacterController;
 public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
 {
 
-    private PlayerCharacter player;
-    private KinematicCharacterMotor playerMotor;
-    private Vector3 playerDown;
 
     [SerializeField]
-    private float
-        cameraDistance,
-        zoomThreshold,
-        zoomScale,
-        panThreshold,
-        panScale,
-        tiltThreshold,
-        tiltScale,
-        manualPanDistanceVertical,
-        manualPanDistanceHorizontal;
-        
+    private float cameraDistance;
+
+    Vector3 targetPoint;
+    [SerializeField]
+    private float tiltThreshold;
+    [SerializeField]
+    private float tiltScale;
+    private Vector3 tiltDampVel = Vector3.zero;
+    [SerializeField]
+    private float tiltDampTime;
+    [SerializeField]
+    private float tiltDampMaxSpeed;
+
+    [SerializeField]
+    private float zoomThreshold;
+    [SerializeField]
+    private float zoomScale;
+    float zoomExtraDistance;
+    private float zoomDampVel = 0;
+    [SerializeField]
+    private float zoomDampTime;
+    [SerializeField]
+    private float zoomDampMaxSpeed;
+    
+    private Vector3 cameraWorldForward;
+    private Vector3 cameraWorldUp;
+    private Vector3 orientForwardDampVel = Vector3.zero;
+    private Vector3 orientUpDampVel = Vector3.zero;
+    [SerializeField]
+    private float orientDampTime;
+    [SerializeField]
+    private float orientDampMaxSpeed;
+
+    /*
+    [SerializeField]
+    private float panThreshold;
+    [SerializeField]
+    private float panScale;
+    [SerializeField]
+    private float manualPanDistanceVertical;
+    [SerializeField]
+    private float manualPanDistanceHorizontal;
+
     private Vector2 manualPanDirection;
     [HideInInspector]
     public bool manualPanLock;
+    */
+
+    ReadOnlyTransform playerTransform;
+    private KinematicCharacterMotorState playerMovementState = new KinematicCharacterMotorState();
+    private Vector3 playerPlaneNormal;
+    private Vector3 playerGravityDirection;
 
     // Start is called before the first frame update
+    void Awake()
+    {
+        cameraWorldForward = transform.forward;
+        playerPlaneNormal = transform.forward;
+        
+        cameraWorldUp = transform.up;
+        playerGravityDirection = -transform.up;
+    }
+
     void Start()
     {
-        SetPlayerToFollow(GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerCharacter>());
+        targetPoint = playerTransform.position;
     }
 
     void Reset()
     {
         cameraDistance = 15;
-        zoomThreshold = 30;
-        zoomScale = 0.3f;
+
+        /*
         panThreshold = 20;
         panScale = 0.2f;
-        tiltThreshold = 40;
-        tiltScale = 0.5f;
         manualPanDistanceVertical = 4;
         manualPanDistanceHorizontal = 8;
+        */
+
+        tiltThreshold = 20;
+        tiltScale = 0.5f;
+        tiltDampTime = 0.1f;
+        tiltDampMaxSpeed = 100;
+
+        zoomThreshold = 30;
+        zoomScale = 0.3f;
+        zoomDampTime = 0.1f;
+        zoomDampMaxSpeed = 100;
+
+        orientDampTime = 0.1f;
+        orientDampMaxSpeed = 100;
     }
 
-    public void SetPlayerExternalCommunication(PlayerExternalCommunicator communicator)
+    public void SetPlayerExternalCommunication(PlayerExternalCommunicator communicator, ReadOnlyTransform _playerTransform)
     {
         communicator.SetPlayerExternalCommunication(this);
+        playerTransform = _playerTransform;
     }
 
-    public void Foo()
+    public void HandlePlayerPlaneChanged(PlaneChangeEventArgs planeChangeInfo)
     {
-        
+        if(!planeChangeInfo.planeBreaker)
+            playerPlaneNormal = planeChangeInfo.planeNormal;
     }
 
-    public void SetPlayerToFollow(PlayerCharacter p)
+    public void HandlePlayerGravityDirectionChanged(Vector3 gravityDirection)
     {
-        player = p;
-        playerMotor = player.GetComponent<KinematicCharacterMotor>();
-        playerDown = -playerMotor.CharacterUp;
+        playerGravityDirection = -gravityDirection;
+    }
+
+    public void HandlePlayerMovementStateUpdated(KinematicCharacterMotorState state)
+    {
+        playerMovementState = state;
     }
 
     // Update is called once per frame
     // Need to fix to work with dynamic plane
     void Update()
     {
-        Vector3 smoothedForward = Vector3.Slerp(transform.forward, playerMotor.PlanarConstraintAxis, 1 - Mathf.Exp(-10 * Time.deltaTime));
-        smoothedForward = Vector3.ProjectOnPlane(smoothedForward, -playerDown).normalized;
-        transform.position = player.transform.position + (-smoothedForward * cameraDistance);
-        transform.forward = smoothedForward;
-        transform.rotation = Quaternion.FromToRotation(transform.up, -playerDown) * transform.rotation;
+        if (cameraWorldForward != playerPlaneNormal)
+            cameraWorldForward = Vector3.SmoothDamp(cameraWorldForward, playerPlaneNormal, ref orientForwardDampVel, orientDampTime, orientDampMaxSpeed);
+        if (cameraWorldUp != -playerGravityDirection)
+            cameraWorldUp = Vector3.SmoothDamp(cameraWorldUp, playerGravityDirection, ref orientUpDampVel, orientDampTime, orientDampMaxSpeed);
 
-        bool zoom = playerMotor.BaseVelocity.magnitude >= zoomThreshold;
-        bool pan = playerMotor.BaseVelocity.magnitude >= panThreshold;
-        bool tilt = playerMotor.BaseVelocity.magnitude >= tiltThreshold;
+        transform.position = playerTransform.position - cameraWorldForward * cameraDistance;
+
+        if (playerMovementState.BaseVelocity.magnitude > tiltThreshold)
+            targetPoint = Vector3.SmoothDamp(targetPoint, playerTransform.position + (playerMovementState.BaseVelocity - playerMovementState.BaseVelocity.normalized * tiltThreshold) * tiltScale, ref tiltDampVel, tiltDampTime, tiltDampMaxSpeed);
+        else
+        {
+            targetPoint = Vector3.SmoothDamp(targetPoint, playerTransform.position, ref tiltDampVel, tiltDampTime/2, tiltDampMaxSpeed);    
+        }
+        transform.LookAt(targetPoint, cameraWorldUp);
+        transform.position = playerTransform.position - transform.forward * cameraDistance;
+
+        if (playerMovementState.BaseVelocity.magnitude > zoomThreshold)
+            zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, (playerMovementState.BaseVelocity.magnitude - zoomThreshold) * zoomScale, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
+        else
+            zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, 0, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
+        transform.position -= transform.forward * zoomExtraDistance;
+
+
+        //transform.RotateAround(playerTransform.position, -playerGravityDirection, playerMovementState.BaseVelocity.magnitude * tiltScale);
+        //targetPoint = playerTransform.position + playerMovementState.BaseVelocity * playerPositionPredictionTime;
+        //transform.LookAt(targetPoint, -playerGravityDirection);
+
+        /*
+        Vector3 smoothedForward = Vector3.Slerp(transform.forward, playerPlaneNormal, 1 - Mathf.Exp(-10 * Time.deltaTime));
+        smoothedForward = Vector3.ProjectOnPlane(smoothedForward, transform.up).normalized;
+        transform.position = playerTransform.position + (-smoothedForward * cameraDistance);
+        transform.forward = smoothedForward;
+        transform.rotation = Quaternion.FromToRotation(transform.up, transform.up) * transform.rotation;
+        */
+        /*
+        bool zoom = false;//playerMovementState.BaseVelocity.magnitude >= zoomThreshold;
+        bool pan = false;//playerMovementState.BaseVelocity.magnitude >= panThreshold;
+        bool tilt = playerMovementState.BaseVelocity.magnitude >= tiltThreshold;
 
         if (zoom || pan || tilt)
         {
@@ -83,8 +173,7 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
 
             if (zoom)
             {
-
-                addedZoomDistance = (playerMotor.BaseVelocity.magnitude - zoomThreshold) * zoomScale;
+                addedZoomDistance = (playerMovementState.BaseVelocity.magnitude - zoomThreshold) * zoomScale;
 
                 transform.position += (Vector3.back * addedZoomDistance);
             }
@@ -93,25 +182,29 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
             {
                 manualPanLock = false;
 
-                addedPanDistance = (playerMotor.BaseVelocity.magnitude - panThreshold) * panScale;
+                addedPanDistance = (playerMovementState.BaseVelocity.magnitude - panThreshold) * panScale;
 
-                transform.position += (playerMotor.BaseVelocity.normalized * addedPanDistance);
+                transform.position += (playerMovementState.BaseVelocity.normalized * addedPanDistance);
             }
 
             if (tilt)
             {
-                Vector3 center = player.transform.position;//transform.position + Vector3.forward * (cameraDistance + addedZoomDistance);
+                Vector3 center = playerTransform.position;//transform.position + Vector3.forward * (cameraDistance + addedZoomDistance);
 
-                float tiltRotation = (playerMotor.BaseVelocity.magnitude - tiltThreshold) * tiltScale;
+                float tiltRotation = (playerMovementState.BaseVelocity.magnitude - tiltThreshold) * tiltScale;
 
-                transform.RotateAround(center, Quaternion.Euler(playerMotor.PlanarConstraintAxis * 90) * playerMotor.BaseVelocity.normalized, tiltRotation);
-                
+                transform.RotateAround(playerTransform.position, , tiltRotation);
+
+                //transform.RotateAround(center, Quaternion.Euler(playerPlaneNormal * 90) * playerMovementState.BaseVelocity.normalized, tiltRotation);
             }
         }
+        */
 
+        /*
         if (manualPanDirection != Vector2.zero && !pan)
         {
             transform.position += new Vector3(manualPanDirection.x * manualPanDistanceHorizontal, manualPanDirection.y * manualPanDistanceVertical);
         }
+        */
     }
 }

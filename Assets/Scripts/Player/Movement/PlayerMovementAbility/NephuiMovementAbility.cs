@@ -89,6 +89,11 @@ public class NephuiMovementAbility : PlayerMovementAbility<NephuiMovementAbility
         baseValues.test = 3;
     }
 
+    protected override void ValidateBaseValues()
+    {
+        
+    }
+
     public override void SetCommunication(PlayerInternalCommunicator communicator)
     {
         (communicator as NephuiInternalCommunicator).SetCommunication(this);

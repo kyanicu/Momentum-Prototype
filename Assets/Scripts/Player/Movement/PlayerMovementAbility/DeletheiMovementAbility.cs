@@ -90,6 +90,11 @@ public class DeletheiMovementAbility : PlayerMovementAbility<DeletheiMovementAbi
         baseValues.test = 7;
     }
 
+    protected override void ValidateBaseValues()
+    {
+        
+    }
+
     public override void SetCommunication(PlayerInternalCommunicator communicator)
     {
         (communicator as DeletheiInternalCommunicator).SetCommunication(this);

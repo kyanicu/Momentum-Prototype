@@ -20,6 +20,9 @@ public class AbilityOverrideArgs : EventArgs
 
 public interface IPlayerMovementAbility : IPlayerCommunication
 {
+
+    void OnValidate();
+
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
     /// </summary>

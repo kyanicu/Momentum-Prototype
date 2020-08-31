@@ -4,17 +4,30 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using KinematicCharacterController;
 
-public enum Character { Alesta, Nephui, Delethei, Ilphine }
-
-public class PlayerCharacter : MonoBehaviour
+public class ReadOnlyTransform
 {
+    private Transform transform;
 
-    Character character;
+    public Vector3 position { get { return transform.position; } }
+    public Quaternion rotation { get { return transform.rotation; } }
+    public Vector3 localScale { get { return transform.localScale; } }
+    public Vector3 lossyScale { get { return transform.lossyScale; } }
+    public Matrix4x4 worldToLocalMatrix { get { return transform.worldToLocalMatrix; } }
+    public Matrix4x4 localToWorldMatrix { get { return transform.localToWorldMatrix; } }
+
+    public ReadOnlyTransform(Transform t)
+    {  
+        transform = t;
+    }
+}
+
+public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : IPlayerMovementAbility, new()
+{
 
     PlayerController playerController;
     
     [SerializeField]
-    private PlayerMovement movement;
+    private PlayerMovement<Ability> movement;
     [SerializeField]
     private new PlayerAnimation animation;
 
@@ -31,72 +44,36 @@ public class PlayerCharacter : MonoBehaviour
         playerController.Enable();
 
         motor = GetComponent<KinematicCharacterMotor>();
-        
-        SetupClass();
+
+        SetupCommunicators();
     }
 
     void Reset()
     {
-        SetupClass();
+        SetupAbstractClass();
     }
 
-    void SetupClass()
+    void OnValidate()
     {
-        switch (gameObject.name)
-        {
-            case("Alesta") :
-                character = Character.Alesta;
-                break;
-            case("Nephui") :
-                character = Character.Nephui;
-                break;
-            case("Delethei") :
-                character = Character.Delethei;
-                break;
-            case("Ilphine") :
-                character = Character.Ilphine;
-                break;
-            default :
-                character = Character.Alesta;
-                break;
-        }
-
-        movement = new PlayerMovement(character);
-        animation = new PlayerAnimation(transform.GetChild(0).gameObject);
-        SetupCommunicators();
+        movement.OnValidate();
     }
+
+    void SetupAbstractClass()
+    {
+        movement = new PlayerMovement<Ability>();
+        animation = new PlayerAnimation(transform.GetChild(0).gameObject);
+    }
+
+    protected abstract void SetupConcreteCommunicators(out PlayerInternalCommunicator internComm, out PlayerExternalCommunicator externComm);
 
     private void SetupCommunicators()
     {
-        switch (character)
-        {
-            case(Character.Alesta) :
-                internalCommunicator = new AlestaInternalCommunicator();
-                externalCommunicator = new AlestaExternalCommunicator();
-                break;
-            case(Character.Nephui) :
-                internalCommunicator = new NephuiInternalCommunicator();
-                externalCommunicator = new NephuiExternalCommunicator();
-                break;
-            case(Character.Delethei) :
-                internalCommunicator = new DeletheiInternalCommunicator();
-                externalCommunicator = new DeletheiExternalCommunicator();
-                break;
-            case(Character.Ilphine) :
-                internalCommunicator = new IlphineInternalCommunicator();
-                externalCommunicator = new IlphineExternalCommunicator();
-                break;
-            default :
-                internalCommunicator = new AlestaInternalCommunicator();
-                externalCommunicator = new AlestaExternalCommunicator();
-                break;
-        }
+        SetupConcreteCommunicators(out internalCommunicator, out externalCommunicator);
         movement.SetCommunication(internalCommunicator);
         animation.SetCommunication(internalCommunicator);
         externalCommunicator.SetCommunication(internalCommunicator);
         
-        Camera.main.transform.parent.GetComponent<PlayerCamera>().SetPlayerExternalCommunication(externalCommunicator);
-        
+        Camera.main.transform.parent.GetComponent<PlayerCamera>().SetPlayerExternalCommunication(externalCommunicator, new ReadOnlyTransform(transform));
     }
 
     void Start()
@@ -140,5 +117,7 @@ public class PlayerCharacter : MonoBehaviour
     {
         // Temporarily here, will be moved up to InputManager/PlayerInputController
         HandleInput(playerController.Player);
+
+        animation.FrameUpdate();
     }
 }

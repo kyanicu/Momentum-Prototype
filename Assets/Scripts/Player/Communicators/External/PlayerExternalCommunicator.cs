@@ -4,12 +4,14 @@ using UnityEngine;
 
 public interface IPlayerExternalCommunication
 {
-    void SetPlayerExternalCommunication(PlayerExternalCommunicator communicator);
+    void SetPlayerExternalCommunication(PlayerExternalCommunicator communicator, ReadOnlyTransform playerTransform);
 }
 
 public interface IPlayerCameraCommunication : IPlayerExternalCommunication
 {
-    void Foo();
+    void HandlePlayerPlaneChanged(PlaneChangeEventArgs planeChangeInfo);
+    void HandlePlayerMovementStateUpdated(KinematicCharacterController.KinematicCharacterMotorState state);
+    void HandlePlayerGravityDirectionChanged(Vector3 gravityDirection);
 }
 
 public abstract class PlayerExternalCommunicator : IPlayerExternalCommunicatorCommunication
@@ -27,9 +29,19 @@ public abstract class PlayerExternalCommunicator : IPlayerExternalCommunicatorCo
         camera = communication;
     }
 
-    public void HandlePlayerUngrounded()
+    public void HandlePlayerPlaneChanged(PlaneChangeEventArgs planeChangeInfo)
     {
-        camera.Foo();
+        camera.HandlePlayerPlaneChanged(planeChangeInfo);
+    }
+
+    public void HandleMovementStateUpdated(KinematicCharacterController.KinematicCharacterMotorState state)
+    {
+        camera.HandlePlayerMovementStateUpdated(state);
+    }
+
+    public void HandlePlayerGravityDirectionChanged(Vector3 gravityDirection)
+    {
+        camera.HandlePlayerGravityDirectionChanged(gravityDirection);
     }
 
 }

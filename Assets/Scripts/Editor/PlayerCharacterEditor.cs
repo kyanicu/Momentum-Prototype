@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 
+/*
 [CustomEditor(typeof(PlayerCharacter))]
 [CanEditMultipleObjects]
 public class PlayerCharacterEditor : Editor 
@@ -20,5 +21,5 @@ public class PlayerCharacterEditor : Editor
         EditorGUILayout.PropertyField(player);
         serializedObject.ApplyModifiedProperties();
     }
-*/
 }
+*/
