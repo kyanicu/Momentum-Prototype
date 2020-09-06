@@ -30,6 +30,8 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
     private PlayerMovement<Ability> movement;
     [SerializeField]
     private new PlayerAnimation animation;
+    [SerializeField]
+    private PlayerStatus status;
 
     private PlayerInternalCommunicator internalCommunicator;
     private PlayerExternalCommunicator externalCommunicator;
@@ -55,6 +57,15 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
 
     void OnValidate()
     {
+        if (movement == null)
+            movement = new PlayerMovement<Ability>();
+        
+        if (animation == null)
+            animation = new PlayerAnimation(transform.GetChild(0).gameObject);
+
+        if (status == null)
+            status = new PlayerStatus();
+
         movement.OnValidate();
     }
 
@@ -62,6 +73,7 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
     {
         movement = new PlayerMovement<Ability>();
         animation = new PlayerAnimation(transform.GetChild(0).gameObject);
+        status = new PlayerStatus();
     }
 
     protected abstract void SetupConcreteCommunicators(out PlayerInternalCommunicator internComm, out PlayerExternalCommunicator externComm);
@@ -105,6 +117,7 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
 
     void OnTriggerEnter(Collider col)
     {
+        status.HandleTriggerEnter(col);
         movement.HandleTriggerEnter(motor, col);
     }
     void OnTriggerExit(Collider col)

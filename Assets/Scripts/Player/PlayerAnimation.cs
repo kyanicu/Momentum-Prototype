@@ -28,7 +28,7 @@ public class PlayerAnimation : IPlayerAnimationCommunication
 
     public PlayerAnimation(GameObject _modelRoot)
     {
-
+        modelRoot = _modelRoot;
     }
 
     public void SetCommunication(PlayerInternalCommunicator communicator)

@@ -6,10 +6,10 @@ TagManager:
   tags:
   - Surface
   - Crystal
-  - Super Crystal
   - Plane
   - Plane Breaker
   - Movement Effector
+  - Teleporter
   layers:
   - Default
   - TransparentFX
@@ -23,9 +23,9 @@ TagManager:
   - Plane
   - Player
   - Movement Effector
-  - 
-  - 
-  - 
+  - Crystal
+  - Invisible Wall
+  - Teleporter
   - 
   - 
   - 
