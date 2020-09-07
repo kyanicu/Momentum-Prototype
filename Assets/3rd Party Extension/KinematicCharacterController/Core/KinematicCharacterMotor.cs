@@ -1327,7 +1327,20 @@ namespace KinematicCharacterController
         /// </summary>
         public Vector3 GetEffectiveGroundNormal()
         {
-            return Vector3.ProjectOnPlane(GroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
+            Vector3 effectiveGroundNormal = GroundingStatus.GroundNormal;
+            if (GroundingStatus.InnerGroundNormal != GroundingStatus.OuterGroundNormal && Vector3.Angle(GroundingStatus.InnerGroundNormal, GroundingStatus.OuterGroundNormal) > MaxStableSlopeAngle)
+            {
+                Vector3 groundPointToCharacter = TransientPosition - GroundingStatus.GroundPoint;
+                if (Vector3.Dot(BaseVelocity, groundPointToCharacter) >= 0f)
+                {
+                    effectiveGroundNormal = GroundingStatus.InnerGroundNormal;
+                }
+                else
+                {
+                    effectiveGroundNormal = GroundingStatus.OuterGroundNormal;
+                }
+            }
+            return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/GroundingStatus.OuterGroundNormal, PlanarConstraintAxis).normalized;
         }
 
         private Vector3 LastEffectiveGroundNormal = Vector3.zero;
@@ -1337,7 +1350,23 @@ namespace KinematicCharacterController
         /// </summary>
         public Vector3 GetLastEffectiveGroundNormal()
         {
-            return Vector3.ProjectOnPlane(LastGroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
+            Vector3 effectiveGroundNormal = LastGroundingStatus.GroundNormal;
+            if (LastGroundingStatus.InnerGroundNormal != LastGroundingStatus.OuterGroundNormal)
+            {
+                Vector3 groundPointToCharacter = TransientPosition - GroundingStatus.GroundPoint;
+                if (Vector3.Angle(LastGroundingStatus.InnerGroundNormal, LastGroundingStatus.OuterGroundNormal) <= MaxStableSlopeAngle && Vector3.Dot(BaseVelocity, groundPointToCharacter) < 0f)
+                //if (Vector3.Angle(LastGroundingStatus.InnerGroundNormal, LastGroundingStatus.OuterGroundNormal) <= MaxStableSlopeAngle)
+                {
+                    effectiveGroundNormal = LastGroundingStatus.InnerGroundNormal;
+                }
+                else
+                {
+                    effectiveGroundNormal = LastGroundingStatus.OuterGroundNormal;
+                }
+            }
+            return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/LastGroundingStatus.OuterGroundNormal, PlanarConstraintAxis).normalized;
+
+            //return Vector3.ProjectOnPlane(LastGroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
         }
 
         private void SetEffectiveGroundNormal(ref HitStabilityReport stabilityReport)
@@ -1395,7 +1424,7 @@ namespace KinematicCharacterController
         /// <summary>
         /// Moves the character's position by given movement while taking into account all physics simulation, step-handling and 
         /// velocity projection rules that affect the character motor
-        /// Self iserted maxMove
+        /// Self inserted maxMove
         /// </summary>
         /// <returns> Returns false if movement could not be solved until the end </returns>
         private bool InternalCharacterMove(ref Vector3 transientVelocity, float deltaTime, float maxMove = float.PositiveInfinity)

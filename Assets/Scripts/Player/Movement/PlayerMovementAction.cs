@@ -397,10 +397,12 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
                 // Brake via deceleration
                 currentVelocity += runDirection * values.brakeDecel * deltaTime;
             }
-            // If possible run along ground via acceleration
-            else if (sqrSpeed < values.runMaxSpeed * values.runMaxSpeed)
+            else
             {
-                currentVelocity += runDirection * values.runAccel * deltaTime;
+                // If possible run along ground via acceleration
+                if (sqrSpeed < values.runMaxSpeed * values.runMaxSpeed)
+                    currentVelocity += runDirection * values.runAccel * deltaTime;
+
                 float faceDir = Mathf.Sign(input.run) * (values.invertRight > 0 ? -1 : +1);
                 if (faceDir != facingDirection)
                 {
@@ -438,7 +440,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
     /// <param name="gravityDirection"> The direction of gravity </param>
     /// <param name="physicsOverride"> Determines overrides to player physics values </param>
     /// <param name="deltaTime"> Motor update time</param>
-    private void AirMove(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
+    private void AirMove(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, WallHits wallHits, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
     {
         // The velocity perpendicular to gravity 
         Vector3 flattenedVelocity = Vector3.ProjectOnPlane(currentVelocity, gravityDirection);
@@ -454,16 +456,38 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         float airMoveAccel = (flattenedSqrSpeed >= values.airSpeedThreshold * values.airSpeedThreshold) ? values.looseAirMoveAccel : values.preciseAirMoveAccel;
         float airMoveBrakeAccel = (flattenedSqrSpeed >= values.airSpeedThreshold * values.airSpeedThreshold) ? values.looseAirMoveBrakeDecel : values.preciseAirMoveBrakeDecel;
 
-        // If moving against horizontal velocity
-        if (Vector3.Dot(flattenedVelocity, airMoveDirection) < 0)
+        Vector3 intoWallNormal = Vector3.zero;
+        float intoWallDot = 0;
+        float dotChecking;
+        if (wallHits.hitCeiling != Vector3.zero && (dotChecking = Vector3.Dot(wallHits.hitCeiling, airMoveDirection)) < intoWallDot)
         {
-            // Brake via deceleration
-            currentVelocity += airMoveDirection * airMoveBrakeAccel * deltaTime;
+            intoWallNormal = wallHits.hitCeiling;
+            intoWallDot = dotChecking;
         }
-        // If possible move in air via acceleration
-        else if (flattenedSqrSpeed < values.airMoveMaxSpeed * values.airMoveMaxSpeed)
+        if(wallHits.hitRightWall != Vector3.zero && (dotChecking = Vector3.Dot(wallHits.hitRightWall, airMoveDirection)) < intoWallDot)
         {
-            currentVelocity += airMoveDirection * airMoveAccel * deltaTime;
+            intoWallNormal = wallHits.hitRightWall;
+            intoWallDot = dotChecking;
+        }
+        if(wallHits.hitLeftWall != Vector3.zero && (dotChecking = Vector3.Dot(wallHits.hitLeftWall, airMoveDirection)) < intoWallDot)
+        {
+            intoWallNormal = wallHits.hitLeftWall;
+            intoWallDot = dotChecking;
+        }
+        
+        if (intoWallDot == 0 || Vector3.Dot(intoWallNormal, gravityDirection) >= 0) 
+        {
+            // If moving against horizontal velocity
+            if (Vector3.Dot(flattenedVelocity, airMoveDirection) < 0)
+            {
+                // Brake via deceleration
+                currentVelocity += airMoveDirection * airMoveBrakeAccel * deltaTime;
+            }
+            // If possible move in air via acceleration
+            else if (flattenedSqrSpeed < values.airMoveMaxSpeed * values.airMoveMaxSpeed)
+            {
+                currentVelocity += airMoveDirection * airMoveAccel * deltaTime;
+            }
         }
     }
 
@@ -545,7 +569,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
     /// <param name="gravityDirection"> The direction of gravity </param>
     /// <param name="physicsOverride"> Determines overrides to player physics values </param>
     /// <param name="deltaTime"> Motor update time</param>
-    public void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
+    public void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, WallHits wallHits, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
     {
         // If the player is jumping
         if(isJumping && CheckIsStillJumping(ref currentVelocity, motor, gravityDirection))
@@ -571,7 +595,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
             if (motor.IsGroundedThisUpdate)
                 Run(ref currentVelocity, motor, gravityDirection, ref physicsNegations, deltaTime);
             else
-                AirMove(ref currentVelocity, motor, gravityDirection, ref physicsNegations, deltaTime);
+                AirMove(ref currentVelocity, motor, gravityDirection, wallHits, ref physicsNegations, deltaTime);
         }
     }
 

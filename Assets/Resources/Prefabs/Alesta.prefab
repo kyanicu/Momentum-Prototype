@@ -278,7 +278,7 @@ MonoBehaviour:
   CapsuleYOffset: 0
   CapsulePhysicsMaterial: {fileID: 0}
   GroundDetectionExtraDistance: 0
-  MaxStableSlopeAngle: 55
+  MaxStableSlopeAngle: 50
   StableGroundLayers:
     serializedVersion: 2
     m_Bits: 256
@@ -340,6 +340,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movement:
     baseValues:
+      maxSpeed: 200
       attachThreshold: 8
       pushOffGroundThreshold: 1
       maxSlopeTrackTime: 0.5
@@ -355,9 +356,9 @@ MonoBehaviour:
         staticFrictionVelThreshold: 0.5
         extraKineticFriction: 2
         extraKineticFrictionSpeedThreshold: 18
-        upsideDownExtraKineticFriction: 9
-        sidewaysExtraKineticFriction: 9
-        slopeConstantDown: 1.5
+        upsideDownExtraKineticFrictionFactor: 0.4
+        sidewaysExtraKineticFrictionFactor: 0.4
+        slopeConstantDown: 1.25
         slopeConstantUp: 0.75
         airDrag: 1
         extraAirDrag: 1
@@ -377,12 +378,12 @@ MonoBehaviour:
         brakeDecel: 40
         looseAirMoveAccel: 14
         looseAirMoveBrakeDecel: 18
-        preciseAirMoveAccel: 30
-        preciseAirMoveBrakeDecel: 30
+        preciseAirMoveAccel: 50
+        preciseAirMoveBrakeDecel: 70
         airSpeedThreshold: 4
         airMoveMaxSpeed: 18
-        jumpSpeed: 15
-        jumpRotationFactor: 1.25
+        jumpSpeed: 17
+        jumpRotationFactor: 2
         jumpCancelSpeed: 4
         jumpCancelThreshold: 15
         invertRight: 0
