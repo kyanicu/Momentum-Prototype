@@ -707,9 +707,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
             Vector3 newCharacterBottomHemiCenter = motor.TransientPosition + (currentRotation * motor.CharacterTransformToCapsuleBottomHemi);
             // Move the position to create a rotation around the bottom hemi center instead of around the pivot
             motor.SetTransientPosition((initialCharacterBottomHemiCenter - newCharacterBottomHemiCenter) + motor.TransientPosition);
-            Debug.DrawLine(initialCharacterBottomHemiCenter, newCharacterBottomHemiCenter, Color.green);
         }
-
     }
     
     /// <summary>
@@ -761,12 +759,6 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
         currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
         if (currentVelocity.sqrMagnitude > values.maxSpeed * values.maxSpeed)
             currentVelocity = currentVelocity.normalized * values.maxSpeed;
-
-        Debug.DrawRay(motor.GroundingStatus.GroundPoint, motor.GroundingStatus.InnerGroundNormal*5, Color.cyan);
-        Debug.DrawRay(motor.GroundingStatus.GroundPoint, motor.GroundingStatus.GroundNormal*5, Color.blue);
-        Debug.DrawRay(motor.GroundingStatus.GroundPoint, motor.GroundingStatus.OuterGroundNormal*5, Color.magenta);
-        
-        Debug.DrawRay(motor.GroundingStatus.GroundPoint, currentVelocity.normalized*5, Color.red);
 
         if (motor.IsGroundedThisUpdate)
         {
@@ -899,9 +891,6 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     /// <param name="deltaTime"> Motor update time </param>
     public void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
-        if (test)
-            Debug.Break();
-
         ability.AfterCharacterUpdate(motor, deltaTime);
         stateUpdated?.Invoke(this, motor.GetState());
 
@@ -912,7 +901,6 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
         //if(motor.WasGroundedLastUpdate != motor.IsGroundedThisUpdate)
             //Debug.Break();
     }
-    public bool test;
 
     /// <summary>
     /// This is called after when the motor wants to know if the collider can be collided with (or if we just go through it)
@@ -1001,8 +989,33 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     /// <param name="hitStabilityReport"> The hit stability </param>
     public void ProcessHitStabilityReport(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport)
     {
-        if (!hitStabilityReport.IsStable && Vector3.Angle(motor.GetEffectiveGroundNormal(), hitNormal) < currentMaxStableSlopeAngle)
+        if (motor.IsGroundedThisUpdate && !hitStabilityReport.IsStable && Vector3.Angle(motor.GetEffectiveGroundNormal(), hitNormal) < currentMaxStableSlopeAngle)
+        {
             hitStabilityReport.IsStable = true;
+        }
+
+        float dotEpsilon = 0.998f;//99998f;
+        float ledgeHitDot;
+        float groundHitDot;
+        if (hitStabilityReport.IsStable)//Vector3.Dot(hitStabilityReport.OuterNormal, hitNormal) < 1)
+        {
+            // Is ledge
+            if (hitStabilityReport.LedgeDetected || Vector3.Angle(hitStabilityReport.OuterNormal, hitStabilityReport.InnerNormal) > motor.MaxStableSlopeAngle)//(Vector3.Dot(hitStabilityReport.InnerNormal, hitNormal) == 1 || Vector3.Dot(hitStabilityReport.InnerNormal, hitStabilityReport.OuterNormal) == 1 || Vector3.Angle(hitStabilityReport.OuterNormal, hitStabilityReport.InnerNormal) > motor.MaxStableSlopeAngle)
+            {
+                hitStabilityReport.IsStable = false;
+            }
+            else if (hitStabilityReport.InnerNormal == hitStabilityReport.OuterNormal && (groundHitDot = Vector3.Dot(motor.GroundingStatus.GroundNormal, hitNormal)) < dotEpsilon && (ledgeHitDot = Vector3.Dot(hitStabilityReport.OuterNormal, hitNormal)) < dotEpsilon)
+            {
+                Debug.DrawRay(hitPoint, hitStabilityReport.OuterNormal*5, Color.magenta, 5);
+                Debug.DrawRay(hitPoint, hitStabilityReport.InnerNormal*4, Color.cyan, 5);
+                Debug.DrawRay(hitPoint, hitNormal*3, Color.blue, 5);
+                //Debug.Break();
+                Debug.LogWarning("Faulty Ledge Detection, setting to unstable to prevent snapping. Debug Rays drawn for 5 seconds. Likely caused by Mesh Collider issue. Try Replacing area with primitive/concave collider");
+                Debug.LogWarning("Dot between Ledge and Hit normals: " + ledgeHitDot);
+                Debug.LogWarning    ("Dot between Ground and Hit normals: " + groundHitDot);
+                hitStabilityReport.IsStable = false;
+            }
+        }
 
         ability.ProcessHitStabilityReport(motor, hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref hitStabilityReport);
     }

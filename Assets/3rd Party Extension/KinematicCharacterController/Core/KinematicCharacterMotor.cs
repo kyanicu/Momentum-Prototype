@@ -1327,6 +1327,7 @@ namespace KinematicCharacterController
         /// </summary>
         public Vector3 GetEffectiveGroundNormal()
         {
+            /*
             Vector3 effectiveGroundNormal = GroundingStatus.GroundNormal;
             if (GroundingStatus.InnerGroundNormal != GroundingStatus.OuterGroundNormal && Vector3.Angle(GroundingStatus.InnerGroundNormal, GroundingStatus.OuterGroundNormal) > MaxStableSlopeAngle)
             {
@@ -1340,7 +1341,8 @@ namespace KinematicCharacterController
                     effectiveGroundNormal = GroundingStatus.OuterGroundNormal;
                 }
             }
-            return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/GroundingStatus.OuterGroundNormal, PlanarConstraintAxis).normalized;
+            */
+            return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/GroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
         }
 
         private Vector3 LastEffectiveGroundNormal = Vector3.zero;
@@ -1350,6 +1352,7 @@ namespace KinematicCharacterController
         /// </summary>
         public Vector3 GetLastEffectiveGroundNormal()
         {
+            /*
             Vector3 effectiveGroundNormal = LastGroundingStatus.GroundNormal;
             if (LastGroundingStatus.InnerGroundNormal != LastGroundingStatus.OuterGroundNormal)
             {
@@ -1364,7 +1367,8 @@ namespace KinematicCharacterController
                     effectiveGroundNormal = LastGroundingStatus.OuterGroundNormal;
                 }
             }
-            return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/LastGroundingStatus.OuterGroundNormal, PlanarConstraintAxis).normalized;
+            */
+            return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/LastGroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
 
             //return Vector3.ProjectOnPlane(LastGroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
         }
