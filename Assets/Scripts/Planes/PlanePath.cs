@@ -27,6 +27,10 @@ public abstract class PlanePath : MonoBehaviour
     private Plane[] pointBackwardPlanes;
     */
 
+    [SerializeField]
+    private bool _prioritize;
+    public bool prioritize { get { return _prioritize; } private set { _prioritize = value; } }
+
     void Awake()
     {
         pathCreator = GetComponent<PathCreator>();

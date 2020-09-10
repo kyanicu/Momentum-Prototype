@@ -1345,6 +1345,10 @@ namespace KinematicCharacterController
             return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/GroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
         }
 
+        public bool GetIsGroundedThisUpdate() {
+            return GroundingStatus.IsStableOnGround && !MustUnground();
+        }
+        
         private Vector3 LastEffectiveGroundNormal = Vector3.zero;
         /// <summary>
         /// Returns what would generally be considered the Effective Ground Normal from the previous update

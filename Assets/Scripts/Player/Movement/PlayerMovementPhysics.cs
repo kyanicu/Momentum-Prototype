@@ -417,8 +417,21 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
     {
         Vector3 currentVelDir = currentVelocity.normalized;
 
-        // Apply sideways extra kinetic friction
-        currentVelocity -= currentVelocity.normalized * (values.sidewaysExtraKineticFrictionFactor * values.gravity.magnitude) * planePerpGravPercent * deltaTime;
+        if (planePerpGravPercent >= 0.90)
+        { 
+            // Apply upside-down extra kinetic friction as simple frction
+            currentVelocity -= currentVelDir * (values.sidewaysExtraKineticFrictionFactor * values.gravity.magnitude) * planePerpGravPercent * deltaTime;
+        }
+        else {
+
+        // Get appropriate gravity factor for either up hill or down hill slope
+        float slopeConstant = 
+            (Vector3.Dot(currentVelocity, gravityDirection) >= 0)
+            ? values.slopeConstantDown : -values.slopeConstantUp;
+        
+        // Apply grounded gravity
+        currentVelocity += currentVelDir * values.gravity.magnitude * values.sidewaysExtraKineticFrictionFactor * slopeConstant * deltaTime * planePerpGravPercent;
+        }
     }
 
     /// <summary>

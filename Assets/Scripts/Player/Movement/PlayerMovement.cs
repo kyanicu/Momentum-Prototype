@@ -492,6 +492,16 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     }
 
     [SerializeField]
+    float extraGroundProbingDistanceFactor = 0.012f;
+    [SerializeField]
+    float extraMaxStableSlopeFactor = 0.005f;
+    float currentMaxStableSlopeAngle;
+
+    [SerializeField]
+    float groundingActionBuffer = 0.1f;
+    Vector3 bufferedUngroundedNormal = Vector3.zero;
+
+    [SerializeField]
     private PlayerMovementPhysics physics;
     [SerializeField]
     private PlayerMovementAction action;
@@ -503,20 +513,13 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
 
     WallHits wallHits = new WallHits();
 
-    [SerializeField]
-    float extraGroundProbingDistanceFactor = 0.012f;
-    [SerializeField]
-    float extraMaxStableSlopeFactor = 0.005f;
-
-    float currentMaxStableSlopeAngle;
-
     private Vector3 internalAngularVelocity = Vector3.zero;
     public Vector3 externalVelocity { private get; set; }
 
     private Plane currentPlane;
     private Plane brokenPlane;
     private DynamicPlane[] currentDynamicPlanes;
-    private PlaneBreaker currentPlaneBreaker;
+    private PlaneBreaker[] currentPlaneBreakers;
 
     // Debug
     #region debug
@@ -573,6 +576,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     public void InitializeForPlay(KinematicCharacterMotor motor)
     {
         currentDynamicPlanes = new DynamicPlane[2];
+        currentPlaneBreakers = new PlaneBreaker[2];
         slopeList = new SlopeList(5);
 
         SetCurrentPlane(motor, new Plane(motor.CharacterForward, motor.Transform.position));
@@ -595,24 +599,46 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
             ability.RegisterInput(controllerActions);
     }
 
+    /// <summary>
+    /// Appropriately handle entering a trigger
+    /// </summary>
+    /// <param name="motor"> The Character's Kinematic Motor</param>
+    /// <param name="col"> The trigger collider</param>
     public void HandleTriggerEnter(KinematicCharacterMotor motor, Collider col)
     {
-        if (col.tag == "Plane")
-            EnterDynamicPlane(motor, col.GetComponent<DynamicPlane>());
-        else if (col.tag == "Plane Breaker")
-            EnterPlaneBreaker(motor, col.GetComponent<PlaneBreaker>());
-        else if (col.tag == "Movement Effector")
-            EnterMovementEffector(col.GetComponent<MovementEffector>());
+        switch (col.tag)
+        {
+            case ("Plane") :
+                EnterDynamicPlane(motor, col.GetComponent<DynamicPlane>());
+                break;
+            case ("Plane Breaker") :
+                EnterPlaneBreaker(motor, col.GetComponent<PlaneBreaker>());
+                break;
+            case ("Movement Effector") :
+                EnterMovementEffector(col.GetComponent<MovementEffector>());
+                break;
+        }
     } 
 
+    /// <summary>
+    /// Appropriately handle Exiting a trigger
+    /// </summary>
+    /// <param name="motor"> The Character's Kinematic Motor</param>
+    /// <param name="col"> The trigger collider</param>
     public void HandleTriggerExit(Collider col)
     {
-        if (col.tag == "Plane")
-            ExitDynamicPlane(col);
-        else if (col.tag == "Plane Breaker")
-            ExitPlaneBreaker();
-        else if (col.tag == "Movement Effector")
-            ExitMovementEffector(col.GetComponent<MovementEffector>());
+        switch (col.tag)
+        {
+            case ("Plane") :
+                ExitDynamicPlane(col);
+                break;
+            case ("Plane Breaker") :
+                ExitPlaneBreaker(col);
+                break;
+            case ("Movement Effector") :
+                ExitMovementEffector(col.GetComponent<MovementEffector>());
+                break;
+        }
     } 
 
 #region CharacterControllerInterface
@@ -751,7 +777,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
 
         // Update velocity from components
         if(values.negateAction == 0)
-            action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, wallHits, ref physics.negations, deltaTime);
+            action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, wallHits, ref physics.negations, groundingActionBuffer, bufferedUngroundedNormal, deltaTime);
         ability.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
         if(values.negatePhysics == 0)
             physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
@@ -788,15 +814,15 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     {
 
         // If active on PlaneBreaker
-        if (currentPlaneBreaker != null && motor.IsGroundedThisUpdate && motor.BaseVelocity.magnitude >= values.attachThreshold)
+        if (currentPlaneBreakers[0] != null && motor.IsGroundedThisUpdate && motor.BaseVelocity.magnitude >= values.attachThreshold)
         {
-            Vector3 planeRight = Vector3.Cross(currentPlaneBreaker.transform.up, currentPlane.normal);
+            Vector3 planeRight = Vector3.Cross(currentPlaneBreakers[0].transform.up, currentPlane.normal);
             float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
             bool movingRight = dot > 0;            
             /*
             Plane traversalPlane;
             Plane approachingPlaneTransition = currentPlaneBreaker.GetApproachingPlaneTransition(motor.Transform.position, currentVelocity.normalized, dot > 0, out traversalPlane);
-            */    SetCurrentPlane(motor, currentPlaneBreaker.GetClosestPathPlane(/*motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius)*/motor.Transform.position, movingRight), true);//SetCurrentPlane(motor, currentPlaneBreaker.GetClosestPathPlane(motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius)/*motor.Transform.position*/, movingRight), true);
+            */    SetCurrentPlane(motor, currentPlaneBreakers[0].GetClosestPathPlane(/*motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius)*/motor.Transform.position, movingRight), true);//SetCurrentPlane(motor, currentPlaneBreaker.GetClosestPathPlane(motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius)/*motor.Transform.position*/, movingRight), true);
             //if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
             //{
             //    float dist;
@@ -872,6 +898,8 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
             slopeList.Add(motor.GetLastEffectiveGroundNormal());
             setAngularVelocity = true;
             //ungrounded?.Invoke(this, EventArgs.Empty);
+            if(!motor.MustUnground())
+                StartUngroundedBuffering(motor.GetLastEffectiveGroundNormal());
         }
 
         // If ungrounding angular momentum mechanic was triggered
@@ -1004,7 +1032,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
             {
                 hitStabilityReport.IsStable = false;
             }
-            else if (hitStabilityReport.InnerNormal == hitStabilityReport.OuterNormal && (groundHitDot = Vector3.Dot(motor.GroundingStatus.GroundNormal, hitNormal)) < dotEpsilon && (ledgeHitDot = Vector3.Dot(hitStabilityReport.OuterNormal, hitNormal)) < dotEpsilon)
+            else if (hitStabilityReport.InnerNormal == hitStabilityReport.OuterNormal && (groundHitDot = Vector3.Dot(motor.GroundingStatus.GroundNormal, hitNormal)) < dotEpsilon && (ledgeHitDot = Vector3.Dot(hitStabilityReport.OuterNormal, hitNormal)) < dotEpsilon && ledgeHitDot != groundHitDot)
             {
                 Debug.DrawRay(hitPoint, hitStabilityReport.OuterNormal*5, Color.magenta, 5);
                 Debug.DrawRay(hitPoint, hitStabilityReport.InnerNormal*4, Color.cyan, 5);
@@ -1031,6 +1059,18 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     }
 
 #endregion
+
+    private void StartUngroundedBuffering(Vector3 ungroundedNormal)
+    {
+        bufferedUngroundedNormal = ungroundedNormal;
+        GameManager.Instance.TimerViaRealTime(groundingActionBuffer, EndUngroundedBuffering);
+    }
+
+    private void EndUngroundedBuffering()
+    {
+        bufferedUngroundedNormal = Vector3.zero;
+    }
+
     Plane settingPlane = new Plane(Vector3.zero, Vector3.zero);
     bool settingPlaneBreaker = false;
     private void SetCurrentPlane(KinematicCharacterMotor motor, Plane plane, bool breaker = false, bool immediate = false)
@@ -1041,7 +1081,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     
         if (immediate)
         {
-            motor.BaseVelocity = Vector3.ProjectOnPlane(motor.BaseVelocity, currentPlane.normal).normalized * motor.BaseVelocity.magnitude; 
+            motor.BaseVelocity = Quaternion.FromToRotation(currentPlane.normal, plane.normal) * motor.BaseVelocity;//Vector3.ProjectOnPlane(motor.BaseVelocity, currentPlane.normal).normalized * motor.BaseVelocity.magnitude; 
             motor.PlanarConstraintAxis = plane.normal;
             motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
             planeChanged?.Invoke(this, new PlaneChangeEventArgs(plane.normal, breaker));
@@ -1068,7 +1108,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
 
             currentDynamicPlanes[0] = dynamicPlane;
 
-            if (currentPlaneBreaker == null || !motor.IsGroundedThisUpdate)
+            if (currentPlaneBreakers[0] == null || !motor.IsGroundedThisUpdate)
             {
                 Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
                 float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
@@ -1093,21 +1133,38 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
 
     private void EnterPlaneBreaker(KinematicCharacterMotor motor, PlaneBreaker planeBreaker)
     {
-        currentPlaneBreaker = planeBreaker;
-        brokenPlane = currentPlane;
-        Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
-        float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
-        bool movingRight = dot > 0;
-        if(motor.IsGroundedThisUpdate)
-            SetCurrentPlane(motor, planeBreaker.GetClosestPathPlane(motor.Transform.position, movingRight), true);
-        
+        if (currentPlaneBreakers[0] != null && currentPlaneBreakers[0].prioritize)
+        {
+            currentPlaneBreakers[1] = planeBreaker;
+        }
+        else
+        {    
+            if (currentPlaneBreakers[0] != null)
+                currentPlaneBreakers[1] = currentPlaneBreakers[0];
+
+            currentPlaneBreakers[0] = planeBreaker;
+            brokenPlane = currentPlane;
+            Vector3 planeRight = Vector3.Cross(Vector3.ProjectOnPlane(-physics.gravityDirection, motor.PlanarConstraintAxis).normalized, currentPlane.normal);
+            float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
+            bool movingRight = dot > 0;
+            if(motor.IsGroundedThisUpdate)
+                SetCurrentPlane(motor, planeBreaker.GetClosestPathPlane(motor.Transform.position, movingRight), true);
+        }
     }
 
-    private void ExitPlaneBreaker()
+    private void ExitPlaneBreaker(Collider col)
     {
-        currentPlaneBreaker = null;
-        if (currentDynamicPlanes[0] == null)
-            currentPlane = brokenPlane;
+        if (currentPlaneBreakers[0].gameObject == col.gameObject)
+        {
+            currentPlaneBreakers[0] = currentPlaneBreakers[1];
+            currentPlaneBreakers[1] = null;
+            if (currentPlaneBreakers[0] == null && currentDynamicPlanes[0] == null)
+                currentPlane = brokenPlane;
+        }
+        else if (currentPlaneBreakers[1].gameObject == col.gameObject)
+        {
+            currentPlaneBreakers[1] = null;
+        }
     }
 
     private void EnterMovementEffector(MovementEffector effector)

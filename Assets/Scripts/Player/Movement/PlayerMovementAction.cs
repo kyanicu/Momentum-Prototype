@@ -258,7 +258,12 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         /// -1 for "left", +1 for "right" (with respect to current orientation of motor.CharacterRight)
         /// </summary>
         private float _run;
-        public float run { get { return _run; } set {  if (_run == 0) _run = value; } }
+        public float run { get { return _run; } set { if (resetRun || _run == 0) _run = value; } }
+
+        /// <summary>
+        /// Ensures that run input uses previous input if physics tick runs more than once in a single frame
+        /// </summary>
+        private bool resetRun;
 
         /// <summary>
         /// Player jump input using GetButtonDown()
@@ -285,6 +290,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         jumpCancel = controllerActions.JumpCancel.triggered;
         
         run = controllerActions.Run.ReadValue<float>();
+        resetRun = false;
 
         doubleTapRun = controllerActions.RunKickOff.triggered;
     }
@@ -294,7 +300,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         /// </summary>
         public void Reset()
         {
-            _run = 0;
+            resetRun = true;
             _jump = false;
             _jumpCancel = false;
             _doubleTapRun = false;
@@ -314,6 +320,9 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
     /// Is the player currently moving "up" due to an initiated jump?
     /// </summary>
     private bool isJumping;
+    private bool bufferingJump;
+    
+    private bool bufferingJumpCancel;
 
     /// <summary>
     /// Is the player waiting for a jump cancel to activate ?
@@ -496,10 +505,10 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
     /// </summary>
     /// <param name="currentVelocity"> Reference to the player's velocity </param>
     /// <param name="motor"> The player's kinematic motor </param>
-    private void Jump(ref Vector3 currentVelocity, KinematicCharacterMotor motor)
+    private void Jump(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 groundNormal)
     {
         // Jump perpendicular to the current slope
-        currentVelocity += Vector3.ProjectOnPlane(values.jumpSpeed * motor.GetEffectiveGroundNormal(), motor.PlanarConstraintAxis);
+        currentVelocity += Vector3.ProjectOnPlane(values.jumpSpeed * groundNormal, motor.PlanarConstraintAxis);
 
         // Unground the motor
         motor.ForceUnground();
@@ -536,8 +545,10 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         // Get the velocity in the direction of gravity
         Vector3 velocityAlongGravity = Vector3.Project(currentVelocity, gravityDirection);
 
+        if(velocityAlongGravity.sqrMagnitude < values.jumpCancelSpeed * values.jumpCancelSpeed)
+            waitingToJumpCancel = false;
         // If jump cancel is valid
-        if (velocityAlongGravity.sqrMagnitude <= values.jumpCancelThreshold * values.jumpCancelThreshold)
+        else if (velocityAlongGravity.sqrMagnitude <= values.jumpCancelThreshold * values.jumpCancelThreshold)
         {
             // Perform jump cancel
             currentVelocity = (currentVelocity - velocityAlongGravity) + (-gravityDirection * values.jumpCancelSpeed);
@@ -569,7 +580,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
     /// <param name="gravityDirection"> The direction of gravity </param>
     /// <param name="physicsOverride"> Determines overrides to player physics values </param>
     /// <param name="deltaTime"> Motor update time</param>
-    public void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, WallHits wallHits, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
+    public void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, WallHits wallHits, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float groundingBufferTime, Vector3 bufferedUngroundedNormal, float deltaTime)
     {
         // If the player is jumping
         if(isJumping && CheckIsStillJumping(ref currentVelocity, motor, gravityDirection))
@@ -580,15 +591,38 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         }
         else 
         {   
-            // Make sure player isn't still trying to jump cancel
-            waitingToJumpCancel = false;
-            isJumping = false;
+            /*
+            if(bufferingJump)
+            {
+                if (input.jumpCancel)
+                    bufferingJumpCancel = true;
+                if (motor.IsGroundedThisUpdate)
+                    bufferingJump = false;
+            }
+            else if (!input.jumpCancel)
+            {
+                /*`bufferingJumpCancel = false;*/
+                // Make sure player isn't still trying to jump cancel
+                waitingToJumpCancel = false;
+                isJumping = false;
+            /*}*/
         }
 
         // if the player is trying to and able to jump
-        if(input.jump && motor.IsGroundedThisUpdate)
-            Jump(ref currentVelocity, motor);
-
+        if(input.jump)
+        { 
+            if (motor.IsGroundedThisUpdate)
+                Jump(ref currentVelocity, motor, motor.GetEffectiveGroundNormal());
+            else if (bufferedUngroundedNormal != Vector3.zero)
+                Jump(ref currentVelocity, motor, bufferedUngroundedNormal);
+            /*
+            else
+            {
+                GameManager.Instance.TimedConditionalCheckViaRealTime(groundingBufferTime, motor.GetIsGroundedThisUpdate, SetInputJumpTrue);
+                bufferingJump = true;
+            }
+            */
+        }
         // if the player is trying to run
         if(input.run != 0)
         {
@@ -599,6 +633,14 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         }
     }
 
+    /*
+    private void SetInputJumpTrue()
+    {
+        input.jump = true;
+        input.jumpCancel = bufferingJumpCancel;
+    }
+    */
+
     /// <summary>
     /// Gather input this Monobehavior.Update()
     /// </summary>
@@ -607,12 +649,9 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         input.RegisterInput(controllerActions);
     }
 
-    /// <summary>
-    /// Resets the input state
-    /// </summary>
     public void ResetInput()
     {
-        input.Reset();
+         input.Reset();
     }
 
 }

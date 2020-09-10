@@ -12,10 +12,6 @@ public class DynamicPlane : PlanePath
     [SerializeField]
     private bool drawPlaneExtents;
 
-    [SerializeField]
-    private bool _prioritize;
-    public bool prioritize { get { return _prioritize; } private set { _prioritize = value; } }
-
     public Vector3 up { get { return transform.up; } }
 
     protected override void AdditionalValidate()

@@ -12,6 +12,8 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
 
     Vector3 targetPoint;
     [SerializeField]
+    float maxPlayerMoveToReset;
+    [SerializeField]
     private float tiltThreshold;
     [SerializeField]
     private float tiltScale;
@@ -87,6 +89,8 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
         manualPanDistanceHorizontal = 8;
         */
 
+        maxPlayerMoveToReset = 50;
+
         tiltThreshold = 20;
         tiltScale = 0.5f;
         tiltDampTime = 0.1f;
@@ -120,6 +124,9 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
 
     public void HandlePlayerMovementStateUpdated(KinematicCharacterMotorState state)
     {
+        if((state.Position - playerMovementState.Position).sqrMagnitude > maxPlayerMoveToReset * maxPlayerMoveToReset)
+            targetPoint = state.Position;
+
         playerMovementState = state;
     }
 

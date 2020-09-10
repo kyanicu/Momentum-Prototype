@@ -38,6 +38,9 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
 
     private KinematicCharacterMotor motor;
 
+    //private HashSet<string> triggerTagsToTrack;
+    //private HashSet<Collider> trackedTriggerColliders;
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -46,6 +49,9 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
         playerController.Enable();
 
         motor = GetComponent<KinematicCharacterMotor>();
+
+        //triggerTagsToTrack = new HashSet<string>{ "Plane", "PlaneBreaker", "MovementEffector" };
+        //trackedTriggerObjects = new HashSet<Collider>();
 
         SetupCommunicators();
     }
@@ -117,8 +123,11 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
 
     void OnTriggerEnter(Collider col)
     {
-        status.HandleTriggerEnter(col);
-        movement.HandleTriggerEnter(motor, col);
+        //if (!trackedTriggerObjects.Contains(col))
+        //{
+            status.HandleTriggerEnter(col);
+            movement.HandleTriggerEnter(motor, col);
+        //}
     }
     void OnTriggerExit(Collider col)
     {
