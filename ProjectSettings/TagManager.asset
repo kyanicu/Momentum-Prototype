@@ -10,6 +10,7 @@ TagManager:
   - Plane Breaker
   - Movement Effector
   - Teleporter
+  - Checkpoint
   layers:
   - Default
   - TransparentFX

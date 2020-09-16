@@ -65,6 +65,30 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""CameraManualTilt"",
+                    ""type"": ""Value"",
+                    ""id"": ""f313189f-99b9-4b63-87bc-501ee392182c"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""CameraChangeSetting"",
+                    ""type"": ""Button"",
+                    ""id"": ""1cd3cd6c-d1ec-4e65-afbc-71c47ffd9431"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""CameraResetManualTilt"",
+                    ""type"": ""Button"",
+                    ""id"": ""1580beff-3ea7-4942-b54e-6a6d3c522f47"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -113,39 +137,6 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": ""1D Axis"",
-                    ""id"": ""f21459a0-8793-4ba9-ac53-272990abcc1c"",
-                    ""path"": ""1DAxis"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""RunKickOff"",
-                    ""isComposite"": true,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""negative"",
-                    ""id"": ""05d885ba-feb9-44d2-aca5-9df9b8c891a7"",
-                    ""path"": ""<Keyboard>/a"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""RunKickOff"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""positive"",
-                    ""id"": ""c3e04b46-b374-4b4c-b371-d59b877f8143"",
-                    ""path"": ""<Keyboard>/d"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""RunKickOff"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
                     ""name"": """",
                     ""id"": ""836f345a-c5a9-4e2b-a925-00da4cc860ea"",
                     ""path"": ""<Keyboard>/space"",
@@ -164,6 +155,83 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""processors"": """",
                     ""groups"": ""Standard"",
                     ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""41ad8fe6-64e2-4bcd-88b3-b8e705b12125"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CameraManualTilt"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""fc516886-2e3b-4918-a2f0-93e23eddbfd3"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Standard"",
+                    ""action"": ""CameraManualTilt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""b9c3a8d1-d5a8-4c73-aabb-f44046363465"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Standard"",
+                    ""action"": ""CameraManualTilt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""25e3d62f-91a3-40c6-8a2c-bb10c6c5d6dc"",
+                    ""path"": ""<Keyboard>/leftArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Standard"",
+                    ""action"": ""CameraManualTilt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""883ea299-97f1-434d-bc18-a3c871ceee41"",
+                    ""path"": ""<Keyboard>/rightArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Standard"",
+                    ""action"": ""CameraManualTilt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bfeb04c3-790f-4697-938c-a03d9763fee5"",
+                    ""path"": ""<Keyboard>/rightAlt"",
+                    ""interactions"": ""Press"",
+                    ""processors"": """",
+                    ""groups"": ""Standard"",
+                    ""action"": ""CameraChangeSetting"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6963ffd5-7fdd-4a9b-90f0-a713f7298a8a"",
+                    ""path"": ""<Keyboard>/rightAlt"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Standard"",
+                    ""action"": ""CameraResetManualTilt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -192,6 +260,9 @@ public class @PlayerController : IInputActionCollection, IDisposable
         m_Player_RunKickOff = m_Player.FindAction("RunKickOff", throwIfNotFound: true);
         m_Player_Pause = m_Player.FindAction("Pause", throwIfNotFound: true);
         m_Player_Permeation = m_Player.FindAction("Permeation", throwIfNotFound: true);
+        m_Player_CameraManualTilt = m_Player.FindAction("CameraManualTilt", throwIfNotFound: true);
+        m_Player_CameraChangeSetting = m_Player.FindAction("CameraChangeSetting", throwIfNotFound: true);
+        m_Player_CameraResetManualTilt = m_Player.FindAction("CameraResetManualTilt", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -247,6 +318,9 @@ public class @PlayerController : IInputActionCollection, IDisposable
     private readonly InputAction m_Player_RunKickOff;
     private readonly InputAction m_Player_Pause;
     private readonly InputAction m_Player_Permeation;
+    private readonly InputAction m_Player_CameraManualTilt;
+    private readonly InputAction m_Player_CameraChangeSetting;
+    private readonly InputAction m_Player_CameraResetManualTilt;
     public struct PlayerActions
     {
         private @PlayerController m_Wrapper;
@@ -257,6 +331,9 @@ public class @PlayerController : IInputActionCollection, IDisposable
         public InputAction @RunKickOff => m_Wrapper.m_Player_RunKickOff;
         public InputAction @Pause => m_Wrapper.m_Player_Pause;
         public InputAction @Permeation => m_Wrapper.m_Player_Permeation;
+        public InputAction @CameraManualTilt => m_Wrapper.m_Player_CameraManualTilt;
+        public InputAction @CameraChangeSetting => m_Wrapper.m_Player_CameraChangeSetting;
+        public InputAction @CameraResetManualTilt => m_Wrapper.m_Player_CameraResetManualTilt;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -284,6 +361,15 @@ public class @PlayerController : IInputActionCollection, IDisposable
                 @Permeation.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPermeation;
                 @Permeation.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPermeation;
                 @Permeation.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPermeation;
+                @CameraManualTilt.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraManualTilt;
+                @CameraManualTilt.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraManualTilt;
+                @CameraManualTilt.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraManualTilt;
+                @CameraChangeSetting.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraChangeSetting;
+                @CameraChangeSetting.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraChangeSetting;
+                @CameraChangeSetting.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraChangeSetting;
+                @CameraResetManualTilt.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraResetManualTilt;
+                @CameraResetManualTilt.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraResetManualTilt;
+                @CameraResetManualTilt.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnCameraResetManualTilt;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -306,6 +392,15 @@ public class @PlayerController : IInputActionCollection, IDisposable
                 @Permeation.started += instance.OnPermeation;
                 @Permeation.performed += instance.OnPermeation;
                 @Permeation.canceled += instance.OnPermeation;
+                @CameraManualTilt.started += instance.OnCameraManualTilt;
+                @CameraManualTilt.performed += instance.OnCameraManualTilt;
+                @CameraManualTilt.canceled += instance.OnCameraManualTilt;
+                @CameraChangeSetting.started += instance.OnCameraChangeSetting;
+                @CameraChangeSetting.performed += instance.OnCameraChangeSetting;
+                @CameraChangeSetting.canceled += instance.OnCameraChangeSetting;
+                @CameraResetManualTilt.started += instance.OnCameraResetManualTilt;
+                @CameraResetManualTilt.performed += instance.OnCameraResetManualTilt;
+                @CameraResetManualTilt.canceled += instance.OnCameraResetManualTilt;
             }
         }
     }
@@ -327,5 +422,8 @@ public class @PlayerController : IInputActionCollection, IDisposable
         void OnRunKickOff(InputAction.CallbackContext context);
         void OnPause(InputAction.CallbackContext context);
         void OnPermeation(InputAction.CallbackContext context);
+        void OnCameraManualTilt(InputAction.CallbackContext context);
+        void OnCameraChangeSetting(InputAction.CallbackContext context);
+        void OnCameraResetManualTilt(InputAction.CallbackContext context);
     }
 }

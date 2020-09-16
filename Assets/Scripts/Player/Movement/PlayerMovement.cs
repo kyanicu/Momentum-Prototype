@@ -617,6 +617,10 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
             case ("Movement Effector") :
                 EnterMovementEffector(col.GetComponent<MovementEffector>());
                 break;
+            case ("Checkpoint") :
+                startState = motor.GetState();
+                startPlane = new Plane(motor.PlanarConstraintAxis, motor.Transform.position);
+                break;
         }
     } 
 
@@ -1038,10 +1042,10 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
                 Debug.DrawRay(hitPoint, hitStabilityReport.InnerNormal*4, Color.cyan, 5);
                 Debug.DrawRay(hitPoint, hitNormal*3, Color.blue, 5);
                 //Debug.Break();
-                Debug.LogWarning("Faulty Ledge Detection, setting to unstable to prevent snapping. Debug Rays drawn for 5 seconds. Likely caused by Mesh Collider issue. Try Replacing area with primitive/concave collider");
+                Debug.LogWarning("Faulty Ledge Detection, setting to stable to prevent flying off. Debug Rays drawn for 5 seconds. Likely caused by Mesh Collider issue. Try Replacing area with primitive/concave collider if grounding should not be allowed on this hit.");
                 Debug.LogWarning("Dot between Ledge and Hit normals: " + ledgeHitDot);
                 Debug.LogWarning    ("Dot between Ground and Hit normals: " + groundHitDot);
-                hitStabilityReport.IsStable = false;
+                hitStabilityReport.IsStable = true;
             }
         }
 

@@ -52,6 +52,30 @@
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
+                },
+                {
+                    "name": "CameraManualTilt",
+                    "type": "Value",
+                    "id": "f313189f-99b9-4b63-87bc-501ee392182c",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "CameraChangeSetting",
+                    "type": "Button",
+                    "id": "1cd3cd6c-d1ec-4e65-afbc-71c47ffd9431",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "CameraResetManualTilt",
+                    "type": "Button",
+                    "id": "1580beff-3ea7-4942-b54e-6a6d3c522f47",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
                 }
             ],
             "bindings": [
@@ -100,39 +124,6 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "1D Axis",
-                    "id": "f21459a0-8793-4ba9-ac53-272990abcc1c",
-                    "path": "1DAxis",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "RunKickOff",
-                    "isComposite": true,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "negative",
-                    "id": "05d885ba-feb9-44d2-aca5-9df9b8c891a7",
-                    "path": "<Keyboard>/a",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "RunKickOff",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "positive",
-                    "id": "c3e04b46-b374-4b4c-b371-d59b877f8143",
-                    "path": "<Keyboard>/d",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "RunKickOff",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
                     "name": "",
                     "id": "836f345a-c5a9-4e2b-a925-00da4cc860ea",
                     "path": "<Keyboard>/space",
@@ -151,6 +142,83 @@
                     "processors": "",
                     "groups": "Standard",
                     "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "2D Vector",
+                    "id": "41ad8fe6-64e2-4bcd-88b3-b8e705b12125",
+                    "path": "2DVector",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CameraManualTilt",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "up",
+                    "id": "fc516886-2e3b-4918-a2f0-93e23eddbfd3",
+                    "path": "<Keyboard>/upArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Standard",
+                    "action": "CameraManualTilt",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "down",
+                    "id": "b9c3a8d1-d5a8-4c73-aabb-f44046363465",
+                    "path": "<Keyboard>/downArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Standard",
+                    "action": "CameraManualTilt",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "left",
+                    "id": "25e3d62f-91a3-40c6-8a2c-bb10c6c5d6dc",
+                    "path": "<Keyboard>/leftArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Standard",
+                    "action": "CameraManualTilt",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "right",
+                    "id": "883ea299-97f1-434d-bc18-a3c871ceee41",
+                    "path": "<Keyboard>/rightArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Standard",
+                    "action": "CameraManualTilt",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "bfeb04c3-790f-4697-938c-a03d9763fee5",
+                    "path": "<Keyboard>/rightAlt",
+                    "interactions": "Press",
+                    "processors": "",
+                    "groups": "Standard",
+                    "action": "CameraChangeSetting",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6963ffd5-7fdd-4a9b-90f0-a713f7298a8a",
+                    "path": "<Keyboard>/rightAlt",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Standard",
+                    "action": "CameraResetManualTilt",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

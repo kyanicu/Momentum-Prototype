@@ -9,6 +9,7 @@ public interface IPlayerExternalCommunication
 
 public interface IPlayerCameraCommunication : IPlayerExternalCommunication
 {
+    void HandleInput(PlayerController.PlayerActions controllerActions);
     void HandlePlayerPlaneChanged(PlaneChangeEventArgs planeChangeInfo);
     void HandlePlayerMovementStateUpdated(KinematicCharacterController.KinematicCharacterMotorState state);
     void HandlePlayerGravityDirectionChanged(Vector3 gravityDirection);
@@ -22,6 +23,11 @@ public abstract class PlayerExternalCommunicator : IPlayerExternalCommunicatorCo
     public void SetCommunication(PlayerInternalCommunicator communicator)
     {
         communicator.SetCommunication(this);
+    }
+
+    public void HandleInput(PlayerController.PlayerActions controllerActions)
+    {
+        camera.HandleInput(controllerActions);
     }
 
     public void SetPlayerExternalCommunication(IPlayerCameraCommunication communication)

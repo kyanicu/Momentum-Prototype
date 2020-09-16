@@ -374,10 +374,12 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
     /// </summary>
     /// <param name="currentVelocity"> Reference to the player's velocity</param>
     /// <param name="deltaTime"> Motor update time</param>
-    private void AddExtraKineticFriction(ref Vector3 currentVelocity, float deltaTime)
+    private void AddExtraKineticFriction(ref Vector3 currentVelocity, float slopeAngle, float deltaTime)
     {
+        float ratio = -(slopeAngle - 90) / 90;
+        
         // Apply extra kinetic friction
-        currentVelocity -= currentVelocity.normalized * values.extraKineticFriction * deltaTime;
+        currentVelocity -= currentVelocity.normalized * values.extraKineticFriction * ratio * deltaTime;
     }
 
     /// <summary>
@@ -526,12 +528,14 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
             }
 
             // If there is extra kinetic friction to apply  
-            if (sqrSpeed > values.extraKineticFrictionSpeedThreshold * values.extraKineticFrictionSpeedThreshold)
-                AddExtraKineticFriction(ref currentVelocity, deltaTime);
+            //if (sqrSpeed > values.extraKineticFrictionSpeedThreshold * values.extraKineticFrictionSpeedThreshold)
+                //AddExtraKineticFriction(ref currentVelocity, slopeAngle, deltaTime);
 
             // If there is upside-down extra kinetic friction to apply  
             if (Vector3.Dot(motor.GetEffectiveGroundNormal(), gravityDirection) > 0)
                 AddUpsideDownExtraKineticFriction(ref currentVelocity, slopeAngle, deltaTime);
+            else if (sqrSpeed > values.extraKineticFrictionSpeedThreshold * values.extraKineticFrictionSpeedThreshold)
+                AddExtraKineticFriction(ref currentVelocity, slopeAngle, deltaTime);
 
             float planePerpGravPercent = Mathf.Abs(Vector3.Dot(motor.PlanarConstraintAxis, gravityDirection));
 

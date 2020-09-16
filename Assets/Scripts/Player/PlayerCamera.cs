@@ -43,6 +43,11 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
     [SerializeField]
     private float orientDampMaxSpeed;
 
+    private bool manualTilting;
+    [SerializeField]
+    private float manualTiltingSpeed;
+    private Vector3 manualTiltDirection;
+
     /*
     [SerializeField]
     private float panThreshold;
@@ -103,6 +108,8 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
 
         orientDampTime = 0.1f;
         orientDampMaxSpeed = 100;
+
+        manualTiltingSpeed = 30;
     }
 
     public void SetPlayerExternalCommunication(PlayerExternalCommunicator communicator, ReadOnlyTransform _playerTransform)
@@ -130,8 +137,35 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
         playerMovementState = state;
     }
 
+    public void HandleInput(PlayerController.PlayerActions controllerActions)
+    {
+        if (controllerActions.CameraManualTilt.ReadValue<Vector2>() != Vector2.zero)
+        {
+            if(!manualTilting)
+            {
+                manualTilting = true;
+                manualTiltDirection = cameraWorldForward;
+            }
+
+            Vector3 horizontalEuler = -playerGravityDirection * controllerActions.CameraManualTilt.ReadValue<Vector2>().x;
+            Vector3 upEuler = Vector3.Cross(transform.forward, -playerGravityDirection) * controllerActions.CameraManualTilt.ReadValue<Vector2>().y;
+            Vector3 euler = horizontalEuler + upEuler;
+            if (euler.sqrMagnitude > 1)
+                euler.Normalize();
+            
+            Vector3 newDirection = Quaternion.Euler(euler * Time.deltaTime * manualTiltingSpeed) * manualTiltDirection;
+
+            if(Mathf.Abs(Vector3.Dot(newDirection, playerGravityDirection)) <= 95)
+                manualTiltDirection = newDirection;
+        }
+
+        if(controllerActions.CameraChangeSetting.triggered)
+        {
+            manualTilting = !manualTilting;
+        }
+    }
+
     // Update is called once per frame
-    // Need to fix to work with dynamic plane
     void Update()
     {
         if (cameraWorldForward != playerPlaneNormal)
@@ -141,16 +175,26 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
 
         transform.position = playerTransform.position - cameraWorldForward * cameraDistance;
 
-        if (playerMovementState.BaseVelocity.magnitude > tiltThreshold)
-            targetPoint = Vector3.SmoothDamp(targetPoint, playerTransform.position + (playerMovementState.BaseVelocity - playerMovementState.BaseVelocity.normalized * tiltThreshold) * tiltScale, ref tiltDampVel, tiltDampTime, tiltDampMaxSpeed);
+        if (!manualTilting)
+        {
+            transform.position = playerTransform.position - cameraWorldForward * cameraDistance;
+            if (playerMovementState.BaseVelocity.sqrMagnitude > tiltThreshold * tiltThreshold)
+                targetPoint = Vector3.SmoothDamp(targetPoint, playerTransform.position + (playerMovementState.BaseVelocity - playerMovementState.BaseVelocity.normalized * tiltThreshold) * tiltScale, ref tiltDampVel, tiltDampTime, tiltDampMaxSpeed);
+            else
+                targetPoint = Vector3.SmoothDamp(targetPoint, playerTransform.position, ref tiltDampVel, tiltDampTime/2, tiltDampMaxSpeed);
+            
+            transform.LookAt(targetPoint, cameraWorldUp);
+            transform.position = playerTransform.position - transform.forward * cameraDistance;
+        }
         else
         {
-            targetPoint = Vector3.SmoothDamp(targetPoint, playerTransform.position, ref tiltDampVel, tiltDampTime/2, tiltDampMaxSpeed);    
+            targetPoint = playerTransform.position;
+            tiltDampVel = Vector3.zero;
+            transform.position = playerTransform.position - manualTiltDirection * cameraDistance;
+            transform.LookAt(playerTransform.position, cameraWorldUp);
         }
-        transform.LookAt(targetPoint, cameraWorldUp);
-        transform.position = playerTransform.position - transform.forward * cameraDistance;
 
-        if (playerMovementState.BaseVelocity.magnitude > zoomThreshold)
+        if (playerMovementState.BaseVelocity.sqrMagnitude > zoomThreshold * zoomThreshold)
             zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, (playerMovementState.BaseVelocity.magnitude - zoomThreshold) * zoomScale, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
         else
             zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, 0, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);

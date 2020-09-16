@@ -111,6 +111,8 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
     {
         movement.HandleInput(controllerActions); 
 
+        externalCommunicator.HandleInput(controllerActions); 
+
         // Debug
         #region debug
         // Resets the the motor state (used as a makeshift "level restart")

@@ -1,0 +1,264 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!181963792 &2655988077585873504
+Preset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AlestaCharacter_ClassicSonicValues
+  m_TargetType:
+    m_NativeTypeID: 114
+    m_ManagedTypePPtr: {fileID: 11500000, guid: 7dfb3e8b0a32d49b48a9299373ded734,
+      type: 3}
+    m_ManagedTypeFallback: 
+  m_Properties:
+  - target: {fileID: 0}
+    propertyPath: m_Enabled
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_EditorHideFlags
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_EditorClassIdentifier
+    value: 
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.maxSpeed
+    value: 125
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.attachThreshold
+    value: 9.375
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.pushOffGroundThreshold
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.maxSlopeTrackTime
+    value: 0.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.ungroundRotationFactor
+    value: 1.25
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.ungroundRotationMinSpeed
+    value: 15
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.ungroundRotationMaxSpeed
+    value: 1000
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.negateAction
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.baseValues.negatePhysics
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.extraGroundProbingDistanceFactor
+    value: 0.012
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.extraMaxStableSlopeFactor
+    value: 0.005
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.groundingActionBuffer
+    value: 0.1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.kineticFriction
+    value: 10.546875
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.staticFrictionMaxSlope
+    value: 30
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.staticFrictionVelThreshold
+    value: 0.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.extraKineticFriction
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.extraKineticFrictionSpeedThreshold
+    value: 22.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.upsideDownExtraKineticFrictionFactor
+    value: 0.4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.sidewaysExtraKineticFrictionFactor
+    value: 0.4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.slopeConstantDown
+    value: 0.571429
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.slopeConstantUp
+    value: 0.571429
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.airDrag
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.extraAirDrag
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.extraAirDragSpeedThreshold
+    value: 22.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.terminalVelocity
+    value: 70
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.terminalVelocityDeceleration
+    value: 50
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.gravityAccel
+    value: 49.21875
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.gravityDirection.x
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.gravityDirection.y
+    value: -1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.gravityDirection.z
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.constantAcceleration.x
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.constantAcceleration.y
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.physics.baseValues.constantAcceleration.z
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.runAccel
+    value: 10.546875
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.runKickOffSpeed
+    value: 15
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.autoRunKickOffSpeed
+    value: 5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.autoRunKickOffSlopeThreshold
+    value: 14
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.runMaxSpeed
+    value: 22.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.brakeDecel
+    value: 112.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.looseAirMoveAccel
+    value: 21.09375
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.looseAirMoveBrakeDecel
+    value: 21.09375
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.preciseAirMoveAccel
+    value: 21.09375
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.preciseAirMoveBrakeDecel
+    value: 21.09375
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.airSpeedThreshold
+    value: 22.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.airMoveMaxSpeed
+    value: 22.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.jumpSpeed
+    value: 24.375
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.jumpRotationFactor
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.jumpCancelSpeed
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.jumpCancelThreshold
+    value: 20
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.action.baseValues.invertRight
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.ability.baseValues.permeationPushAccel
+    value: 80
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.ability.baseValues.permeationResistFactor
+    value: 0.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.ability.baseValues.permeationGravityFactor
+    value: 0.25
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: movement.ability.baseValues.permeationVelocityThreshold
+    value: 10
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: animation.modelRoot
+    value: 
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: animation.positionInterpDampTime
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: animation.positionInterpDampMaxSpeed
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: animation.rotationInterpDampTime
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: animation.rotationInterpDampMaxSpeed
+    value: 0
+    objectReference: {fileID: 0}
+  m_ExcludedProperties: []
