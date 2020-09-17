@@ -3143,9 +3143,9 @@ MonoBehaviour:
         upsideDownExtraKineticFrictionFactor: 0.3
         sidewaysExtraKineticFrictionFactor: 0.3
         slopeConstantDown: 1.2
-        slopeConstantUp: 0.8
-        airDrag: 1
-        extraAirDrag: 1
+        slopeConstantUp: 0.7
+        airDrag: 3
+        extraAirDrag: 2
         extraAirDragSpeedThreshold: 18
         terminalVelocity: 125
         terminalVelocityDeceleration: 50

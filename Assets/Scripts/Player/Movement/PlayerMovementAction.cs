@@ -349,22 +349,22 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
     protected override void SetDefaultBaseValues()
     {
         // Set default values
-        baseValues.runAccel = 10;
-        baseValues.runKickOffSpeed = 5;
+        baseValues.runAccel = 15;
+        baseValues.runKickOffSpeed = 15;
         baseValues.autoRunKickOffSpeed = 2;
         baseValues.autoRunKickOffSlopeThreshold = 14;
         baseValues.runMaxSpeed = 18;
-        baseValues.brakeDecel = 40;
-        baseValues.looseAirMoveAccel = 14;
-        baseValues.looseAirMoveBrakeDecel = 18;
+        baseValues.brakeDecel = 50;
+        baseValues.looseAirMoveAccel = 10;
+        baseValues.looseAirMoveBrakeDecel = 15;
         baseValues.preciseAirMoveAccel = 30;
-        baseValues.preciseAirMoveBrakeDecel = 30; 
+        baseValues.preciseAirMoveBrakeDecel = 70; 
+        baseValues.airSpeedThreshold = 12;
         baseValues.airMoveMaxSpeed = 18;
-        baseValues.airSpeedThreshold = 4;
-        baseValues.jumpSpeed = 15;
-        baseValues.jumpRotationFactor = 1.25f; 
+        baseValues.jumpSpeed = 22;
+        baseValues.jumpRotationFactor = 2; 
         baseValues.jumpCancelSpeed = 4;
-        baseValues.jumpCancelThreshold = 15;
+        baseValues.jumpCancelThreshold = 20;
         baseValues.invertRight = 0;
     }
 
@@ -610,7 +610,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
 
         // if the player is trying to and able to jump
         if(input.jump)
-        { 
+        {
             if (motor.IsGroundedThisUpdate)
                 Jump(ref currentVelocity, motor, motor.GetEffectiveGroundNormal());
             else if (bufferedUngroundedNormal != Vector3.zero)
@@ -651,7 +651,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
 
     public void ResetInput()
     {
-         input.Reset();
+        input.Reset();
     }
 
 }

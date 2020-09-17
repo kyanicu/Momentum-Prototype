@@ -72,6 +72,7 @@ public abstract class PlanePath : MonoBehaviour
 
     protected abstract void AdditionalValidate();
 
+#if UnityEditor
     void OnDrawGizmosSelected()
     {
         if (Selection.Contains(gameObject))
@@ -87,6 +88,7 @@ public abstract class PlanePath : MonoBehaviour
 
         AdditionalDrawGizmosSelected();
     }
+#endif
 
     protected abstract void AdditionalDrawGizmosSelected();
 

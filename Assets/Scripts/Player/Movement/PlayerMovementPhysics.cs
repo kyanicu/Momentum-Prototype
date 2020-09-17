@@ -306,21 +306,21 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
     protected override void SetDefaultBaseValues()
     {
         // Set default values
-        baseValues.kineticFriction = 9;
+        baseValues.kineticFriction = 15;
         baseValues.staticFrictionMaxSlope = 30;
         baseValues.staticFrictionVelThreshold = 0.5f;
-        baseValues.extraKineticFriction = 2;
+        baseValues.extraKineticFriction = 3;
         baseValues.extraKineticFrictionSpeedThreshold = 18;
-        baseValues.upsideDownExtraKineticFrictionFactor = 0.4f;
-        baseValues.sidewaysExtraKineticFrictionFactor = 0.4f;
-        baseValues.slopeConstantDown = 1.5f;
-        baseValues.slopeConstantUp = 0.75f;
-        baseValues.airDrag = 1;
-        baseValues.extraAirDrag = 1;
+        baseValues.upsideDownExtraKineticFrictionFactor = 0.3f;
+        baseValues.sidewaysExtraKineticFrictionFactor = 0.3f;
+        baseValues.slopeConstantDown = 1.2f;
+        baseValues.slopeConstantUp = 0.7f;
+        baseValues.airDrag = 3;
+        baseValues.extraAirDrag = 2;
         baseValues.extraAirDragSpeedThreshold = 18;
-        baseValues.terminalVelocity = 70;
+        baseValues.terminalVelocity = 125;
         baseValues.terminalVelocityDeceleration = 50;
-        baseValues.gravityAccel = 36;
+        baseValues.gravityAccel = 50;
         baseValues.gravityDirection = Vector3.down;
         baseValues.constantAcceleration = Vector3.zero;
     }

@@ -543,7 +543,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     protected override void SetDefaultBaseValues()
     {
         // Set default field values
-        baseValues.maxSpeed = 70;
+        baseValues.maxSpeed = 125;
         baseValues.attachThreshold = 8;
         baseValues.pushOffGroundThreshold = 1;
         baseValues.maxSlopeTrackTime = 0.5f;
