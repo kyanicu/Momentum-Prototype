@@ -3140,8 +3140,12 @@ MonoBehaviour:
         staticFrictionVelThreshold: 0.5
         extraKineticFriction: 3
         extraKineticFrictionSpeedThreshold: 18
-        upsideDownExtraKineticFrictionFactor: 0.3
-        sidewaysExtraKineticFrictionFactor: 0.3
+        upsideDownExtraKineticFrictionFactor: 0.75
+        upsideDownExtraKineticFrictionTimeThreshold: 0.75
+        upsideDownAttachSpeed: 25
+        sidewaysExtraKineticFrictionFactor: 0.75
+        sidewaysExtraKineticFrictionTimeThreshold: 0.75
+        sidewaysAttachSpeed: 25
         slopeConstantDown: 1.2
         slopeConstantUp: 0.7
         airDrag: 3

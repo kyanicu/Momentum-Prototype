@@ -33,11 +33,27 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
     /// </summary>
     public float upsideDownExtraKineticFrictionFactor;
     /// <summary>
+    /// The time needed to be upside down before upside down physics activate
+    /// </summary>
+    public float upsideDownExtraKineticFrictionTimeThreshold;
+    /// <summary>
+    /// The speed needed to stay on the ground when upside down
+    /// </summary>
+    public float upsideDownAttachSpeed;
+    /// <summary>
     /// The  extra non-overridable decceleration of kinetic friction to a player if they are running not parallel to the plane of gravity.
     /// Works as a factor on the magnitude of gravity
     /// Can be considered the player's inability to maintain speed when running along but not up a slant
     /// </summary>
     public float sidewaysExtraKineticFrictionFactor;
+    /// <summary>
+    /// The time needed to be sideways before sideways physics activate
+    /// </summary>
+    public float sidewaysExtraKineticFrictionTimeThreshold;
+    /// <summary>
+    /// The speed needed to stay on the ground when sideways
+    /// </summary>
+    public float sidewaysAttachSpeed;
     /// <summary>
     /// The factor of gravity when running downhill
     /// </summary>
@@ -95,7 +111,11 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
         extraKineticFriction = DefaultFloat(overrideType);
         extraKineticFrictionSpeedThreshold = DefaultFloat(overrideType);
         upsideDownExtraKineticFrictionFactor = DefaultFloat(overrideType);
+        upsideDownExtraKineticFrictionTimeThreshold = DefaultFloat(overrideType);
+        upsideDownAttachSpeed = DefaultFloat(overrideType);
         sidewaysExtraKineticFrictionFactor = DefaultFloat(overrideType);
+        sidewaysExtraKineticFrictionTimeThreshold = DefaultFloat(overrideType);
+        sidewaysAttachSpeed = DefaultFloat(overrideType);
         slopeConstantDown = DefaultFloat(overrideType);
         slopeConstantUp = DefaultFloat(overrideType);
         airDrag = DefaultFloat(overrideType);
@@ -119,7 +139,11 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
         extraKineticFriction = Add(extraKineticFriction, v.extraKineticFriction);
         extraKineticFrictionSpeedThreshold = Add(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
         upsideDownExtraKineticFrictionFactor = Add(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
+        upsideDownExtraKineticFrictionTimeThreshold = Add(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
+        upsideDownAttachSpeed = Add(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
         sidewaysExtraKineticFrictionFactor = Add(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
+        sidewaysExtraKineticFrictionTimeThreshold = Add(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
+        sidewaysAttachSpeed = Add(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
         slopeConstantDown = Add(slopeConstantDown, v.slopeConstantDown);
         slopeConstantUp = Add(slopeConstantUp, v.slopeConstantUp);
         airDrag = Add(airDrag, v.airDrag);
@@ -142,7 +166,11 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
         extraKineticFriction = Subtract(extraKineticFriction, v.extraKineticFriction);
         extraKineticFrictionSpeedThreshold = Subtract(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
         upsideDownExtraKineticFrictionFactor = Subtract(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
+        upsideDownExtraKineticFrictionTimeThreshold = Subtract(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
+        upsideDownAttachSpeed = Subtract(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
         sidewaysExtraKineticFrictionFactor = Subtract(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
+        sidewaysExtraKineticFrictionTimeThreshold = Subtract(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
+        sidewaysAttachSpeed = Subtract(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
         slopeConstantDown = Subtract(slopeConstantDown, v.slopeConstantDown);
         slopeConstantUp = Subtract(slopeConstantUp, v.slopeConstantUp);
         airDrag = Subtract(airDrag, v.airDrag);
@@ -165,7 +193,11 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
         extraKineticFriction = Multiply(extraKineticFriction, v.extraKineticFriction);
         extraKineticFrictionSpeedThreshold = Multiply(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
         upsideDownExtraKineticFrictionFactor = Multiply(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
+        upsideDownExtraKineticFrictionTimeThreshold = Multiply(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
+        upsideDownAttachSpeed = Multiply(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
         sidewaysExtraKineticFrictionFactor = Multiply(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
+        sidewaysExtraKineticFrictionTimeThreshold = Multiply(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
+        sidewaysAttachSpeed = Multiply(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
         slopeConstantDown = Multiply(slopeConstantDown, v.slopeConstantDown);
         slopeConstantUp = Multiply(slopeConstantUp, v.slopeConstantUp);
         airDrag = Multiply(airDrag, v.airDrag);
@@ -188,7 +220,11 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
         extraKineticFriction = Divide(extraKineticFriction, v.extraKineticFriction);
         extraKineticFrictionSpeedThreshold = Divide(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
         upsideDownExtraKineticFrictionFactor = Divide(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
+        upsideDownExtraKineticFrictionTimeThreshold = Divide(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
+        upsideDownAttachSpeed = Divide(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
         sidewaysExtraKineticFrictionFactor = Divide(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
+        sidewaysExtraKineticFrictionTimeThreshold = Divide(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
+        sidewaysAttachSpeed = Divide(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
         slopeConstantDown = Divide(slopeConstantDown, v.slopeConstantDown);
         slopeConstantUp = Divide(slopeConstantUp, v.slopeConstantUp);
         airDrag = Divide(airDrag, v.airDrag);
@@ -211,7 +247,11 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
         extraKineticFriction = Or(extraKineticFriction, v.extraKineticFriction);
         extraKineticFrictionSpeedThreshold = Or(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
         upsideDownExtraKineticFrictionFactor = Or(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
+        upsideDownExtraKineticFrictionTimeThreshold = Or(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
+        upsideDownAttachSpeed = Or(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
         sidewaysExtraKineticFrictionFactor = Or(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
+        sidewaysExtraKineticFrictionTimeThreshold = Or(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
+        sidewaysAttachSpeed = Or(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
         slopeConstantDown = Or(slopeConstantDown, v.slopeConstantDown);
         slopeConstantUp = Or(slopeConstantUp, v.slopeConstantUp);
         airDrag = Or(airDrag, v.airDrag);
@@ -234,7 +274,11 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
         extraKineticFriction = And(extraKineticFriction, v.extraKineticFriction);
         extraKineticFrictionSpeedThreshold = And(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
         upsideDownExtraKineticFrictionFactor = And(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
+        upsideDownExtraKineticFrictionTimeThreshold = And(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
+        upsideDownAttachSpeed = And(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
         sidewaysExtraKineticFrictionFactor = And(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
+        sidewaysExtraKineticFrictionTimeThreshold = And(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
+        sidewaysAttachSpeed = And(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
         slopeConstantDown = And(slopeConstantDown, v.slopeConstantDown);
         slopeConstantUp = And(slopeConstantUp, v.slopeConstantUp);
         airDrag = And(airDrag, v.airDrag);
@@ -295,6 +339,9 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
     /// </summary>
     public PhysicsNegations negations;
 
+    private float upsideDownTimer;
+    private float sidewaysTimer;
+
     /// <summary>
     /// Constructor
     /// </summary>
@@ -311,8 +358,12 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
         baseValues.staticFrictionVelThreshold = 0.5f;
         baseValues.extraKineticFriction = 3;
         baseValues.extraKineticFrictionSpeedThreshold = 18;
-        baseValues.upsideDownExtraKineticFrictionFactor = 0.3f;
-        baseValues.sidewaysExtraKineticFrictionFactor = 0.3f;
+        baseValues.upsideDownExtraKineticFrictionFactor = 0.75f;
+        baseValues.upsideDownExtraKineticFrictionTimeThreshold = 0.75f;
+        baseValues.upsideDownAttachSpeed = 25;
+        baseValues.sidewaysExtraKineticFrictionFactor = 0.75f;
+        baseValues.sidewaysExtraKineticFrictionTimeThreshold = 0.75f;
+        baseValues.sidewaysAttachSpeed = 25;
         baseValues.slopeConstantDown = 1.2f;
         baseValues.slopeConstantUp = 0.7f;
         baseValues.airDrag = 3;
@@ -393,11 +444,11 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
         float ratio = (slopeAngle - 90) / 90;
         Vector3 currentVelDir = currentVelocity.normalized;
 
-        if (ratio >= 0.90)
-        { 
-            // Apply upside-down extra kinetic friction as simple frction
+        //if (ratio >= 0.90)
+        //{ 
+            // Apply upside-down extra kinetic friction as simple friction
             currentVelocity -= currentVelDir * (values.upsideDownExtraKineticFrictionFactor * values.gravity.magnitude) * ratio * deltaTime;
-        }
+        /*}
         else {
 
         // Get appropriate gravity factor for either up hill or down hill slope
@@ -408,6 +459,7 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
         // Apply grounded gravity
         currentVelocity += currentVelDir * values.gravity.magnitude * values.upsideDownExtraKineticFrictionFactor * slopeConstant * deltaTime * ratio;
         }
+        */
     }
 
     /// <summary>
@@ -419,11 +471,11 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
     {
         Vector3 currentVelDir = currentVelocity.normalized;
 
-        if (planePerpGravPercent >= 0.90)
-        { 
+        //if (planePerpGravPercent >= 0.90)
+        //{ 
             // Apply upside-down extra kinetic friction as simple frction
             currentVelocity -= currentVelDir * (values.sidewaysExtraKineticFrictionFactor * values.gravity.magnitude) * planePerpGravPercent * deltaTime;
-        }
+        /*}
         else {
 
         // Get appropriate gravity factor for either up hill or down hill slope
@@ -434,6 +486,7 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
         // Apply grounded gravity
         currentVelocity += currentVelDir * values.gravity.magnitude * values.sidewaysExtraKineticFrictionFactor * slopeConstant * deltaTime * planePerpGravPercent;
         }
+        */
     }
 
     /// <summary>
@@ -523,7 +576,7 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
                     ActivateStaticFriction(ref currentVelocity);
 
                 // If there is kinetic friction to apply
-                else if (sqrSpeed > 0 )
+                else if (sqrSpeed > 0)
                     AddKineticFriction(ref currentVelocity, deltaTime);
             }
 
@@ -533,14 +586,42 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
 
             // If there is upside-down extra kinetic friction to apply  
             if (Vector3.Dot(motor.GetEffectiveGroundNormal(), gravityDirection) > 0)
-                AddUpsideDownExtraKineticFriction(ref currentVelocity, slopeAngle, deltaTime);
-            else if (sqrSpeed > values.extraKineticFrictionSpeedThreshold * values.extraKineticFrictionSpeedThreshold)
-                AddExtraKineticFriction(ref currentVelocity, slopeAngle, deltaTime);
+            {
+                if(upsideDownTimer >= values.upsideDownExtraKineticFrictionTimeThreshold)
+                {
+                    AddUpsideDownExtraKineticFriction(ref currentVelocity, slopeAngle, deltaTime);
+                    
+                    if (currentVelocity.sqrMagnitude < values.upsideDownAttachSpeed * values.upsideDownAttachSpeed)
+                        motor.ForceUnground();
+                }
+                else
+                    upsideDownTimer += deltaTime;
+            }
+            else
+            {
+                upsideDownTimer = 0;
+
+                if (sqrSpeed > values.extraKineticFrictionSpeedThreshold * values.extraKineticFrictionSpeedThreshold)
+                    AddExtraKineticFriction(ref currentVelocity, slopeAngle, deltaTime);
+            }
 
             float planePerpGravPercent = Mathf.Abs(Vector3.Dot(motor.PlanarConstraintAxis, gravityDirection));
+            if (planePerpGravPercent > motor.MaxStableSlopeAngle/90)
+            {
+                if(sidewaysTimer >= values.sidewaysExtraKineticFrictionTimeThreshold)
+                {
+                    AddSidewaysExtraKineticFrictionFactor(ref currentVelocity, planePerpGravPercent, deltaTime);
 
-            if (planePerpGravPercent > 0.05)
-                AddSidewaysExtraKineticFrictionFactor(ref currentVelocity, planePerpGravPercent, deltaTime);
+                    if (currentVelocity.sqrMagnitude < values.upsideDownAttachSpeed * values.upsideDownAttachSpeed)
+                        motor.ForceUnground();
+                }
+                else
+                    sidewaysTimer += deltaTime; 
+            }
+            else
+            {
+                sidewaysTimer = 0;
+            }
 
             if(values.constantAcceleration != Vector3.zero)
                 currentVelocity += Vector3.ProjectOnPlane(values.constantAcceleration, motor.GetEffectiveGroundNormal()) * deltaTime;
@@ -548,6 +629,8 @@ public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMo
         }
         else
         {
+            sidewaysTimer = 0;
+            upsideDownTimer = 0;
 
             // Velocity perpendicular to gravity
             Vector3 flattenedVelocity;

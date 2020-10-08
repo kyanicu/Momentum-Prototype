@@ -305,16 +305,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraDistance: 15
-  tiltThreshold: 20
-  tiltScale: 0.5
+  maxPlayerMoveToReset: 50
+  tiltThreshold: 10
+  tiltScale: 0.4
   tiltDampTime: 0.1
-  tiltDampMaxSpeed: 100
-  zoomThreshold: 30
+  tiltDampMaxSpeed: 150
+  zoomThreshold: 20
   zoomScale: 0.3
-  zoomDampTime: 0.1
-  zoomDampMaxSpeed: 100
+  zoomDampTime: 0.2
+  zoomDampMaxSpeed: 150
   orientDampTime: 0.1
-  orientDampMaxSpeed: 100
+  orientDampMaxSpeed: 150
+  manualTiltingSpeed: 50
 --- !u!1 &954129658378158994
 GameObject:
   m_ObjectHideFlags: 0

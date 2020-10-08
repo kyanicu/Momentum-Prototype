@@ -691,7 +691,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
             }
             else
             {
-                slerpFactor = 1000;//3;
+                slerpFactor = 1000;//1;//3;;
                 Vector3 smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
                 
                 currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
@@ -701,7 +701,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
         {
             
             if(!reorient)
-                slerpFactor = 0;//3;
+                slerpFactor = 1;//3;//0;
             else
                 slerpFactor = 1000;//30;
 
@@ -1254,8 +1254,9 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     public void ResetState(KinematicCharacterMotor motor)
     {
         // Resets the the motor state (used as a makeshift "level restart")
-        motor.ApplyState(startState);
         SetCurrentPlane(motor, startPlane);
+        motor.ApplyState(startState);
+        motor.BaseVelocity = Vector3.zero;
     }
     #endregion
 }
