@@ -4,6 +4,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using KinematicCharacterController;
 
+
+/// <summary>
+/// A wrapper for the Transform class that allows only reading of main fields
+/// </summary>
 public class ReadOnlyTransform
 {
     private Transform transform;
@@ -21,6 +25,10 @@ public class ReadOnlyTransform
     }
 }
 
+/// <summary>
+/// GameObject Component that represents and handles all aspects of a Player Character
+/// </summary>
+/// <typeparam name="Ability"> The ability class of the given character </typeparam>
 public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : IPlayerMovementAbility, new()
 {
 
@@ -38,9 +46,6 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
 
     private KinematicCharacterMotor motor;
 
-    //private HashSet<string> triggerTagsToTrack;
-    //private HashSet<Collider> trackedTriggerColliders;
-
     // Start is called before the first frame update
     void Awake()
     {
@@ -49,9 +54,6 @@ public abstract class PlayerCharacter<Ability> : MonoBehaviour where Ability : I
         playerController.Enable();
 
         motor = GetComponent<KinematicCharacterMotor>();
-
-        //triggerTagsToTrack = new HashSet<string>{ "Plane", "PlaneBreaker", "MovementEffector" };
-        //trackedTriggerObjects = new HashSet<Collider>();
 
         SetupCommunicators();
     }
