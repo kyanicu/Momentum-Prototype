@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Class representing the playable character of Ilphine
+/// Class representing the playable character of Cartia
 /// Overrides PlayerCharacter to handle specific character aspects
 /// </summary>
-public class IlphineCharacter : PlayerCharacter
+public class CartiaCharacter : PlayerCharacter
 {
     /// <summary>
     /// Initializes concrete class
@@ -14,7 +14,7 @@ public class IlphineCharacter : PlayerCharacter
     /// <param name="_movement">The movement field in PlayerCharacter to be set by concrete class</param>
     protected override void SetupConcreteClass(out PlayerMovement _movement)
     {
-        _movement = new PlayerMovement(new IlphineMovementAbility());
+        _movement = new PlayerMovement(new CartiaMovementAbility());
     }
 
     /// <summary>
@@ -24,7 +24,8 @@ public class IlphineCharacter : PlayerCharacter
     /// <param name="externComm">The external communicator field in PlayerCharacter to be set</param>
     protected override void SetupConcreteCommunicators(out PlayerInternalCommunicator internComm, out PlayerExternalCommunicator externComm)
     {
-        internComm = new IlphineInternalCommunicator();
-        externComm = new IlphineExternalCommunicator();
+        internComm = new CartiaInternalCommunicator();
+        externComm = new CartiaExternalCommunicator();
     }
 }
+

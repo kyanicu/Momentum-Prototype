@@ -75,8 +75,8 @@ struct IlphineMovementAbilityInput : IPlayerMovementInput
 public class IlphineMovementAbility : PlayerMovementAbility<IlphineMovementAbilityValues>, IIlphineMovementAbilityCommunication
 {
     
-    public override event EventHandler<AbilityOverrideArgs> addingMovementOverrides;
-    public override event EventHandler<AbilityOverrideArgs> removingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
 
     private IlphineMovementAbilityInput input;
 
@@ -95,7 +95,7 @@ public class IlphineMovementAbility : PlayerMovementAbility<IlphineMovementAbili
         
     }
 
-    public override void SetCommunication(PlayerInternalCommunicator communicator)
+    public override void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         (communicator as IlphineInternalCommunicator).SetCommunication(this);
     }

@@ -6,20 +6,47 @@ using UnityEngine;
 using KinematicCharacterController;
 using PathCreation;
 
+/// <summary>
+/// Interface for input relating to PlayerMovement
+/// </summary>
 public interface IPlayerMovementInput
 {
+    /// <summary>
+    /// Register input for use
+    /// </summary>
+    /// <param name="controllerActions">The controller actions</param>
     void RegisterInput(PlayerController.PlayerActions controllerActions);
+    /// <summary>
+    /// Reset input registration
+    /// </summary>
     void Reset();
 }
 
-
+/// <summary>
+/// Holds wall hit info
+/// </summary>
 public struct WallHits
 {
+    /// <summary>
+    /// Normal of a ceiling hit
+    /// Vector3.Zero if none hit
+    /// </summary>
     public Vector3 hitCeiling;
+    /// <summary>
+    /// Normal of a left wall hit
+    /// Vector3.Zero if none hit
+    /// </summary>
     public Vector3 hitLeftWall;
+    /// <summary>
+    /// Normal of a right wall hit
+    /// Vector3.Zero if none hit
+    /// </summary>
     public Vector3 hitRightWall;
 }
 
+/// <summary>
+/// Holds and hand handles overrideable values 
+/// </summary>
 [System.Serializable]
 public abstract class PlayerMovementOverridableValues
 {
@@ -195,7 +222,6 @@ public abstract class PlayerMovementOverridableAttribute<Values> where Values : 
     /// <summary>
     /// The current physics values for the player, including overrides
     /// </summary>
-    //[SerializeField]
     protected Values values;
 
     public PlayerMovementOverridableAttribute()
@@ -408,13 +434,13 @@ public class PlayerMovementValues : PlayerMovementOverridableValues
 }
 
 [System.Serializable]
-public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication where Ability : IPlayerMovementAbility, new()
+public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication
 {
 
-    #region MovementEvents
-    public event EventHandler<PlaneChangeEventArgs> planeChanged;
-    public event EventHandler<KinematicCharacterMotorState> stateUpdated;
-    #endregion
+#region MovementEvents
+    public event Action<PlaneChangeArgs> planeChanged;
+    public event Action<KinematicCharacterMotorState> stateUpdated;
+#endregion
 
     private struct SlopeList
     {
@@ -506,7 +532,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     [SerializeField]
     private PlayerMovementAction action;
     [SerializeField]
-    private Ability ability;
+    private IPlayerMovementAbility ability;
 
     private SlopeList slopeList;
     private bool foundFloorToReorientTo;
@@ -530,15 +556,19 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     /// <summary>
     ///  Constructor
     /// </summary>
-    public PlayerMovement()
+    private PlayerMovement()
     {
         physics = new PlayerMovementPhysics();
         action = new PlayerMovementAction();
-        ability = new Ability();
+    } 
+
+    public PlayerMovement(IPlayerMovementAbility _ability) : this()
+    {
+        ability = _ability;
 
         ability.addingMovementOverrides += AddAbilityOverride;
         ability.removingMovementOverrides += RemoveAbilityOverride;
-    } 
+    }
     
     protected override void SetDefaultBaseValues()
     {
@@ -558,15 +588,15 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     {
         action.OnValidate();
         physics.OnValidate();
-        ability.OnValidate();
+        ////ability.OnValidate();
     }
 
-    public void SetCommunication(PlayerInternalCommunicator communicator)
+    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         communicator.SetCommunication(this);
 
-        action.SetCommunication(communicator);
-        ability.SetCommunication(communicator);
+        action.SetCommunicationInterface(communicator);
+        ability.SetCommunicationInterface(communicator);
     }
 
     /// <summary>
@@ -924,7 +954,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
     public void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
         ability.AfterCharacterUpdate(motor, deltaTime);
-        stateUpdated?.Invoke(this, motor.GetState());
+        stateUpdated?.Invoke(motor.GetState());
 
         // Reset Ability and Action Input
         ability.ResetInput();
@@ -1088,7 +1118,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
             motor.BaseVelocity = Quaternion.FromToRotation(currentPlane.normal, plane.normal) * motor.BaseVelocity;//Vector3.ProjectOnPlane(motor.BaseVelocity, currentPlane.normal).normalized * motor.BaseVelocity.magnitude; 
             motor.PlanarConstraintAxis = plane.normal;
             motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
-            planeChanged?.Invoke(this, new PlaneChangeEventArgs(plane.normal, breaker));
+            planeChanged?.Invoke(new PlaneChangeArgs(plane.normal, breaker));
             settingPlane = new Plane(Vector3.zero, Vector3.zero);
             settingPlaneBreaker = false;
         }
@@ -1211,7 +1241,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
         ability.ExitMovementEffector(effector);
     }
 
-    private void AddAbilityOverride(object sender, AbilityOverrideArgs args)
+    private void AddAbilityOverride(AbilityOverrideArgs args)
     {
         for (int i = 0; i < args.movementOverrides.Count; i++)
         {
@@ -1229,7 +1259,7 @@ public class PlayerMovement<Ability> : PlayerMovementOverridableAttribute<Player
         }
     }
 
-    private void RemoveAbilityOverride(object sender, AbilityOverrideArgs args)
+    private void RemoveAbilityOverride(AbilityOverrideArgs args)
     {
         for (int i = 0; i < args.movementOverrides.Count; i++)
         {

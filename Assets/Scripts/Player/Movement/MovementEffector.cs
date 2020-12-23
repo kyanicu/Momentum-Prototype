@@ -40,8 +40,8 @@ public class MovementEffector : MonoBehaviour
     public List<MutableTuple<NephuiMovementAbilityValues, PlayerMovementOverrideType>> nephuiAbilityOverrides { get { return _nephuiAbilityOverrides; } private set { _nephuiAbilityOverrides = value; } }
 
     [SerializeField]
-    private List<MutableTuple<DeletheiMovementAbilityValues, PlayerMovementOverrideType>> _deletheiAbilityOverrides = new List<MutableTuple<DeletheiMovementAbilityValues, PlayerMovementOverrideType>>();
-    public List<MutableTuple<DeletheiMovementAbilityValues, PlayerMovementOverrideType>> deletheiAbilityOverrides { get { return _deletheiAbilityOverrides; } private set { _deletheiAbilityOverrides = value; } }
+    private List<MutableTuple<CartiaMovementAbilityValues, PlayerMovementOverrideType>> _cartiaAbilityOverrides = new List<MutableTuple<CartiaMovementAbilityValues, PlayerMovementOverrideType>>();
+    public List<MutableTuple<CartiaMovementAbilityValues, PlayerMovementOverrideType>> cartiaAbilityOverrides { get { return _cartiaAbilityOverrides; } private set { _cartiaAbilityOverrides = value; } }
 
     [SerializeField]
     private List<MutableTuple<IlphineMovementAbilityValues, PlayerMovementOverrideType>> _ilphineAbilityOverrides = new List<MutableTuple<IlphineMovementAbilityValues, PlayerMovementOverrideType>>();

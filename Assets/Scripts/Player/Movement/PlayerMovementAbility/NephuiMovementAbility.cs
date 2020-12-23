@@ -74,8 +74,8 @@ struct NephuiMovementAbilityInput : IPlayerMovementInput
 public class NephuiMovementAbility : PlayerMovementAbility<NephuiMovementAbilityValues>,  INephuiMovementAbilityCommunication
 {
 
-    public override event EventHandler<AbilityOverrideArgs> addingMovementOverrides;
-    public override event EventHandler<AbilityOverrideArgs> removingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
 
     private NephuiMovementAbilityInput input;
 
@@ -94,7 +94,7 @@ public class NephuiMovementAbility : PlayerMovementAbility<NephuiMovementAbility
         
     }
 
-    public override void SetCommunication(PlayerInternalCommunicator communicator)
+    public override void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         (communicator as NephuiInternalCommunicator).SetCommunication(this);
     }

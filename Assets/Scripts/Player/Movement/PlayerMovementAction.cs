@@ -308,7 +308,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
     }
 
     #region Events
-    public event EventHandler facingDirectionChanged;
+    public event Action facingDirectionChanged;
     #endregion
 
     /// <summary>
@@ -341,7 +341,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         facingDirection = +1;
     }
 
-    public void SetCommunication(PlayerInternalCommunicator communicator)
+    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         communicator.SetCommunication(this);
     }
@@ -416,7 +416,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
                 if (faceDir != facingDirection)
                 {
                     facingDirection = faceDir;
-                    facingDirectionChanged?.Invoke(this, EventArgs.Empty);
+                    facingDirectionChanged?.Invoke();
                 }                
             }
         }

@@ -5,7 +5,7 @@ using KinematicCharacterController;
 using System;
 
 [System.Serializable]
-public class DeletheiMovementAbilityValues : PlayerMovementOverridableValues
+public class CartiaMovementAbilityValues : PlayerMovementOverridableValues
 {
     [SerializeField]
     public float test;
@@ -17,48 +17,48 @@ public class DeletheiMovementAbilityValues : PlayerMovementOverridableValues
     
     public override void AddBy(PlayerMovementOverridableValues ov) 
     {
-        DeletheiMovementAbilityValues v = ov as DeletheiMovementAbilityValues;
+        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
 
         test = Add(test, v.test);
     }
 
     public override void SubtractBy(PlayerMovementOverridableValues ov) 
     {
-        DeletheiMovementAbilityValues v = ov as DeletheiMovementAbilityValues;
+        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
 
         test = Subtract(test, v.test);
     }
 
     public override void MultiplyBy(PlayerMovementOverridableValues ov) 
     {
-        DeletheiMovementAbilityValues v = ov as DeletheiMovementAbilityValues;
+        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
 
         test = Multiply(test, v.test);
     }
 
     public override void DivideBy(PlayerMovementOverridableValues ov) 
     {
-        DeletheiMovementAbilityValues v = ov as DeletheiMovementAbilityValues;
+        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
 
         test = Divide(test, v.test);
     }
 
     public override void OrBy(PlayerMovementOverridableValues ov) 
     {
-        DeletheiMovementAbilityValues v = ov as DeletheiMovementAbilityValues;
+        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
 
         test = Or(test, v.test);
     }
 
     public override void AndBy(PlayerMovementOverridableValues ov) 
     {
-        DeletheiMovementAbilityValues v = ov as DeletheiMovementAbilityValues;
+        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
 
         test = And(test, v.test);
     }
 }
 
-struct DeletheiMovementAbilityInput : IPlayerMovementInput
+struct CartiaMovementAbilityInput : IPlayerMovementInput
 {
     public void RegisterInput(PlayerController.PlayerActions controllerActions)
     {
@@ -72,17 +72,17 @@ struct DeletheiMovementAbilityInput : IPlayerMovementInput
 }
 
 [System.Serializable]
-public class DeletheiMovementAbility : PlayerMovementAbility<DeletheiMovementAbilityValues> ,IDeletheiMovementAbilityCommunication
+public class CartiaMovementAbility : PlayerMovementAbility<CartiaMovementAbilityValues> ,ICartiaMovementAbilityCommunication
 {
 
-    public override event EventHandler<AbilityOverrideArgs> addingMovementOverrides;
-    public override event EventHandler<AbilityOverrideArgs> removingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
 
-    private DeletheiMovementAbilityInput input;
+    private CartiaMovementAbilityInput input;
 
-    public DeletheiMovementAbility()
+    public CartiaMovementAbility()
     {
-        input = new DeletheiMovementAbilityInput();
+        input = new CartiaMovementAbilityInput();
     }
 
     protected override void SetDefaultBaseValues()
@@ -95,9 +95,9 @@ public class DeletheiMovementAbility : PlayerMovementAbility<DeletheiMovementAbi
         
     }
 
-    public override void SetCommunication(PlayerInternalCommunicator communicator)
+    public override void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
-        (communicator as DeletheiInternalCommunicator).SetCommunication(this);
+        (communicator as CartiaInternalCommunicator).SetCommunication(this);
     }
 
     #region AbilityInterface
@@ -222,17 +222,17 @@ public class DeletheiMovementAbility : PlayerMovementAbility<DeletheiMovementAbi
 
     public override void EnterMovementEffector(MovementEffector effector)
     {
-        for (int i = 0; i < effector.deletheiAbilityOverrides.Count; i++)
+        for (int i = 0; i < effector.cartiaAbilityOverrides.Count; i++)
         {
-            AddOverride(effector.deletheiAbilityOverrides[i].item1, effector.deletheiAbilityOverrides[i].item2);
+            AddOverride(effector.cartiaAbilityOverrides[i].item1, effector.cartiaAbilityOverrides[i].item2);
         }
     }
 
     public override void ExitMovementEffector(MovementEffector effector)
     {
-        for (int i = 0; i < effector.deletheiAbilityOverrides.Count; i++)
+        for (int i = 0; i < effector.cartiaAbilityOverrides.Count; i++)
         {
-            RemoveOverride(effector.deletheiAbilityOverrides[i].item1, effector.deletheiAbilityOverrides[i].item2);
+            RemoveOverride(effector.cartiaAbilityOverrides[i].item1, effector.cartiaAbilityOverrides[i].item2);
         }
     }
 
