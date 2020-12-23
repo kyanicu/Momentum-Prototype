@@ -5,57 +5,49 @@ using KinematicCharacterController;
 using System;
 
 [System.Serializable]
-public class IlphineMovementAbilityValues : PlayerMovementOverridableValues
+public class IlphineMovementAbilityValues : PlayerOverridableValues
 {
     [SerializeField]
     public float test;
-
-    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
-    {
-        test = DefaultFloat(overrideType);
-    }
     
-    public override void AddBy(PlayerMovementOverridableValues ov) 
+    protected override void SetValueCounts()
     {
-        IlphineMovementAbilityValues v = ov as IlphineMovementAbilityValues;
-
-        test = Add(test, v.test);
+        floatValuesCount = 1;
+        intValuesCount = 0;
+        vector3ValuesCount = 0;
     }
 
-    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    protected override float GetFloatValue(int i)
     {
-        IlphineMovementAbilityValues v = ov as IlphineMovementAbilityValues;
-
-        test = Subtract(test, v.test);
+        switch (i) 
+        {
+            case (0) :
+                return test;
+            default :
+                return 0;
+        }
     }
-
-    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    protected override void SetFloatValue(int i, float value)
     {
-        IlphineMovementAbilityValues v = ov as IlphineMovementAbilityValues;
-
-        test = Multiply(test, v.test);
+        switch (i) 
+        {
+            case (0) :
+                test = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    protected override int GetIntValue(int i)
     {
-        IlphineMovementAbilityValues v = ov as IlphineMovementAbilityValues;
-
-        test = Divide(test, v.test);
+        return 0;
     }
-
-    public override void OrBy(PlayerMovementOverridableValues ov) 
+    protected override void SetIntValue(int i, int value) { }
+    protected override Vector3 GetVector3Value(int i)
     {
-        IlphineMovementAbilityValues v = ov as IlphineMovementAbilityValues;
-
-        test = Or(test, v.test);
+        return Vector3.zero;
     }
-
-    public override void AndBy(PlayerMovementOverridableValues ov) 
-    {
-        IlphineMovementAbilityValues v = ov as IlphineMovementAbilityValues;
-
-        test = And(test, v.test);
-    }
+    protected override void SetVector3Value(int i, Vector3 value) {}
 }
 
 struct IlphineMovementAbilityInput : IPlayerMovementInput
@@ -224,7 +216,7 @@ public class IlphineMovementAbility : PlayerMovementAbility<IlphineMovementAbili
     {
         for (int i = 0; i < effector.movementOverrides.Count; i++)
         {
-            AddOverride(effector.ilphineAbilityOverrides[i].item1, effector.movementOverrides[i].item2);
+            ApplyOverride(effector.ilphineAbilityOverrides[i].item1, effector.movementOverrides[i].item2);
         }
     }
 

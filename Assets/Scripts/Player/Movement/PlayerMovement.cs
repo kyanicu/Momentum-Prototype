@@ -44,271 +44,8 @@ public struct WallHits
     public Vector3 hitRightWall;
 }
 
-/// <summary>
-/// Holds and hand handles overrideable values 
-/// </summary>
 [System.Serializable]
-public abstract class PlayerMovementOverridableValues
-{
-
-    public abstract void SetDefaultValues(PlayerMovementOverrideType overrideType);
-
-    protected static float DefaultFloat(PlayerMovementOverrideType type)
-    {
-        switch (type)
-        {
-            case PlayerMovementOverrideType.Addition :
-                return 0;
-            case PlayerMovementOverrideType.Multiplier :
-                return 1;
-            case PlayerMovementOverrideType.Set :
-                return float.PositiveInfinity;
-            default :
-                return 0;
-        }
-    }
-    protected static Vector3 DefaultVector3(PlayerMovementOverrideType type)
-    {
-        switch (type)
-        {
-            case PlayerMovementOverrideType.Addition :
-                return Vector3.zero;
-            case PlayerMovementOverrideType.Multiplier :
-                return Vector3.one;
-            case PlayerMovementOverrideType.Set :
-                return Vector3.positiveInfinity;
-            default :
-                return Vector3.zero;
-        }
-    }
-
-    protected static int DefaultInt(PlayerMovementOverrideType type)
-    {
-        switch (type)
-        {
-            case PlayerMovementOverrideType.Addition :
-                return 0;
-            case PlayerMovementOverrideType.Multiplier :
-                return 1;
-            case PlayerMovementOverrideType.Set :
-                return int.MaxValue;
-            default :
-                return 0;
-        }
-    }
-
-    protected static float Add(float v1, float v2)
-    {
-        return v1 + v2;
-    }
-
-    protected static float Subtract(float v1, float v2)
-    {
-        return v1 - v2;
-    }
-    
-    protected static float Multiply(float v1, float v2)
-    {
-        return v1 * v2;
-    }
-    
-    protected static float Divide(float v1, float v2)
-    {
-        return v1 / v2;
-    }
-    
-    protected static float Or(float v1, float v2)
-    {
-        return (!float.IsInfinity(v2)) ? v2 : v1;
-    }
-    
-    protected static float And(float v1, float v2)
-    {
-        return (!float.IsInfinity(v2)) ? float.PositiveInfinity : v1;
-    }
-    
-    protected static int Add(int v1, int v2)
-    {
-        return v1 + v2;
-    }
-
-    protected static int Subtract(int v1, int v2)
-    {
-        return v1 - v2;
-    }
-    
-    protected static int Multiply(int v1, int v2)
-    {
-        return v1 * v2;
-    }
-    
-    protected static int Divide(int v1, int v2)
-    {
-        return v1 / v2;
-    }
-    
-    protected static int Or(int v1, int v2)
-    {
-        return (v2 != int.MaxValue) ? v2 : v1;
-    }
-    
-    protected static int And(int v1, int v2)
-    {
-        return (v2 != int.MaxValue) ? int.MaxValue : v1;
-    }
-
-    protected static Vector3 Add(Vector3 v1, Vector3 v2)
-    {
-        return v1 + v2;
-    }
-    
-    protected static Vector3 Subtract(Vector3 v1, Vector3 v2)
-    {
-        return v1 + v2;
-    }
-    
-    protected static Vector3 Multiply(Vector3 v1, Vector3 v2)
-    {
-        return Vector3.Scale(v1, v2);
-    }
-    
-    protected static Vector3 Divide(Vector3 v1, Vector3 v2)
-    {
-        return Vector3.Scale(v1, new Vector3(1/v2.x, 1/v2.y, 1/v2.z));
-    }
-    
-    protected static Vector3 Or(Vector3 v1, Vector3 v2)
-    {
-        return (!float.IsInfinity(v2.x)) ? v2 : v1;
-    }
-    
-    protected static Vector3 And(Vector3 v1, Vector3 v2)
-    {
-        return (!float.IsInfinity(v2.x)) ? Vector3.positiveInfinity : v1;;
-    }
-
-    public abstract void AddBy(PlayerMovementOverridableValues v);
-    public abstract void SubtractBy(PlayerMovementOverridableValues v);
-    public abstract void MultiplyBy(PlayerMovementOverridableValues v);
-    public abstract void DivideBy(PlayerMovementOverridableValues v);
-    public abstract void OrBy(PlayerMovementOverridableValues v);
-    public abstract void AndBy(PlayerMovementOverridableValues v);
-}
-
-[System.Serializable]
-public abstract class PlayerMovementOverridableAttribute<Values> where Values : PlayerMovementOverridableValues, new()
-{
-    /// <summary>
-    /// The default physics values for the player
-    /// </summary>
-    [SerializeField]
-    protected Values baseValues;
-
-    /// <summary>
-    /// The added physics values for the player
-    /// </summary>
-    private Values addedValues;
-
-    /// <summary>
-    /// The multiplied physics values for the player
-    /// </summary>
-    private Values multipliedValues;
-
-    /// <summary>
-    /// The multiplied physics values for the player
-    /// </summary>
-    private List<Values> setValues;
-
-    /// <summary>
-    /// The current physics values for the player, including overrides
-    /// </summary>
-    protected Values values;
-
-    public PlayerMovementOverridableAttribute()
-    {
-        baseValues = new Values();
-        addedValues = new Values();
-        multipliedValues = new Values();
-        setValues = new List<Values>() { new Values() };
-        values = new Values();
-
-        baseValues.SetDefaultValues(PlayerMovementOverrideType.Addition);
-        addedValues.SetDefaultValues(PlayerMovementOverrideType.Addition);
-        multipliedValues.SetDefaultValues(PlayerMovementOverrideType.Multiplier);
-        setValues[0].SetDefaultValues(PlayerMovementOverrideType.Set);
-        values.SetDefaultValues(PlayerMovementOverrideType.Addition);
-
-        SetDefaultBaseValues();
-
-        CalculateValues();
-    }
-
-    protected abstract void SetDefaultBaseValues();
-
-    public void CalculateValues()
-    {
-        Values set = new Values();
-        set.SetDefaultValues(PlayerMovementOverrideType.Set);
-        foreach (Values s in setValues)
-        {
-            set.OrBy(s);
-        }
-
-        values.SetDefaultValues(PlayerMovementOverrideType.Addition);
-        values.AddBy(baseValues);
-        values.OrBy(set);
-        values.MultiplyBy(multipliedValues);
-        values.AddBy(addedValues);
-    }
-
-    public void AddOverride(Values overrideValues, PlayerMovementOverrideType overrideType)
-    {
-        switch (overrideType) 
-        {
-            case (PlayerMovementOverrideType.Addition) :
-                addedValues.AddBy(overrideValues); 
-                break;
-            case (PlayerMovementOverrideType.Multiplier) :
-                multipliedValues.MultiplyBy(overrideValues); 
-                break;
-            case (PlayerMovementOverrideType.Set) :
-                setValues.Add(overrideValues); 
-                break;
-        }
-        CalculateValues();
-    }
-
-    public void RemoveOverride(Values overrideValues, PlayerMovementOverrideType overrideType)
-    {
-        switch (overrideType) 
-        {
-            case (PlayerMovementOverrideType.Addition) :
-               addedValues.SubtractBy(overrideValues); 
-                break;
-            case (PlayerMovementOverrideType.Multiplier) :
-                multipliedValues.DivideBy(overrideValues); 
-                break;
-            case (PlayerMovementOverrideType.Set) :
-                setValues.Remove(overrideValues); 
-                break;
-        }
-        CalculateValues();
-    }
-
-    public void OnValidate()
-    {
-        ValidateBaseValues();
-        CalculateValues();
-    }
-
-    protected abstract void ValidateBaseValues();
-
-}
-
-public enum PlayerMovementOverrideType { Set, Addition, Multiplier }
-
-[System.Serializable]
-public class PlayerMovementValues : PlayerMovementOverridableValues
+public class PlayerMovementValues : PlayerOverridableValues
 {
 
     [SerializeField]
@@ -329,112 +66,100 @@ public class PlayerMovementValues : PlayerMovementOverridableValues
     public int negateAction;
     public int negatePhysics;
 
-    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
+    protected override void SetValueCounts()
     {
-        maxSpeed = DefaultFloat(overrideType);
-        attachThreshold = DefaultFloat(overrideType);
-        pushOffGroundThreshold = DefaultFloat(overrideType);
-        maxSlopeTrackTime = DefaultFloat(overrideType);
-        ungroundRotationFactor = DefaultFloat(overrideType);
-        ungroundRotationMinSpeed = DefaultFloat(overrideType);
-        ungroundRotationMaxSpeed = DefaultFloat(overrideType);
-        negateAction = DefaultInt(overrideType);
-        negatePhysics = DefaultInt(overrideType);
-    }
-    
-    public override void AddBy(PlayerMovementOverridableValues ov) 
-    {
-        PlayerMovementValues v = ov as PlayerMovementValues;
-
-        maxSpeed = Add(maxSpeed, v.maxSpeed);
-        attachThreshold = Add(attachThreshold, v.attachThreshold);
-        pushOffGroundThreshold = Add(pushOffGroundThreshold, v.pushOffGroundThreshold);
-        maxSlopeTrackTime = Add(maxSlopeTrackTime, v.maxSlopeTrackTime);
-        ungroundRotationFactor = Add(ungroundRotationFactor, v.ungroundRotationFactor);
-        ungroundRotationMinSpeed = Add(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
-        ungroundRotationMaxSpeed = Add(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
-        negateAction = Add(negateAction, v.negateAction);
-        negatePhysics = Add(negatePhysics, v.negatePhysics);
+        floatValuesCount = 7;
+        intValuesCount = 2;
+        vector3ValuesCount = 0;
     }
 
-    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    protected override float GetFloatValue(int i)
     {
-        PlayerMovementValues v = ov as PlayerMovementValues;
-
-        maxSpeed = Subtract(maxSpeed, v.maxSpeed);
-        attachThreshold = Subtract(attachThreshold, v.attachThreshold);
-        pushOffGroundThreshold = Subtract(pushOffGroundThreshold, v.pushOffGroundThreshold);
-        maxSlopeTrackTime = Subtract(maxSlopeTrackTime, v.maxSlopeTrackTime);
-        ungroundRotationFactor = Subtract(ungroundRotationFactor, v.ungroundRotationFactor);
-        ungroundRotationMinSpeed = Subtract(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
-        ungroundRotationMaxSpeed = Subtract(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
-        negateAction = Subtract(negateAction, v.negateAction);
-        negatePhysics = Subtract(negatePhysics, v.negatePhysics);
+        switch (i) 
+        {
+            case (0) :
+                return maxSpeed;
+            case (1) :
+                return attachThreshold;
+            case (2) :
+                return pushOffGroundThreshold;
+            case (3) :
+                return maxSlopeTrackTime;
+            case (4) :
+                return ungroundRotationFactor;
+            case (5) :
+                return ungroundRotationMinSpeed;
+            case (6) :
+                return ungroundRotationMaxSpeed;
+            default :
+                return 0;
+        }
     }
-
-    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    protected override void SetFloatValue(int i, float value)
     {
-        PlayerMovementValues v = ov as PlayerMovementValues;
-
-        maxSpeed = Multiply(maxSpeed, v.maxSpeed);
-        attachThreshold = Multiply(attachThreshold, v.attachThreshold);
-        pushOffGroundThreshold = Multiply(pushOffGroundThreshold, v.pushOffGroundThreshold);
-        maxSlopeTrackTime = Multiply(maxSlopeTrackTime, v.maxSlopeTrackTime);
-        ungroundRotationFactor = Multiply(ungroundRotationFactor, v.ungroundRotationFactor);
-        ungroundRotationMinSpeed = Multiply(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
-        ungroundRotationMaxSpeed = Multiply(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
-        negateAction = Multiply(negateAction, v.negateAction);
-        negatePhysics = Multiply(negatePhysics, v.negatePhysics);
+        switch (i) 
+        {
+            case (0) :
+                maxSpeed = value;
+                break;
+            case (1) :
+                attachThreshold = value;
+                break;
+            case (2) :
+                pushOffGroundThreshold = value;
+                break;
+            case (3) :
+                maxSlopeTrackTime = value;
+                break;
+            case (4) :
+                ungroundRotationFactor = value;
+                break;
+            case (5) :
+                ungroundRotationMinSpeed = value;
+                break;
+            case (6) :
+                ungroundRotationMaxSpeed = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    protected override int GetIntValue(int i)
     {
-        PlayerMovementValues v = ov as PlayerMovementValues;
-
-        maxSpeed = Divide(maxSpeed, v.maxSpeed);
-        attachThreshold = Divide(attachThreshold, v.attachThreshold);
-        pushOffGroundThreshold = Divide(pushOffGroundThreshold, v.pushOffGroundThreshold);
-        maxSlopeTrackTime = Divide(maxSlopeTrackTime, v.maxSlopeTrackTime);
-        ungroundRotationFactor = Divide(ungroundRotationFactor, v.ungroundRotationFactor);
-        ungroundRotationMinSpeed = Divide(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
-        ungroundRotationMaxSpeed = Divide(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
-        negateAction = Divide(negateAction, v.negateAction);
-        negatePhysics = Divide(negatePhysics, v.negatePhysics);
+        switch (i) 
+        {
+            case (0) :
+                return negateAction;
+            case (1) :
+                return negatePhysics;
+            default :
+                return 0;
+        }
     }
-
-    public override void OrBy(PlayerMovementOverridableValues ov) 
+    protected override void SetIntValue(int i, int value)
     {
-        PlayerMovementValues v = ov as PlayerMovementValues;
-
-        maxSpeed = Or(maxSpeed, v.maxSpeed);
-        attachThreshold = Or(attachThreshold, v.attachThreshold);
-        pushOffGroundThreshold = Or(pushOffGroundThreshold, v.pushOffGroundThreshold);
-        maxSlopeTrackTime = Or(maxSlopeTrackTime, v.maxSlopeTrackTime);
-        ungroundRotationFactor = Or(ungroundRotationFactor, v.ungroundRotationFactor);
-        ungroundRotationMinSpeed = Or(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
-        ungroundRotationMaxSpeed = Or(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
-        negateAction = Or(negateAction, v.negateAction);
-        negatePhysics = Or(negatePhysics, v.negatePhysics);
+        switch (i) 
+        {
+            case (0) :
+                negateAction = value;
+                break;
+            case (1) :
+                negatePhysics = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void AndBy(PlayerMovementOverridableValues ov) 
+    protected override Vector3 GetVector3Value(int i)
     {
-        PlayerMovementValues v = ov as PlayerMovementValues;
-
-        maxSpeed = And(maxSpeed, v.maxSpeed);
-        attachThreshold = And(attachThreshold, v.attachThreshold);
-        pushOffGroundThreshold = And(pushOffGroundThreshold, v.pushOffGroundThreshold);
-        maxSlopeTrackTime = And(maxSlopeTrackTime, v.maxSlopeTrackTime);
-        ungroundRotationFactor = And(ungroundRotationFactor, v.ungroundRotationFactor);
-        ungroundRotationMinSpeed = And(ungroundRotationMinSpeed, v.ungroundRotationMinSpeed);
-        ungroundRotationMaxSpeed = And(ungroundRotationMaxSpeed, v.ungroundRotationMaxSpeed);
-        negateAction = And(negateAction, v.negateAction);
-        negatePhysics = And(negatePhysics, v.negatePhysics);
+        return Vector3.zero;
     }
+    protected override void SetVector3Value(int i, Vector3 value) {}
+
 }
 
 [System.Serializable]
-public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication
+public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication
 {
 
 #region MovementEvents
@@ -1205,17 +930,17 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
     {
         for (int i = 0; i < effector.movementOverrides.Count; i++)
         {
-            AddOverride(effector.movementOverrides[i].item1, effector.movementOverrides[i].item2);
+            ApplyOverride(effector.movementOverrides[i].item1, effector.movementOverrides[i].item2);
         }
 
         for (int i = 0; i < effector.physicsOverrides.Count; i++)
         {
-            physics.AddOverride(effector.physicsOverrides[i].item1, effector.physicsOverrides[i].item2);
+            physics.ApplyOverride(effector.physicsOverrides[i].item1, effector.physicsOverrides[i].item2);
         }
 
         for (int i = 0; i < effector.actionOverrides.Count; i++)
         {
-            action.AddOverride(effector.actionOverrides[i].item1, effector.actionOverrides[i].item2);
+            action.ApplyOverride(effector.actionOverrides[i].item1, effector.actionOverrides[i].item2);
         }
 
         ability.EnterMovementEffector(effector);
@@ -1245,17 +970,17 @@ public class PlayerMovement : PlayerMovementOverridableAttribute<PlayerMovementV
     {
         for (int i = 0; i < args.movementOverrides.Count; i++)
         {
-            AddOverride(args.movementOverrides[i].item1, args.movementOverrides[i].item2);
+            ApplyOverride(args.movementOverrides[i].item1, args.movementOverrides[i].item2);
         }
 
         for (int i = 0; i < args.physicsOverrides.Count; i++)
         {
-            physics.AddOverride(args.physicsOverrides[i].item1, args.physicsOverrides[i].item2);
+            physics.ApplyOverride(args.physicsOverrides[i].item1, args.physicsOverrides[i].item2);
         }
 
         for (int i = 0; i < args.actionOverrides.Count; i++)
         {
-            action.AddOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
+            action.ApplyOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
         }
     }
 

@@ -19,32 +19,32 @@ public class MovementEffector : MonoBehaviour
 {
 
     [SerializeField]
-    private List<MutableTuple<PlayerMovementValues, PlayerMovementOverrideType>> _movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerMovementOverrideType>>();
-    public List<MutableTuple<PlayerMovementValues, PlayerMovementOverrideType>> movementOverrides { get { return _movementOverrides; } private set { _movementOverrides = value; } }
+    private List<MutableTuple<PlayerMovementValues, PlayerOverrideType>> _movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerOverrideType>>();
+    public List<MutableTuple<PlayerMovementValues, PlayerOverrideType>> movementOverrides { get { return _movementOverrides; } private set { _movementOverrides = value; } }
 
     [SerializeField]
-    private List<MutableTuple<PlayerMovementPhysicsValues, PlayerMovementOverrideType>> _physicsOverrides = new List<MutableTuple<PlayerMovementPhysicsValues, PlayerMovementOverrideType>>();
-    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerMovementOverrideType>> physicsOverrides { get { return _physicsOverrides; } private set { _physicsOverrides = value; } }
+    private List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>> _physicsOverrides = new List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>>();
+    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>> physicsOverrides { get { return _physicsOverrides; } private set { _physicsOverrides = value; } }
 
     [SerializeField]
-    private List<MutableTuple<PlayerMovementActionValues, PlayerMovementOverrideType>> _actionOverrides = new List<MutableTuple<PlayerMovementActionValues, PlayerMovementOverrideType>>();
-    public List<MutableTuple<PlayerMovementActionValues, PlayerMovementOverrideType>> actionOverrides { get { return _actionOverrides; } private set { _actionOverrides = value; } }
+    private List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>> _actionOverrides = new List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>>();
+    public List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>> actionOverrides { get { return _actionOverrides; } private set { _actionOverrides = value; } }
 
 
     [SerializeField]
-    private List<MutableTuple<AlestaMovementAbilityValues, PlayerMovementOverrideType>> _alestaAbilityOverrides = new List<MutableTuple<AlestaMovementAbilityValues, PlayerMovementOverrideType>>();
-    public List<MutableTuple<AlestaMovementAbilityValues, PlayerMovementOverrideType>> alestaAbilityOverrides { get { return _alestaAbilityOverrides; } private set { _alestaAbilityOverrides = value; } }
+    private List<MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType>> _alestaAbilityOverrides = new List<MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType>>();
+    public List<MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType>> alestaAbilityOverrides { get { return _alestaAbilityOverrides; } private set { _alestaAbilityOverrides = value; } }
 
     [SerializeField]
-    private List<MutableTuple<NephuiMovementAbilityValues, PlayerMovementOverrideType>> _nephuiAbilityOverrides = new List<MutableTuple<NephuiMovementAbilityValues, PlayerMovementOverrideType>>();
-    public List<MutableTuple<NephuiMovementAbilityValues, PlayerMovementOverrideType>> nephuiAbilityOverrides { get { return _nephuiAbilityOverrides; } private set { _nephuiAbilityOverrides = value; } }
+    private List<MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType>> _nephuiAbilityOverrides = new List<MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType>>();
+    public List<MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType>> nephuiAbilityOverrides { get { return _nephuiAbilityOverrides; } private set { _nephuiAbilityOverrides = value; } }
 
     [SerializeField]
-    private List<MutableTuple<CartiaMovementAbilityValues, PlayerMovementOverrideType>> _cartiaAbilityOverrides = new List<MutableTuple<CartiaMovementAbilityValues, PlayerMovementOverrideType>>();
-    public List<MutableTuple<CartiaMovementAbilityValues, PlayerMovementOverrideType>> cartiaAbilityOverrides { get { return _cartiaAbilityOverrides; } private set { _cartiaAbilityOverrides = value; } }
+    private List<MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType>> _cartiaAbilityOverrides = new List<MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType>>();
+    public List<MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType>> cartiaAbilityOverrides { get { return _cartiaAbilityOverrides; } private set { _cartiaAbilityOverrides = value; } }
 
     [SerializeField]
-    private List<MutableTuple<IlphineMovementAbilityValues, PlayerMovementOverrideType>> _ilphineAbilityOverrides = new List<MutableTuple<IlphineMovementAbilityValues, PlayerMovementOverrideType>>();
-    public List<MutableTuple<IlphineMovementAbilityValues, PlayerMovementOverrideType>> ilphineAbilityOverrides { get { return _ilphineAbilityOverrides; } private set { _ilphineAbilityOverrides = value; } }
+    private List<MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType>> _ilphineAbilityOverrides = new List<MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType>>();
+    public List<MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType>> ilphineAbilityOverrides { get { return _ilphineAbilityOverrides; } private set { _ilphineAbilityOverrides = value; } }
 
 }

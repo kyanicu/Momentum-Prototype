@@ -8,13 +8,13 @@ using System;
 public struct AbilityOverrideArgs
 {
     [SerializeField]
-    public List<MutableTuple<PlayerMovementValues, PlayerMovementOverrideType>> movementOverrides;
+    public List<MutableTuple<PlayerMovementValues, PlayerOverrideType>> movementOverrides;
 
     [SerializeField]
-    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerMovementOverrideType>> physicsOverrides;
+    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>> physicsOverrides;
 
     [SerializeField]
-    public List<MutableTuple<PlayerMovementActionValues, PlayerMovementOverrideType>> actionOverrides;
+    public List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>> actionOverrides;
 
 }
 
@@ -128,7 +128,7 @@ public interface IPlayerMovementAbility : IPlayerCommunication
 }
 
 [System.Serializable]
-public abstract class PlayerMovementAbility<Values> : PlayerMovementOverridableAttribute<Values>, IPlayerMovementAbility where Values : PlayerMovementOverridableValues, new()
+public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute<Values>, IPlayerMovementAbility where Values : PlayerOverridableValues, new()
 {
     public abstract event Action<AbilityOverrideArgs> addingMovementOverrides;
     public abstract event Action<AbilityOverrideArgs> removingMovementOverrides;

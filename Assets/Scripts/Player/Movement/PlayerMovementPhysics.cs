@@ -4,7 +4,7 @@ using UnityEngine;
 using KinematicCharacterController;
 
 [System.Serializable]
-public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
+public class PlayerMovementPhysicsValues : PlayerOverridableValues
 {
     /// <summary>
     /// The deceleration of kinetic friction on the player when they are not actively running along a ground
@@ -103,192 +103,154 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
     /// </summary>
     public Vector3 gravity { get { return gravityDirection * gravityAccel; } }
 
-    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
+    protected override void SetValueCounts()
     {
-        kineticFriction = DefaultFloat(overrideType);
-        staticFrictionMaxSlope = DefaultFloat(overrideType);
-        staticFrictionVelThreshold = DefaultFloat(overrideType);
-        extraKineticFriction = DefaultFloat(overrideType);
-        extraKineticFrictionSpeedThreshold = DefaultFloat(overrideType);
-        upsideDownExtraKineticFrictionFactor = DefaultFloat(overrideType);
-        upsideDownExtraKineticFrictionTimeThreshold = DefaultFloat(overrideType);
-        upsideDownAttachSpeed = DefaultFloat(overrideType);
-        sidewaysExtraKineticFrictionFactor = DefaultFloat(overrideType);
-        sidewaysExtraKineticFrictionTimeThreshold = DefaultFloat(overrideType);
-        sidewaysAttachSpeed = DefaultFloat(overrideType);
-        slopeConstantDown = DefaultFloat(overrideType);
-        slopeConstantUp = DefaultFloat(overrideType);
-        airDrag = DefaultFloat(overrideType);
-        extraAirDrag = DefaultFloat(overrideType);
-        extraAirDragSpeedThreshold = DefaultFloat(overrideType);
-        terminalVelocity = DefaultFloat(overrideType);
-        terminalVelocityDeceleration = DefaultFloat(overrideType);
-        gravityAccel = DefaultFloat(overrideType);
-        gravityDirection = DefaultVector3(overrideType);
-        constantAcceleration = DefaultVector3(overrideType);
-    }
-    
-    public override void AddBy(PlayerMovementOverridableValues ov) 
-    {
-        PlayerMovementPhysicsValues v = ov as PlayerMovementPhysicsValues;
-
-
-        kineticFriction = Add(kineticFriction, v.kineticFriction);
-        staticFrictionMaxSlope = Add(staticFrictionMaxSlope, v.staticFrictionMaxSlope);
-        staticFrictionVelThreshold = Add(staticFrictionVelThreshold, v.staticFrictionVelThreshold);
-        extraKineticFriction = Add(extraKineticFriction, v.extraKineticFriction);
-        extraKineticFrictionSpeedThreshold = Add(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
-        upsideDownExtraKineticFrictionFactor = Add(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
-        upsideDownExtraKineticFrictionTimeThreshold = Add(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
-        upsideDownAttachSpeed = Add(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
-        sidewaysExtraKineticFrictionFactor = Add(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
-        sidewaysExtraKineticFrictionTimeThreshold = Add(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
-        sidewaysAttachSpeed = Add(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
-        slopeConstantDown = Add(slopeConstantDown, v.slopeConstantDown);
-        slopeConstantUp = Add(slopeConstantUp, v.slopeConstantUp);
-        airDrag = Add(airDrag, v.airDrag);
-        extraAirDrag = Add(extraAirDrag, v.extraAirDrag);
-        extraAirDragSpeedThreshold = Add(extraAirDragSpeedThreshold, v.extraAirDragSpeedThreshold);
-        terminalVelocity = Add(terminalVelocity, v.terminalVelocity);
-        terminalVelocityDeceleration = Add(terminalVelocityDeceleration, v.terminalVelocityDeceleration);
-        gravityAccel = Add(gravityAccel, v.gravityAccel);
-        gravityDirection = Add(gravityDirection, v.gravityDirection);
-        constantAcceleration = Add(constantAcceleration, v.constantAcceleration);
+        floatValuesCount = 19;
+        intValuesCount = 0;
+        vector3ValuesCount = 2;
     }
 
-    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    protected override float GetFloatValue(int i)
     {
-        PlayerMovementPhysicsValues v = ov as PlayerMovementPhysicsValues;
-
-        kineticFriction = Subtract(kineticFriction, v.kineticFriction);
-        staticFrictionMaxSlope = Subtract(staticFrictionMaxSlope, v.staticFrictionMaxSlope);
-        staticFrictionVelThreshold = Subtract(staticFrictionVelThreshold, v.staticFrictionVelThreshold);
-        extraKineticFriction = Subtract(extraKineticFriction, v.extraKineticFriction);
-        extraKineticFrictionSpeedThreshold = Subtract(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
-        upsideDownExtraKineticFrictionFactor = Subtract(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
-        upsideDownExtraKineticFrictionTimeThreshold = Subtract(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
-        upsideDownAttachSpeed = Subtract(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
-        sidewaysExtraKineticFrictionFactor = Subtract(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
-        sidewaysExtraKineticFrictionTimeThreshold = Subtract(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
-        sidewaysAttachSpeed = Subtract(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
-        slopeConstantDown = Subtract(slopeConstantDown, v.slopeConstantDown);
-        slopeConstantUp = Subtract(slopeConstantUp, v.slopeConstantUp);
-        airDrag = Subtract(airDrag, v.airDrag);
-        extraAirDrag = Subtract(extraAirDrag, v.extraAirDrag);
-        extraAirDragSpeedThreshold = Subtract(extraAirDragSpeedThreshold, v.extraAirDragSpeedThreshold);
-        terminalVelocity = Subtract(terminalVelocity, v.terminalVelocity);
-        terminalVelocityDeceleration = Subtract(terminalVelocityDeceleration, v.terminalVelocityDeceleration);
-        gravityAccel = Subtract(gravityAccel, v.gravityAccel);
-        gravityDirection = Subtract(gravityDirection, v.gravityDirection);
-        constantAcceleration = Subtract(constantAcceleration, v.constantAcceleration);
+        switch (i) 
+        {
+            case (0) :
+                return kineticFriction;
+            case (1) :
+                return staticFrictionMaxSlope;
+            case (2) :
+                return staticFrictionVelThreshold;
+            case (3) :
+                return extraKineticFriction;
+            case (4) :
+                return extraKineticFrictionSpeedThreshold;
+            case (5) :
+                return upsideDownExtraKineticFrictionFactor;
+            case (6) :
+                return upsideDownExtraKineticFrictionTimeThreshold;
+            case (7) :
+                return upsideDownAttachSpeed;
+            case (8) :
+                return sidewaysExtraKineticFrictionFactor;
+            case (9) :
+                return sidewaysExtraKineticFrictionTimeThreshold;
+            case (10) :
+                return sidewaysAttachSpeed;
+            case (11) :
+                return slopeConstantDown;
+            case (12) :
+                return slopeConstantUp;
+            case (13) :
+                return airDrag;
+            case (14) :
+                return extraAirDrag;
+            case (15) :
+                return extraAirDragSpeedThreshold;
+            case (16) :
+                return terminalVelocity;
+            case (17) :
+                return terminalVelocityDeceleration;
+            case (18) :
+                return gravityAccel;
+            default :
+                return 0;
+        }
     }
-
-    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    protected override void SetFloatValue(int i, float value)
     {
-        PlayerMovementPhysicsValues v = ov as PlayerMovementPhysicsValues;
-
-        kineticFriction = Multiply(kineticFriction, v.kineticFriction);
-        staticFrictionMaxSlope = Multiply(staticFrictionMaxSlope, v.staticFrictionMaxSlope);
-        staticFrictionVelThreshold = Multiply(staticFrictionVelThreshold, v.staticFrictionVelThreshold);
-        extraKineticFriction = Multiply(extraKineticFriction, v.extraKineticFriction);
-        extraKineticFrictionSpeedThreshold = Multiply(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
-        upsideDownExtraKineticFrictionFactor = Multiply(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
-        upsideDownExtraKineticFrictionTimeThreshold = Multiply(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
-        upsideDownAttachSpeed = Multiply(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
-        sidewaysExtraKineticFrictionFactor = Multiply(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
-        sidewaysExtraKineticFrictionTimeThreshold = Multiply(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
-        sidewaysAttachSpeed = Multiply(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
-        slopeConstantDown = Multiply(slopeConstantDown, v.slopeConstantDown);
-        slopeConstantUp = Multiply(slopeConstantUp, v.slopeConstantUp);
-        airDrag = Multiply(airDrag, v.airDrag);
-        extraAirDrag = Multiply(extraAirDrag, v.extraAirDrag);
-        extraAirDragSpeedThreshold = Multiply(extraAirDragSpeedThreshold, v.extraAirDragSpeedThreshold);
-        terminalVelocity = Multiply(terminalVelocity, v.terminalVelocity);
-        terminalVelocityDeceleration = Multiply(terminalVelocityDeceleration, v.terminalVelocityDeceleration);
-        gravityAccel = Multiply(gravityAccel, v.gravityAccel);
-        gravityDirection = Multiply(gravityDirection, v.gravityDirection);
-        constantAcceleration = Multiply(constantAcceleration, v.constantAcceleration);
+        switch (i) 
+        {
+            case (0) :
+                kineticFriction = value;
+                break;
+            case (1) :
+                staticFrictionMaxSlope = value;
+                break;
+            case (2) :
+                staticFrictionVelThreshold = value;
+                break;
+            case (3) :
+                extraKineticFriction = value;
+                break;
+            case (4) :
+                extraKineticFrictionSpeedThreshold = value;
+                break;
+            case (5) :
+                upsideDownExtraKineticFrictionFactor = value;
+                break;
+            case (6) :
+                upsideDownExtraKineticFrictionTimeThreshold = value;
+                break;
+            case (7) :
+                upsideDownAttachSpeed = value;
+                break;
+            case (8) :
+                sidewaysExtraKineticFrictionFactor = value;
+                break;
+            case (9) :
+                sidewaysExtraKineticFrictionTimeThreshold = value;
+                break;
+            case (10) :
+                sidewaysAttachSpeed = value;
+                break;
+            case (11) :
+                slopeConstantDown = value;
+                break;
+            case (12) :
+                slopeConstantUp = value;
+                break;
+            case (13) :
+                airDrag = value;
+                break;
+            case (14) :
+                extraAirDrag = value;
+                break;
+            case (15) :
+                extraAirDragSpeedThreshold = value;
+                break;
+            case (16) :
+                terminalVelocity = value;
+                break;
+            case (17) :
+                terminalVelocityDeceleration = value;
+                break;
+            case (18) :
+                gravityAccel = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    protected override int GetIntValue(int i)
     {
-        PlayerMovementPhysicsValues v = ov as PlayerMovementPhysicsValues;
-
-        kineticFriction = Divide(kineticFriction, v.kineticFriction);
-        staticFrictionMaxSlope = Divide(staticFrictionMaxSlope, v.staticFrictionMaxSlope);
-        staticFrictionVelThreshold = Divide(staticFrictionVelThreshold, v.staticFrictionVelThreshold);
-        extraKineticFriction = Divide(extraKineticFriction, v.extraKineticFriction);
-        extraKineticFrictionSpeedThreshold = Divide(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
-        upsideDownExtraKineticFrictionFactor = Divide(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
-        upsideDownExtraKineticFrictionTimeThreshold = Divide(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
-        upsideDownAttachSpeed = Divide(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
-        sidewaysExtraKineticFrictionFactor = Divide(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
-        sidewaysExtraKineticFrictionTimeThreshold = Divide(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
-        sidewaysAttachSpeed = Divide(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
-        slopeConstantDown = Divide(slopeConstantDown, v.slopeConstantDown);
-        slopeConstantUp = Divide(slopeConstantUp, v.slopeConstantUp);
-        airDrag = Divide(airDrag, v.airDrag);
-        extraAirDrag = Divide(extraAirDrag, v.extraAirDrag);
-        extraAirDragSpeedThreshold = Divide(extraAirDragSpeedThreshold, v.extraAirDragSpeedThreshold);
-        terminalVelocity = Divide(terminalVelocity, v.terminalVelocity);
-        terminalVelocityDeceleration = Divide(terminalVelocityDeceleration, v.terminalVelocityDeceleration);
-        gravityAccel = Divide(gravityAccel, v.gravityAccel);
-        gravityDirection = Divide(gravityDirection, v.gravityDirection);
-        constantAcceleration = Divide(constantAcceleration, v.constantAcceleration);
+        return 0;
     }
-
-    public override void OrBy(PlayerMovementOverridableValues ov) 
+    protected override void SetIntValue(int i, int value) {}
+    protected override Vector3 GetVector3Value(int i)
     {
-        PlayerMovementPhysicsValues v = ov as PlayerMovementPhysicsValues;
-
-        kineticFriction = Or(kineticFriction, v.kineticFriction);
-        staticFrictionMaxSlope = Or(staticFrictionMaxSlope, v.staticFrictionMaxSlope);
-        staticFrictionVelThreshold = Or(staticFrictionVelThreshold, v.staticFrictionVelThreshold);
-        extraKineticFriction = Or(extraKineticFriction, v.extraKineticFriction);
-        extraKineticFrictionSpeedThreshold = Or(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
-        upsideDownExtraKineticFrictionFactor = Or(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
-        upsideDownExtraKineticFrictionTimeThreshold = Or(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
-        upsideDownAttachSpeed = Or(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
-        sidewaysExtraKineticFrictionFactor = Or(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
-        sidewaysExtraKineticFrictionTimeThreshold = Or(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
-        sidewaysAttachSpeed = Or(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
-        slopeConstantDown = Or(slopeConstantDown, v.slopeConstantDown);
-        slopeConstantUp = Or(slopeConstantUp, v.slopeConstantUp);
-        airDrag = Or(airDrag, v.airDrag);
-        extraAirDrag = Or(extraAirDrag, v.extraAirDrag);
-        extraAirDragSpeedThreshold = Or(extraAirDragSpeedThreshold, v.extraAirDragSpeedThreshold);
-        terminalVelocity = Or(terminalVelocity, v.terminalVelocity);
-        terminalVelocityDeceleration = Or(terminalVelocityDeceleration, v.terminalVelocityDeceleration);
-        gravityAccel = Or(gravityAccel, v.gravityAccel);
-        gravityDirection = Or(gravityDirection, v.gravityDirection);
-        constantAcceleration = Or(constantAcceleration, v.constantAcceleration);
+        switch (i) 
+        {
+            case (0) :
+                return gravityDirection;
+            case (1) :
+                return constantAcceleration;
+            default :
+                return Vector3.zero;
+        }
     }
-
-    public override void AndBy(PlayerMovementOverridableValues ov) 
+    protected override void SetVector3Value(int i, Vector3 value)
     {
-        PlayerMovementPhysicsValues v = ov as PlayerMovementPhysicsValues;
-
-        kineticFriction = And(kineticFriction, v.kineticFriction);
-        staticFrictionMaxSlope = And(staticFrictionMaxSlope, v.staticFrictionMaxSlope);
-        staticFrictionVelThreshold = And(staticFrictionVelThreshold, v.staticFrictionVelThreshold);
-        extraKineticFriction = And(extraKineticFriction, v.extraKineticFriction);
-        extraKineticFrictionSpeedThreshold = And(extraKineticFrictionSpeedThreshold, v.extraKineticFrictionSpeedThreshold);
-        upsideDownExtraKineticFrictionFactor = And(upsideDownExtraKineticFrictionFactor, v.upsideDownExtraKineticFrictionFactor);
-        upsideDownExtraKineticFrictionTimeThreshold = And(upsideDownExtraKineticFrictionTimeThreshold, v.upsideDownExtraKineticFrictionTimeThreshold);
-        upsideDownAttachSpeed = And(upsideDownAttachSpeed, v.upsideDownAttachSpeed);
-        sidewaysExtraKineticFrictionFactor = And(sidewaysExtraKineticFrictionFactor, v.sidewaysExtraKineticFrictionFactor);
-        sidewaysExtraKineticFrictionTimeThreshold = And(sidewaysExtraKineticFrictionTimeThreshold, v.sidewaysExtraKineticFrictionTimeThreshold);
-        sidewaysAttachSpeed = And(sidewaysAttachSpeed, v.sidewaysAttachSpeed);
-        slopeConstantDown = And(slopeConstantDown, v.slopeConstantDown);
-        slopeConstantUp = And(slopeConstantUp, v.slopeConstantUp);
-        airDrag = And(airDrag, v.airDrag);
-        extraAirDrag = And(extraAirDrag, v.extraAirDrag);
-        extraAirDragSpeedThreshold = And(extraAirDragSpeedThreshold, v.extraAirDragSpeedThreshold);
-        terminalVelocity = And(terminalVelocity, v.terminalVelocity);
-        terminalVelocityDeceleration = And(terminalVelocityDeceleration, v.terminalVelocityDeceleration);
-        gravityAccel = And(gravityAccel, v.gravityAccel);
-        gravityDirection = And(gravityDirection, v.gravityDirection);
-        constantAcceleration = And(constantAcceleration, v.constantAcceleration);
+        switch (i) 
+        {
+            case (0) :
+                gravityDirection = value;
+                break;
+            case (1) :
+                constantAcceleration = value;
+                break;
+            default :
+                break;
+        }
     }
 
 }
@@ -297,7 +259,7 @@ public class PlayerMovementPhysicsValues : PlayerMovementOverridableValues
 /// Handles application of physics mechanics on the player
 /// </summary>
 [System.Serializable]
-public class PlayerMovementPhysics : PlayerMovementOverridableAttribute<PlayerMovementPhysicsValues>
+public class PlayerMovementPhysics : PlayerOverridableAttribute<PlayerMovementPhysicsValues>
 {
     /// <summary>
     /// Contains information on potential update specific negations to physics values/mechanics

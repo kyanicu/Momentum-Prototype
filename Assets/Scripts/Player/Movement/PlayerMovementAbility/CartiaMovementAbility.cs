@@ -5,57 +5,49 @@ using KinematicCharacterController;
 using System;
 
 [System.Serializable]
-public class CartiaMovementAbilityValues : PlayerMovementOverridableValues
+public class CartiaMovementAbilityValues : PlayerOverridableValues
 {
     [SerializeField]
     public float test;
 
-    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
+    protected override void SetValueCounts()
     {
-        test = DefaultFloat(overrideType);
-    }
-    
-    public override void AddBy(PlayerMovementOverridableValues ov) 
-    {
-        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
-
-        test = Add(test, v.test);
+        floatValuesCount = 1;
+        intValuesCount = 0;
+        vector3ValuesCount = 0;
     }
 
-    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    protected override float GetFloatValue(int i)
     {
-        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
-
-        test = Subtract(test, v.test);
+        switch (i) 
+        {
+            case (0) :
+                return test;
+            default :
+                return 0;
+        }
     }
-
-    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    protected override void SetFloatValue(int i, float value)
     {
-        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
-
-        test = Multiply(test, v.test);
+        switch (i) 
+        {
+            case (0) :
+                test = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    protected override int GetIntValue(int i)
     {
-        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
-
-        test = Divide(test, v.test);
+        return 0;
     }
-
-    public override void OrBy(PlayerMovementOverridableValues ov) 
+    protected override void SetIntValue(int i, int value) { }
+    protected override Vector3 GetVector3Value(int i)
     {
-        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
-
-        test = Or(test, v.test);
+        return Vector3.zero;
     }
-
-    public override void AndBy(PlayerMovementOverridableValues ov) 
-    {
-        CartiaMovementAbilityValues v = ov as CartiaMovementAbilityValues;
-
-        test = And(test, v.test);
-    }
+    protected override void SetVector3Value(int i, Vector3 value) {}
 }
 
 struct CartiaMovementAbilityInput : IPlayerMovementInput
@@ -224,7 +216,7 @@ public class CartiaMovementAbility : PlayerMovementAbility<CartiaMovementAbility
     {
         for (int i = 0; i < effector.cartiaAbilityOverrides.Count; i++)
         {
-            AddOverride(effector.cartiaAbilityOverrides[i].item1, effector.cartiaAbilityOverrides[i].item2);
+            ApplyOverride(effector.cartiaAbilityOverrides[i].item1, effector.cartiaAbilityOverrides[i].item2);
         }
     }
 
