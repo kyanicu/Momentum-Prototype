@@ -8,7 +8,8 @@ using PathCreation;
 
 /// <summary>
 /// Interface for input relating to PlayerMovement
-/// </summary>
+/// TODO: Should be deprecated or restructured once input is handled by actions/events
+ /// </summary>
 public interface IPlayerMovementInput
 {
     /// <summary>
@@ -44,28 +45,64 @@ public struct WallHits
     public Vector3 hitRightWall;
 }
 
+/// <summary>
+/// The overrideable values for PlayerMovement 
+/// </summary>
 [System.Serializable]
 public class PlayerMovementValues : PlayerOverridableValues
 {
 
+    /// <summary>
+    /// The absolute max speed the player can ever achieve
+    /// </summary>
     [SerializeField]
     public float maxSpeed;
+    /// <summary>
+    /// The speed needed for the player to attach to a surface and reorient along it 
+    /// </summary>
     [SerializeField]
     public float attachThreshold;
+    /// <summary>
+    /// The acceleration off the current slope needed to force unground the character
+    /// </summary>
     [SerializeField]
     public float pushOffGroundThreshold;
+    /// <summary>
+    /// The max time for a slope to stay registered in the slope tracking for determining rotational momentum
+    /// </summary>
     [SerializeField]
     public float maxSlopeTrackTime;
+    /// <summary>
+    /// THe scalar factor for the kept speed of rotational momentum when ungrounding
+    /// </summary>
     [SerializeField]
     public float ungroundRotationFactor;
+    /// <summary>
+    /// The minimum speed of rotational momentum for it to be kept when ungrounding
+    /// </summary>
     [SerializeField]
     public float ungroundRotationMinSpeed;
+    /// <summary>
+    /// The maximum speed of rotational momentum the player can keep when ungrounding
+    /// </summary>
     [SerializeField]
     public float ungroundRotationMaxSpeed;
 
+    /// <summary>
+    /// Is the action component negated?
+    /// Uses int as a count of true bools as bool is not supported in overridable values
+    /// Use negateAction > 0 == true
+    /// </summary>
     public int negateAction;
+    /// <summary>
+    /// Is the physics component negated?
+    /// Uses int as a count of true bools as bool is not supported in overridable values
+    /// Use negatePhysics > 0 == true
     public int negatePhysics;
 
+    /// <summary>
+    /// Overridden to set the counts for the overridable values
+    /// </summary>
     protected override void SetValueCounts()
     {
         floatValuesCount = 7;
@@ -73,6 +110,9 @@ public class PlayerMovementValues : PlayerOverridableValues
         vector3ValuesCount = 0;
     }
 
+    /// <summary>
+    /// Overridden to return the appropriate float value
+    /// </summary>
     protected override float GetFloatValue(int i)
     {
         switch (i) 
@@ -95,6 +135,11 @@ public class PlayerMovementValues : PlayerOverridableValues
                 return 0;
         }
     }
+    /// <summary>
+    /// Overridden to set the appropriate float value
+    /// </summary>
+    /// <param name="i"> The float value index </param>
+    /// <param name="value"> The value to be set to </param>
     protected override void SetFloatValue(int i, float value)
     {
         switch (i) 
@@ -124,6 +169,9 @@ public class PlayerMovementValues : PlayerOverridableValues
                 break;
         }
     }
+    /// <summary>
+    /// Overridden to return the appropriate int value
+    /// </summary>
     protected override int GetIntValue(int i)
     {
         switch (i) 
@@ -136,6 +184,11 @@ public class PlayerMovementValues : PlayerOverridableValues
                 return 0;
         }
     }
+    /// <summary>
+    /// Overridden to set the appropriate int value
+    /// </summary>
+    /// <param name="i"> The int value index </param>
+    /// <param name="value"> The value to be set to </param>
     protected override void SetIntValue(int i, int value)
     {
         switch (i) 
@@ -150,31 +203,78 @@ public class PlayerMovementValues : PlayerOverridableValues
                 break;
         }
     }
+    /// <summary>
+    /// Overridden to return the appropriate Vector3 value
+    /// </summary>
     protected override Vector3 GetVector3Value(int i)
     {
         return Vector3.zero;
     }
+    /// <summary>
+    /// Overridden to set the appropriate Vector3 value
+    /// </summary>
+    /// <param name="i"> The Vector3 value index </param>
+    /// <param name="value"> The value to be set to </param>
     protected override void SetVector3Value(int i, Vector3 value) {}
 
 }
 
+/// <summary>
+/// Represents and handles all aspects of Player Movement
+/// Uses the KinematicCharacterMotor to determine logicstics and calculations for how the player moves.
+/// KinematicCharacterMotor Unity Component (3rd Party Extension from Asset Store) uses a kinematic rigidbody to handle lower level velocity/rotation/slope calculation, ground probing, collision, rigidbody interactions, etc.
+/// Movement Component, itself, directly controls the kinematic motor and uses it's info to create the game's character controller, based on this game's requirements and mechanics, such as Dynamic Plane Shifting, linear and rotational momentum conservation/usage, slope handling, 360 degree movement, collision effects, etc. Uses Physics, Action, and Ability to calculate Acceleration each physics tick
+/// Physics component handles environmental effects on velocity and rotation
+/// Action component handles player input effects on velocity and rotation
+/// Ability component handles special actions that can act as an extension to the Movement component itself, allowing it to handle and control Physics, Action, and core Movement component aspects
+/// Overridable Attribute to allow for temporarily modified movement
+/// Implements ICharacterController to allow control over the players KinematicCharacterMotor Unity Component
+/// Implements IPlayerMovementCmmunication to allow communication between other Player components
+/// </summary>
 [System.Serializable]
 public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication
 {
 
 #region MovementEvents
+    /// <summary>
+    /// Triggered on Plane Change
+    /// </summary>
     public event Action<PlaneChangeArgs> planeChanged;
+    /// <summary>
+    /// Triggerred Motor state update
+    /// TODO: Deprecate when referrence is done instead
+    /// </summary>
     public event Action<KinematicCharacterMotorState> stateUpdated;
 #endregion
 
+    /// <summary>
+    /// Hold information on recently changed slopes
+    /// Used primarily to handle calculating rotational momentum on ungrounding
+    /// </summary>
     private struct SlopeList
     {
+        /// <summary>
+        /// The list of registered slopes
+        /// </summary>
         private (Vector3, float)[] slopeList;
+        /// <summary>
+        /// The maximum ammount of slopes that can be registered
+        /// </summary>
         private int capacity;
+        /// <summary>
+        /// The current ammount of registered slopes
+        /// </summary>
         private int count;
 
+        /// <summary>
+        /// The time the slope has been registered as the current slope
+        /// </summary>
         private float slopeTimer;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="size"> The max capacity of registered slopes </param>
         public SlopeList(int size)
         {
             slopeList = new (Vector3, float)[size];
@@ -183,41 +283,71 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             slopeTimer = 0;
         }
 
+        /// <summary>
+        /// Resets the list to empty
+        /// </summary>
         public void Reset()
         {
             this = new SlopeList(capacity);
         }
 
+        /// <summary>
+        /// Increment timer
+        /// ? Should maxTime even be there? It can just directly reference MaxSlopeTrackTime
+        /// </summary>
+        /// <param name="deltaTime"> Difference in time since last increment </param>
+        /// <param name="maxTime"> The max time allowed to stay on a single slope</param>
         public void IncrementTimer(float deltaTime, float maxTime)
         {
             slopeTimer += deltaTime;
-        
+
+            // If timer exeeds max time, deregister all slopes
             if (slopeTimer > maxTime && count != 0)
             {
                 Reset();
             }
         }
 
+        /// <summary>
+        /// Registers a new slope as the current slope
+        /// </summary>
+        /// <param name="slopeNormal"> The slope normal </param>
         public void Add(Vector3 slopeNormal)
         {
+            // If slope can simply be added
             if (count < capacity)
             {
                 slopeList[count] = (slopeNormal,slopeTimer);
                 count++;
             }
+            // If max size exceeded
             else 
             {
+                // Shift all slopes back an index, Loosing index 0
                 for(int i = 0; i < count-1; i++)
                 {
                     slopeList[i] = slopeList[i+1];
                 }
+                // Add new slope at top
                 slopeList[count-1] = (slopeNormal, slopeTimer);
             }
+            // Reset the timer to track the new current slope
             slopeTimer = 0;
         }
 
+        /// <summary>
+        /// Calculate (heavily estimated) the angular velocity based on the slopes and current timer
+        /// ? Should all of the parameters just reference stuff in the movement class instead of being passed in?
+        /// </summary>
+        /// <param name="linearVelocity"> The Player's current Linear velocity</param>
+        /// <param name="axis"> The player's current plane normal </param>
+        /// <param name="rotationFactor"> The rotation factor for scaling the calculated rotation </param>
+        /// <param name="minRotationSpeed"> The minimum speed allowed for rotational momentum to not be set to zero </param>
+        /// <param name="maxRotationSpeed"> The maximum speed for rotational momentum to be capped at </param>
+        /// <returns> The calculated angular velocity </returns>
         public Vector3 GetAngularVelocity(Vector3 linearVelocity, Vector3 axis, float rotationFactor, float minRotationSpeed, float maxRotationSpeed)
         {
+            // No rotational momentum
             if(count <= 1) 
                 return Vector3.zero;
 
@@ -225,14 +355,17 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
             float rotationSpeed = 0;
 
+            // Estimate rotational speed via kinematic equations
             for (int i = 0; i < count-1; i++)
             {
                 rotationSpeed += Vector3.SignedAngle(slopeList[i].Item1, slopeList[i+1].Item1, axis) / (slopeList[i].Item2 + slopeList[i+1].Item2);
             }
             rotationSpeed /= count - 1;
 
+            // Calculate final rotational momentum
             angularVelocity = rotationSpeed * axis * rotationFactor;
 
+            // Ensure max and min
             if (Mathf.Abs(rotationSpeed) > maxRotationSpeed)
                 rotationSpeed = maxRotationSpeed * Mathf.Sign(rotationSpeed);
             else if (Mathf.Abs(rotationSpeed) < minRotationSpeed)
@@ -242,59 +375,147 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         }
     }
 
+#region Extra Ground Stability Values
+    /// <summary>
+    /// The current multiplied distance for probing for a ground
+    /// Increases with player speed
+    /// </summary>
     [SerializeField]
     float extraGroundProbingDistanceFactor = 0.012f;
+    /// <summary>
+    /// The current extra multiplied slope differece for staying on ground
+    /// Increases with player speed
+    /// </summary>
     [SerializeField]
     float extraMaxStableSlopeFactor = 0.005f;
+    /// <summary>
+    /// Current total max slope difference for staying on ground
+    /// </summary>
     float currentMaxStableSlopeAngle;
+    #endregion
 
+#region BufferingInfo
+    /// <summary>
+    /// Buffer used to allow for grounded within a buffered time before grounding and after ungroundiong
+    /// </summary>
     [SerializeField]
     float groundingActionBuffer = 0.1f;
+    /// <summary>
+    /// The buffered ground slope during buffer time after ungrounding
+    /// </summary>
     Vector3 bufferedUngroundedNormal = Vector3.zero;
+    #endregion
 
+#region Helper/Extension Components
+    /// <summary>
+    /// The component for handling player physics that occur as a result of environment
+    /// Adds acceleration to velocity each physics tick
+    /// </summary>
     [SerializeField]
     private PlayerMovementPhysics physics;
+    /// <summary>
+    /// The component for handling player actions directly related to movement as a result of player input
+    /// Adds acceleration to velocity each physics tick
+    /// </summary>
     [SerializeField]
     private PlayerMovementAction action;
+    /// <summary>
+    /// The component for handling special player actions that can have a more direct effect on the player's Movement itself, allowing for more than just adding acceleration each physics tick
+    /// </summary>
     [SerializeField]
     private IPlayerMovementAbility ability;
-
-    private SlopeList slopeList;
-    private bool foundFloorToReorientTo;
-
-    WallHits wallHits = new WallHits();
-
-    private Vector3 internalAngularVelocity = Vector3.zero;
-    public Vector3 externalVelocity { private get; set; }
-
-    private Plane currentPlane;
-    private Plane brokenPlane;
-    private DynamicPlane[] currentDynamicPlanes;
-    private PlaneBreaker[] currentPlaneBreakers;
-
-    // Debug
-    #region debug
-    KinematicCharacterMotorState startState;
-    Plane startPlane;
     #endregion
 
     /// <summary>
-    ///  Constructor
+    /// The list of tracked slopes for calculating rotational momentum
+    /// </summary>
+    private SlopeList slopeList;
+
+    /// <summary>
+    /// Flag for if the player is spinning midair, yet finds a floor inline with gravity that it can snap on to, even if it's not oriented towards it
+    /// </summary>
+    private bool foundFloorToReorientTo;
+
+    /// <summary>
+    /// Info on the non floor surfaces hit each physics tick
+    /// </summary>
+    WallHits wallHits = new WallHits();
+
+    /// <summary>
+    /// The internally calculated angular velocity
+    /// </summary>
+    private Vector3 internalAngularVelocity = Vector3.zero;
+    /// <summary>
+    /// Allows for external additions to velocity without effecting the core internally calculated velocity 
+    /// </summary>
+    /// <value></value>
+    public Vector3 externalVelocity { private get; set; }
+
+#region Dynamic Plane Info
+    /// <summary>
+    /// The current plane that the player is on
+    /// In regards to the 2.5D Dynamic Plane Shifting mechanic
+    /// </summary>
+    private Plane currentPlane;
+    /// <summary>
+    /// The plane a player broke off of when on a plane breaker
+    /// Tracked so that if the player leaves a plane breaker without being in a dynamic plane, it can reorient itself back to this as it's last stable plane
+    /// </summary>
+    private Plane brokenPlane;
+    /// <summary>
+    /// The current dynamic plane the player is on
+    /// Holds up to 2 incase of overlap
+    /// </summary>
+    private DynamicPlane[] currentDynamicPlanes = new DynamicPlane[2];
+    /// <summary>
+    /// The current Plane breaker the player is on
+    /// Holds up to 2 incase of overlap 
+    /// </summary>
+    private PlaneBreaker[] currentPlaneBreakers = new PlaneBreaker[2];
+    #endregion
+
+    // Debug
+#region debug
+    /// <summary>
+    /// Holds the initial kinematic motor state to be applied on a debug reset
+    /// Essentially a forced respawn
+    /// </summary>
+    KinematicCharacterMotorState startState;
+    /// <summary>
+    /// Holds the initial plane to be applied on a debug reset
+    /// </summary>
+    Plane startPlane;
+    #endregion
+
+#region ClassSetup
+    /// <summary>
+    /// Default constructor
     /// </summary>
     private PlayerMovement()
     {
+        // Instantiate helper components
         physics = new PlayerMovementPhysics();
         action = new PlayerMovementAction();
     } 
 
+    /// <summary>
+    /// Constructor used to set the appropriate PlayerMovementAbility
+    /// Calls default constructor first
+    /// </summary>
+    /// <param name="_ability"> The PlayerMovementAbility to be used</param>
+    /// <returns></returns>
     public PlayerMovement(IPlayerMovementAbility _ability) : this()
     {
         ability = _ability;
 
+        // Set Ability event handlers
         ability.addingMovementOverrides += AddAbilityOverride;
         ability.removingMovementOverrides += RemoveAbilityOverride;
     }
     
+    /// <summary>
+    /// Sets the default base overridable values
+    /// </summary>
     protected override void SetDefaultBaseValues()
     {
         // Set default field values
@@ -309,6 +530,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         baseValues.negatePhysics = 0;
     }
 
+    /// <summary>
+    /// Validates the base default values as valid
+    /// </summary>
     protected override void ValidateBaseValues()
     {
         action.OnValidate();
@@ -316,22 +540,26 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         ////ability.OnValidate();
     }
 
+    /// <summary>
+    /// Initializes communication with the Player's internal communcator
+    /// </summary>
+    /// <param name="communicator"> The internal commmunicator </param>
     public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
+        // SEt the communication
         communicator.SetCommunication(this);
 
+        // Set the helper classes' communications
         action.SetCommunicationInterface(communicator);
         ability.SetCommunicationInterface(communicator);
     }
 
     /// <summary>
-    /// Used to initialize motor's reference to this script
+    /// Setup the class to be ready for gameplay
     /// Also initializes state info for debugging
     /// </summary>
     public void InitializeForPlay(KinematicCharacterMotor motor)
     {
-        currentDynamicPlanes = new DynamicPlane[2];
-        currentPlaneBreakers = new PlaneBreaker[2];
         slopeList = new SlopeList(5);
 
         SetCurrentPlane(motor, new Plane(motor.CharacterForward, motor.Transform.position));
@@ -343,17 +571,21 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         startPlane = new Plane(motor.PlanarConstraintAxis, motor.Transform.position);
         #endregion
     }
+    #endregion
 
     /// <summary>
     /// Handles Input when valid
+    /// TODO: Remove when refactored to be handled by events 
     /// </summary>
     public void HandleInput(PlayerController.PlayerActions controllerActions)
     {
+        // Make sure Action can take input
         if(values.negateAction == 0)
             action.RegisterInput(controllerActions);
-            ability.RegisterInput(controllerActions);
+        ability.RegisterInput(controllerActions);
     }
 
+#region PlayerCharacter's MonoBehavior Messages Handling
     /// <summary>
     /// Appropriately handle entering a trigger
     /// </summary>
@@ -380,7 +612,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     } 
 
     /// <summary>
-    /// Appropriately handle Exiting a trigger
+    /// Appropriately handle exiting a trigger
     /// </summary>
     /// <param name="motor"> The Character's Kinematic Motor</param>
     /// <param name="col"> The trigger collider</param>
@@ -399,6 +631,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
                 break;
         }
     } 
+    #endregion
 
 #region CharacterControllerInterface
 
@@ -819,6 +1052,8 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
 #endregion
 
+
+#region Buffer Handling
     private void StartUngroundedBuffering(Vector3 ungroundedNormal)
     {
         bufferedUngroundedNormal = ungroundedNormal;
@@ -829,7 +1064,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     {
         bufferedUngroundedNormal = Vector3.zero;
     }
+#endregion
 
+#region Dynamic Plane Shifting
     Plane settingPlane = new Plane(Vector3.zero, Vector3.zero);
     bool settingPlaneBreaker = false;
     private void SetCurrentPlane(KinematicCharacterMotor motor, Plane plane, bool breaker = false, bool immediate = false)
@@ -925,7 +1162,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             currentPlaneBreakers[1] = null;
         }
     }
+#endregion
 
+#region Movement Effector Handling
     private void EnterMovementEffector(MovementEffector effector)
     {
         for (int i = 0; i < effector.movementOverrides.Count; i++)
@@ -965,7 +1204,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
         ability.ExitMovementEffector(effector);
     }
+#endregion
 
+#region Ability Movement Override Handling
     private void AddAbilityOverride(AbilityOverrideArgs args)
     {
         for (int i = 0; i < args.movementOverrides.Count; i++)
@@ -1001,6 +1242,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             action.RemoveOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
         }
     }
+#endregion
 
     #region debug        
     /// <summary>
@@ -1014,4 +1256,5 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         motor.BaseVelocity = Vector3.zero;
     }
     #endregion
+
 }
