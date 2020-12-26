@@ -293,7 +293,6 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
         /// <summary>
         /// Increment timer
-        /// ? Should maxTime even be there? It can just directly reference MaxSlopeTrackTime
         /// </summary>
         /// <param name="deltaTime"> Difference in time since last increment </param>
         /// <param name="maxTime"> The max time allowed to stay on a single slope</param>
@@ -337,7 +336,6 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
         /// <summary>
         /// Calculate (heavily estimated) the angular velocity based on the slopes and current timer
-        /// ? Should all of the parameters just reference stuff in the movement class instead of being passed in?
         /// </summary>
         /// <param name="linearVelocity"> The Player's current Linear velocity</param>
         /// <param name="axis"> The player's current plane normal </param>
@@ -472,6 +470,10 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// Holds up to 2 incase of overlap 
     /// </summary>
     private PlaneBreaker[] currentPlaneBreakers = new PlaneBreaker[2];
+    /// <summary>
+    /// Current stored plane waiting to be set at the appropriate time in the update cycle
+    /// </summary>
+    public Plane settingPlane = new Plane(Vector3.zero, Vector3.zero);
     #endregion
 
     // Debug
@@ -636,29 +638,41 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 #region CharacterControllerInterface
 
     /// <summary>
-    /// This is called when the motor wants to know what its rotation should be right now
+    /// Sets the rotation of the kinematic motor
+    /// TODO: Jesus FUCK fix the use of slerp factor and just make this entire function actually make sense
+    /// ? Is this being done efficiently with how it uses Vector and Quaternion math?
     /// </summary>
-    /// <param name="currentRotation"> Reference to the player's </param>
+    /// <param name="currentRotation"> Reference to the motor's rotation </param>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
     public void UpdateRotation(ref Quaternion currentRotation, KinematicCharacterMotor motor, float deltaTime)
     {
+        //Hold the previous rotation info
         Quaternion prevRot = currentRotation;
-        Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (currentRotation * motor.CharacterTransformToCapsuleBottomHemi); //(currentRotation * Vector3.down * motor.Capsule.radius);
+        Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (currentRotation * motor.CharacterTransformToCapsuleBottomHemi); 
 
+        // Factor for how smoothly the character rotates
+        // ? Should slerp even be used? Try making it instantaneous and handle smoothing via animation/interpolation
         float slerpFactor = 30;
+        
+        // Handles reorienting the player onto the proper plane if not already
+        // ? Should this be done in SetPlane?
         if (motor.CharacterForward != motor.PlanarConstraintAxis)
         {
             
+            // Calculate the intermediate forwards due to smoothing 
             Vector3 smoothedForward;
                 if(Vector3.Dot(motor.CharacterForward, -motor.PlanarConstraintAxis) > 0.95f)
                     smoothedForward = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-10 * deltaTime));
                 else 
                     smoothedForward = Vector3.Slerp(motor.CharacterForward, motor.PlanarConstraintAxis, 1 - Mathf.Exp(-slerpFactor * deltaTime));
             
-            currentRotation = /*Quaternion.FromToRotation(motor.CharacterForward, motor.PlanarConstraintAxis) * currentRotation;*/Quaternion.FromToRotation(motor.CharacterForward, smoothedForward) * currentRotation;
+            // Set forward to match the current plane (with smoothing accounted for)
+            currentRotation = ////Quaternion.FromToRotation(motor.CharacterForward, motor.PlanarConstraintAxis) * currentRotation;
+                Quaternion.FromToRotation(motor.CharacterForward, smoothedForward) * currentRotation;
         }
 
+        // See if the player should reorient itself back to the gravity-based ground
         bool reorient = false;
         if(foundFloorToReorientTo)
         {
@@ -669,30 +683,43 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         
         if(motor.IsGroundedThisUpdate)
         {
+            // TODO: No need to be set every frame, set once on grounding 
             internalAngularVelocity = Vector3.zero;
 
+            // If player is attached to ground orientation
             if(motor.BaseVelocity.magnitude >= values.attachThreshold)
             {
-                slerpFactor = 1000;//30;
-                Vector3 smoothedGroundNormal = motor.GetEffectiveGroundNormal(); //Vector3.Slerp(motor.CharacterUp, motor.GetEffectiveGroundNormal(), 1 - Mathf.Exp(-slerpFactor * deltaTime));
-                currentRotation = /*Quaternion.FromToRotation(motor.CharacterUp, motor.GetEffectiveGroundNormal()) * currentRotation;*/Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
+                // Smoothly reorient along slope
+                // ? Why smooth if it's so strong/quick?
+                slerpFactor = 1000;////30;
+                Vector3 smoothedGroundNormal = motor.GetEffectiveGroundNormal(); ////Vector3.Slerp(motor.CharacterUp, motor.GetEffectiveGroundNormal(), 1 - Mathf.Exp(-slerpFactor * deltaTime));
+                currentRotation = ////Quaternion.FromToRotation(motor.CharacterUp, motor.GetEffectiveGroundNormal()) * currentRotation;
+                    Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
             }
             else
             {
-                slerpFactor = 1000;//1;//3;;
+                // Smoothly reorient along gravity
+                // ? Why smooth if it's so strong/quick?
+                slerpFactor = 1000;////1;//3;;
                 Vector3 smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
                 
                 currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
             }
         }
+        // If the player does not have angular momentum midair
+        // ? Can this be moved be an if/else with the directly negated if statement a few lines below?
         else if(internalAngularVelocity == Vector3.zero)
         {
-            
+            // Slowly smoothen if no ground to reorient towards and land on
+            // ? if animation is used instead of slerp, and actual movement-wise rotation is instant, this actually is the only time it would make sense to keep slerp, since it's supposed to have the character's orientation smoothly go towards gravity, smoothing isn't used pirmarily for visuals here
             if(!reorient)
-                slerpFactor = 1;//3;//0;
+                slerpFactor = 1;////3;//0;
+            // Quickly Smoothen if there is
+            // ? This would be handled by animation if that's used instead
             else
-                slerpFactor = 1000;//30;
+                slerpFactor = 1000;////30;
 
+            // Smoothly reorient player along gravity 
             Vector3 smoothedUp;
             if(Vector3.Dot(motor.CharacterUp, physics.gravityDirection) > 0.95f)
                 smoothedUp = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
@@ -701,44 +728,54 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
         }
 
+        // Handle Action related rotation updates, if active
         if(values.negateAction == 0)
             action.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
-            ability.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
+        
+        // Handle Ability related rotation updates
+        ability.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
+        
+        // Handle Physics related rotation updates, if active
         if(values.negatePhysics == 0)
             physics.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
 
+        // Handle angular momentum 
         if(internalAngularVelocity != Vector3.zero)
         {
+            // Reorient  angluar momentum along plane
+            // ? Should this be done in SetPlane just once instead?
             if (Mathf.Abs(Vector3.Dot(internalAngularVelocity, motor.PlanarConstraintAxis)) < 0.99) 
             {
                 // Project rotational velocity
                 internalAngularVelocity = Vector3.Project(internalAngularVelocity, motor.PlanarConstraintAxis);
                 // Maintain rotational momentum but reorient
             }
-            //internalAngularVelocity = Vector3.project(internalAngularVelocity, motor.PlanarConstraintAxis).normalized * internalAngularVelocity.magnitude
+            ////internalAngularVelocity = Vector3.project(internalAngularVelocity, motor.PlanarConstraintAxis).normalized * internalAngularVelocity.magnitude
 
+            // Add angular velocity to the rotation
             currentRotation = Quaternion.Euler(internalAngularVelocity * deltaTime) * currentRotation;
         }
 
+        // If rotated along the ground, rotate along the bottom sphere of the capsule instead of it's center so that the player doesn't rotate off the point on the ground they are currently on 
         if(motor.IsGroundedThisUpdate)
         {
             Vector3 newCharacterBottomHemiCenter = motor.TransientPosition + (currentRotation * motor.CharacterTransformToCapsuleBottomHemi);
-            // Move the position to create a rotation around the bottom hemi center instead of around the pivot
+
             motor.SetTransientPosition((initialCharacterBottomHemiCenter - newCharacterBottomHemiCenter) + motor.TransientPosition);
         }
     }
     
     /// <summary>
-    /// This is called hen the motor wants to know what its velocity should be right now
+    /// Sets the velocity of the kinematic motor
+    /// ? Is max move even necessary?
     /// </summary>
-    /// <param name="currentVelocity"> Reference to the player's velocity </param>
+    /// <param name="currentVelocity"> Reference to the motor's velocity </param>
     /// <param name="maxMove"> The max distance the player can move this update</param>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
     public void UpdateVelocity(ref Vector3 currentVelocity, ref float maxMove, KinematicCharacterMotor motor, float deltaTime)
     {
-        
-        // Handle velocity projection if grounded
+        // Handle velocity projection on a surface if grounded
         if (motor.IsGroundedThisUpdate)
         {
             // The dot between the ground normal and the external velocity addition
@@ -747,7 +784,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             Vector3 projection = dot * motor.GetEffectiveGroundNormal();
             // If external velocity off ground is strong enough
             if(dot > 0  && projection.sqrMagnitude >= values.pushOffGroundThreshold * values.pushOffGroundThreshold)
+            {
                 motor.ForceUnground();
+            }
             else
             {
                 // if just landed or slope hasn't changed
@@ -774,90 +813,82 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         if(values.negatePhysics == 0)
             physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
 
+        // Ensure velocity is locked to current 2.5D plane
         currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
+        
+        // Cap the velocity if over max speed
         if (currentVelocity.sqrMagnitude > values.maxSpeed * values.maxSpeed)
             currentVelocity = currentVelocity.normalized * values.maxSpeed;
 
+        // Handle ground stability calculation changes   
         if (motor.IsGroundedThisUpdate)
         {
+            //Scale according to velocity so that it's less likely to fly off the ground due to innacuracies cause by higher speeds
             motor.GroundDetectionExtraDistance = currentVelocity.magnitude * extraGroundProbingDistanceFactor;
             currentMaxStableSlopeAngle = motor.MaxStableSlopeAngle + (motor.MaxStableSlopeAngle * motor.BaseVelocity.magnitude * extraMaxStableSlopeFactor);
-            motor.MaxStableDenivelationAngle = currentMaxStableSlopeAngle;
         }
         else 
         {
+            // No need for extra stability measures since there's no ground to try to stay grounded to
             motor.GroundDetectionExtraDistance = 0;
             currentMaxStableSlopeAngle = motor.MaxStableSlopeAngle;
-            motor.MaxStableDenivelationAngle = currentMaxStableSlopeAngle;
         }
+        motor.MaxStableDenivelationAngle = currentMaxStableSlopeAngle;
 
-
+        // Reset wall hit info since current info is no longer in use
         wallHits.hitCeiling = Vector3.zero;
         wallHits.hitLeftWall = Vector3.zero;
         wallHits.hitRightWall = Vector3.zero;
     }
 
     /// <summary>
-    /// This is called before the motor does anything
+    /// Sets up the class and motor info for the upcoming motor update
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
     public void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
+        // Handle setting the current plane 
+        // Set so that the update uses the proper plane that the player is currently on
 
         // If active on PlaneBreaker
         if (currentPlaneBreakers[0] != null && motor.IsGroundedThisUpdate && motor.BaseVelocity.magnitude >= values.attachThreshold)
         {
             Vector3 planeRight = Vector3.Cross(currentPlaneBreakers[0].transform.up, currentPlane.normal);
-            float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
-            bool movingRight = dot > 0;            
-            /*
-            Plane traversalPlane;
-            Plane approachingPlaneTransition = currentPlaneBreaker.GetApproachingPlaneTransition(motor.Transform.position, currentVelocity.normalized, dot > 0, out traversalPlane);
-            */    SetCurrentPlane(motor, currentPlaneBreakers[0].GetClosestPathPlane(/*motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius)*/motor.Transform.position, movingRight), true);//SetCurrentPlane(motor, currentPlaneBreaker.GetClosestPathPlane(motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius)/*motor.Transform.position*/, movingRight), true);
-            //if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
-            //{
-            //    float dist;
-                //if (approachingPlaneTransition.Raycast(new Ray(motor.Transform.position, currentVelocity), out dist))
-                    //maxMove = dist;
-            //}
-            //Debug.Break();
+            bool movingRight = Vector3.Dot(motor.BaseVelocity, planeRight) > 0;            
+            
+            // Update current plane to match the player's position on the PlaneBreaker
+            SetCurrentPlane(motor, currentPlaneBreakers[0].GetClosestPathPlane(motor.Transform.position, movingRight), true);
         }
-        // If on Dynamic Plane, handle movement  
+        // If on Dynamic Plane
         else if(currentDynamicPlanes[0] != null)
         {
             Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
-            float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
-            bool movingRight = dot > 0;
-            /*
-            Plane traversalPlane;
-            Plane approachingPlaneTransition = currentDynamicPlanes[0].GetApproachingPlaneTransition(motor.Transform.position, movingRight, out traversalPlane);
-            */    SetCurrentPlane(motor, currentDynamicPlanes[0].GetClosestPathPlane(motor.Transform.position, movingRight));
-            /*
-            if (dot != 0 && approachingPlaneTransition.normal != Vector3.zero && approachingPlaneTransition.distance != float.PositiveInfinity)
-            {
-                float dist;
-                if (approachingPlaneTransition.Raycast(new Ray(motor.Transform.position, currentVelocity), out dist))
-                    maxMove = dist;
-            }
-            */
+            bool movingRight = Vector3.Dot(motor.BaseVelocity, planeRight) > 0;
+
+            // Update current plane to match the player's position on the DynamicPlane
+            SetCurrentPlane(motor, currentDynamicPlanes[0].GetClosestPathPlane(motor.Transform.position, movingRight), false);
         }
+        // Set stored plane, if waiting to be set
+        else if (settingPlane.normal != Vector3.zero)
+            SetCurrentPlane(motor, settingPlane);
 
-        if (settingPlane.normal != Vector3.zero)
-            SetCurrentPlane(motor, settingPlane, settingPlaneBreaker, true);
+        // Reset stored plane
+        settingPlane = new Plane(Vector3.zero, Vector3.zero);
 
+        // Handle extra Ability update setup
         ability.BeforeCharacterUpdate(motor, deltaTime);
     }
 
     /// <summary>
-    /// This is called after the motor has finished its ground probing, but before PhysicsMover/Velocity/etc.... handling
-    /// Primarily used currently to handle the slope tracking for the ungrounding angular momentum mechanic
+    /// Handles grounding info after probing and grounding/ungrounding
+    /// Primarily used to handle the slope tracking for the ungrounding angular momentum mechanic
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
     public void PostGroundingUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
-        // kKep tracking time on current slope
+        // Keep tracking time on current slope
         slopeList.IncrementTimer(deltaTime, values.maxSlopeTrackTime);
         
         // Used to see if angular velocity should be set for angular momentum when ungrounding
@@ -866,6 +897,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         if(motor.IsGroundedThisUpdate)
         {
             // If speed drops enough, detatch from slope
+            // TODO: Simplify attach threshold so that a bool is set so that "isAttached" doesn't have to be calculated every time
             if(Vector3.ProjectOnPlane(motor.BaseVelocity, motor.GetEffectiveGroundNormal()).magnitude < values.attachThreshold && Vector3.Angle(-physics.gravityDirection, motor.GetEffectiveGroundNormal()) > motor.MaxStableSlopeAngle)
             {
                 motor.ForceUnground();
@@ -873,15 +905,10 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             }
             // If slope changed
             else if(motor.WasGroundedLastUpdate && motor.GetEffectiveGroundNormal() != motor.GetLastEffectiveGroundNormal())
+            {
                 // Start tracking new slope
                 slopeList.Add(motor.GetLastEffectiveGroundNormal());
-
-            // If just grounded
-            if(!motor.WasGroundedLastUpdate)
-            {
-                //grounded?.Invoke(this, EventArgs.Empty);
             }
-
         }
         // If just ungrounded
         else if(motor.WasGroundedLastUpdate)
@@ -889,7 +916,8 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             // Log new slope that was just ungrounded from
             slopeList.Add(motor.GetLastEffectiveGroundNormal());
             setAngularVelocity = true;
-            //ungrounded?.Invoke(this, EventArgs.Empty);
+
+            // Handle ungrounded buffering
             if(!motor.MustUnground())
                 StartUngroundedBuffering(motor.GetLastEffectiveGroundNormal());
         }
@@ -901,40 +929,41 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             internalAngularVelocity = slopeList.GetAngularVelocity(motor.BaseVelocity, motor.PlanarConstraintAxis, values.ungroundRotationFactor, values.ungroundRotationMinSpeed, values.ungroundRotationMaxSpeed);
             slopeList.Reset();
         }
+
+        // Handle extra grounding update based Ability mechanics/info
         ability.PostGroundingUpdate(motor, deltaTime);
     }
 
     /// <summary>
-    /// This is called after the motor has finished everything in its update
+    /// Handles post motor update actions such as resetting things for the next update
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
     public void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
         ability.AfterCharacterUpdate(motor, deltaTime);
+        // TODO: Remove with communication being handled by reference
         stateUpdated?.Invoke(motor.GetState());
 
         // Reset Ability and Action Input
         ability.ResetInput();
         action.ResetInput();
-
-        //if(motor.WasGroundedLastUpdate != motor.IsGroundedThisUpdate)
-            //Debug.Break();
     }
 
     /// <summary>
-    /// This is called after when the motor wants to know if the collider can be collided with (or if we just go through it)
+    /// Lets the motor know if a collision should be ignored or not, used primarily but Ability for potential collision overriding mechanics
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="coll"> The collider being checked </param>
     public bool IsColliderValidForCollisions(KinematicCharacterMotor motor, Collider coll)
     {
-        // As of now all colliders are valid
+        // See if an Ability mechanic overrides a collision
         return ability.IsColliderValidForCollisions(motor, coll);
     }
 
     /// <summary>
-    /// This is called when the motor's ground probing detects a ground hit
+    /// Used to handle (or even modify) ground info on probing
+    /// Happens before grounding update so that modifications here are taken into account
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider">The ground collider </param>
@@ -943,20 +972,13 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// <param name="hitStabilityReport"> The ground stability </param>
     public void OnGroundHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {
-
-        //Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius);
-            /*
-            slerpFactor = 300;
-            Vector3 smoothedGroundNormal = Vector3.Slerp(motor.CharacterUp, motor.GetEffectiveGroundNormal(), 1 - Mathf.Exp(-slerpFactor * deltaTime));
-            */
-            //motor.SetRotation(Quaternion.FromToRotation(motor.CharacterUp, hitNormal) * motor.TransientRotation);//Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
-            //motor.SetTransientPosition(initialCharacterBottomHemiCenter + (motor.TransientRotation * Vector3.down * motor.Capsule.radius));   
-             
+        // Handles extra Ability handling and modififcation of grounding hit info 
         ability.OnGroundHit(motor, hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
     }
 
     /// <summary>
-    /// This is called when the motor's movement logic detects a hit
+    /// Used to handle (or even modify) hit info on sweeping 
+    /// Happens before hit info is handled by the motor so that modifications here are taken into account
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider"> The hit collider </param>
@@ -965,25 +987,15 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// <param name="hitStabilityReport"> The hit stability </param>
     public void OnMovementHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {   
-        /*if(motor.IsGroundedThisUpdate && hitStabilityReport.IsStable && motor.BaseVelocity.magnitude >= values.attachThreshold)
-        {
-            Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (motor.CharacterUp * motor.Capsule.radius);
-            /*
-            slerpFactor = 300;
-            Vector3 smoothedGroundNormal = Vector3.Slerp(motor.CharacterUp, motor.GetEffectiveGroundNormal(), 1 - Mathf.Exp(-slerpFactor * deltaTime));
-            */
-            /*motor.SetRotation(Quaternion.FromToRotation(motor.CharacterUp, hitNormal) * motor.TransientRotation);//Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
-             motor.SetTransientPosition(initialCharacterBottomHemiCenter + (motor.TransientRotation * Vector3.down * motor.Capsule.radius));           
-        }
-        // If floor it hit when mid air
-        else */if (!motor.IsGroundedThisUpdate
+        // If floor (in line with gravity) is hit when mid air, but the player isn't oriented properly to land normally 
+        if (!motor.IsGroundedThisUpdate
         && motor.StableGroundLayers.value == (motor.StableGroundLayers.value | (1 << hitCollider.gameObject.layer))
         && Vector3.Angle(-physics.gravityDirection, hitNormal) <= motor.MaxStableSlopeAngle)
         { 
             foundFloorToReorientTo = true;
         }
-
-        if (!hitStabilityReport.IsStable)
+        // If hit is not valid ground for the player to land on
+        else if (!hitStabilityReport.IsStable)
         {
             if (Vector3.Dot(physics.gravityDirection, hitNormal) >= 0.5)
                 wallHits.hitCeiling = hitNormal;
@@ -993,11 +1005,13 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
                 wallHits.hitLeftWall = hitNormal;
         }
 
+        // Handle extra movement hit handling/modification based on Ability
         ability.OnMovementHit(motor, hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
     }
 
     /// <summary>
-    /// This is called after every move hit, to give you an opportunity to modify the HitStabilityReport to your liking
+    /// Detailed handling and modifying of HitStabilityReport to check if ground is valid or not
+    /// Used primarily for ledge handling logic
     /// </summary>
     /// <param name="motor"> The player's kinematic motor </param>
     /// <param name="hitCollider"> The hit collider </param>
@@ -1009,44 +1023,50 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// <param name="hitStabilityReport"> The hit stability </param>
     public void ProcessHitStabilityReport(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport)
     {
+        // Handles extra slope angle measurements to ensure valid ground slope difference is detected on faster velocities
         if (motor.IsGroundedThisUpdate && !hitStabilityReport.IsStable && Vector3.Angle(motor.GetEffectiveGroundNormal(), hitNormal) < currentMaxStableSlopeAngle)
         {
             hitStabilityReport.IsStable = true;
         }
 
-        float dotEpsilon = 0.998f;//99998f;
+        // Handles potentially innaccurate ledge detection possibly due to issues with concave mesh colliders
+        // TODO: Jesus Fucking Christ this is a mess PLEASE fix this or (better yet) just DON'T use concave mesh colliders. Commented out code is kept for later debugging
+        float dotEpsilon = 0.998f;////99998f;
         float ledgeHitDot;
         float groundHitDot;
-        if (hitStabilityReport.IsStable)//Vector3.Dot(hitStabilityReport.OuterNormal, hitNormal) < 1)
+        if (hitStabilityReport.IsStable)////Vector3.Dot(hitStabilityReport.OuterNormal, hitNormal) < 1)
         {
-            // Is ledge
-            if (hitStabilityReport.LedgeDetected || Vector3.Angle(hitStabilityReport.OuterNormal, hitStabilityReport.InnerNormal) > motor.MaxStableSlopeAngle)//(Vector3.Dot(hitStabilityReport.InnerNormal, hitNormal) == 1 || Vector3.Dot(hitStabilityReport.InnerNormal, hitStabilityReport.OuterNormal) == 1 || Vector3.Angle(hitStabilityReport.OuterNormal, hitStabilityReport.InnerNormal) > motor.MaxStableSlopeAngle)
+            // Is ledge that was falsely detected
+            if (hitStabilityReport.LedgeDetected || Vector3.Angle(hitStabilityReport.OuterNormal, hitStabilityReport.InnerNormal) > motor.MaxStableSlopeAngle)////(Vector3.Dot(hitStabilityReport.InnerNormal, hitNormal) == 1 || Vector3.Dot(hitStabilityReport.InnerNormal, hitStabilityReport.OuterNormal) == 1 || Vector3.Angle(hitStabilityReport.OuterNormal, hitStabilityReport.InnerNormal) > motor.MaxStableSlopeAngle)
             {
                 hitStabilityReport.IsStable = false;
             }
+            // Double check that this ledge isn't actually a ledge
             else if (hitStabilityReport.InnerNormal == hitStabilityReport.OuterNormal && (groundHitDot = Vector3.Dot(motor.GroundingStatus.GroundNormal, hitNormal)) < dotEpsilon && (ledgeHitDot = Vector3.Dot(hitStabilityReport.OuterNormal, hitNormal)) < dotEpsilon && ledgeHitDot != groundHitDot)
             {
-                Debug.DrawRay(hitPoint, hitStabilityReport.OuterNormal*5, Color.magenta, 5);
-                Debug.DrawRay(hitPoint, hitStabilityReport.InnerNormal*4, Color.cyan, 5);
-                Debug.DrawRay(hitPoint, hitNormal*3, Color.blue, 5);
-                //Debug.Break();
-                Debug.LogWarning("Faulty Ledge Detection, setting to stable to prevent flying off. Debug Rays drawn for 5 seconds. Likely caused by Mesh Collider issue. Try Replacing area with primitive/concave collider if grounding should not be allowed on this hit.");
-                Debug.LogWarning("Dot between Ledge and Hit normals: " + ledgeHitDot);
-                Debug.LogWarning    ("Dot between Ground and Hit normals: " + groundHitDot);
+                ////Debug.DrawRay(hitPoint, hitStabilityReport.OuterNormal*5, Color.magenta, 5);
+                ////Debug.DrawRay(hitPoint, hitStabilityReport.InnerNormal*4, Color.cyan, 5);
+                ////Debug.DrawRay(hitPoint, hitNormal*3, Color.blue, 5);
+                ////Debug.Break();
+                ////Debug.LogWarning("Faulty Ledge Detection, setting to stable to prevent flying off. Debug Rays drawn for 5 seconds. Likely caused by Mesh Collider issue. Try Replacing area with primitive/concave collider if grounding should not be allowed on this hit.");
+                ////Debug.LogWarning("Dot between Ledge and Hit normals: " + ledgeHitDot);
+                ////Debug.LogWarning    ("Dot between Ground and Hit normals: " + groundHitDot);
                 hitStabilityReport.IsStable = true;
             }
         }
 
+        // Handles extra Ability mechanics thaqt can modify or use hit stability info
         ability.ProcessHitStabilityReport(motor, hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref hitStabilityReport);
     }
 
     /// <summary>
-    /// This is called when the character detects discrete collisions (collisions that don't result from the motor's capsuleCasts when moving)
+    /// Handles discrete collision detection (not detected by sweeping movement logic), if on
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider"> The detected collider </param>
     public void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider)
     {
+        // Extra discrete collision handling by Ability
         ability.OnDiscreteCollisionDetected(motor, hitCollider);
     }
 
@@ -1054,12 +1074,20 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
 
 #region Buffer Handling
+
+    /// <summary>
+    /// Starts ungrounded buffering by storing buffered info and beginning a timer for the info to be deleted
+    /// </summary>
+    /// <param name="ungroundedNormal"> The last ground normal before ungrounding</param>
     private void StartUngroundedBuffering(Vector3 ungroundedNormal)
     {
         bufferedUngroundedNormal = ungroundedNormal;
         GameManager.Instance.TimerViaRealTime(groundingActionBuffer, EndUngroundedBuffering);
     }
 
+    /// <summary>
+    /// Ends ungrounded bufferiong by deleting all buffered info
+    /// </summary>
     private void EndUngroundedBuffering()
     {
         bufferedUngroundedNormal = Vector3.zero;
@@ -1067,176 +1095,251 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 #endregion
 
 #region Dynamic Plane Shifting
-    Plane settingPlane = new Plane(Vector3.zero, Vector3.zero);
-    bool settingPlaneBreaker = false;
-    private void SetCurrentPlane(KinematicCharacterMotor motor, Plane plane, bool breaker = false, bool immediate = false)
+    /// <summary>
+    /// Sets the current plane and fixes the player and their movement on that plane
+    /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
+    /// <param name="plane"> The new plane to be set</param>
+    /// <param name="breaker"> Is the plane change a result of a PlaneBreaker </param>
+    private void SetCurrentPlane(KinematicCharacterMotor motor, Plane plane, bool breaker = false)
     {
-        
+        //If the plane is invalid or identical to the current plane
         if (plane.normal == Vector3.zero || (plane.normal == currentPlane.normal && plane.distance == currentPlane.distance))
             return; 
-    
-        if (immediate)
-        {
-            motor.BaseVelocity = Quaternion.FromToRotation(currentPlane.normal, plane.normal) * motor.BaseVelocity;//Vector3.ProjectOnPlane(motor.BaseVelocity, currentPlane.normal).normalized * motor.BaseVelocity.magnitude; 
-            motor.PlanarConstraintAxis = plane.normal;
-            motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
-            planeChanged?.Invoke(new PlaneChangeArgs(plane.normal, breaker));
-            settingPlane = new Plane(Vector3.zero, Vector3.zero);
-            settingPlaneBreaker = false;
-        }
-        else
-        {
-            settingPlane = plane;
-            settingPlaneBreaker = breaker;
-        }
+
+        // Rotate Velocity along new plane without losing momentum
+        motor.BaseVelocity = Quaternion.FromToRotation(currentPlane.normal, plane.normal) * motor.BaseVelocity;
+        // Lock player movement on plane
+        motor.PlanarConstraintAxis = plane.normal;
+        // Move player to plane
+        motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
+
+        // Trigger communication event on plane change
+        planeChanged?.Invoke(new PlaneChangeArgs(plane.normal, breaker));
     }
 
+    /// <summary>
+    /// Begin tracking newly entered DynamicPlane
+    /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
+    /// <param name="dynamicPlane"> The DynamicPlane entered</param>
     private void EnterDynamicPlane(KinematicCharacterMotor motor, DynamicPlane dynamicPlane)
     {
-        if (currentDynamicPlanes[0] != null && currentDynamicPlanes[0].prioritize)
+        // If DynamicPlane overlaps with another the player is already in
+        if (currentDynamicPlanes[0] != null)
         {
-            currentDynamicPlanes[1] = dynamicPlane;
-        }
-        else
-        {    
-            if (currentDynamicPlanes[0] != null)
-                currentDynamicPlanes[1] = currentDynamicPlanes[0];
-
-            currentDynamicPlanes[0] = dynamicPlane;
-
-            if (currentPlaneBreakers[0] == null || !motor.IsGroundedThisUpdate)
+            // If the previous DynamicPlane is prioritized, keep new DynamicPlane tracked secondarily
+            if (currentDynamicPlanes[0].prioritize)
+                currentDynamicPlanes[1] = dynamicPlane;
+            else
             {
-                Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
-                float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
-                bool movingRight = dot > 0;
-                SetCurrentPlane(motor, dynamicPlane.GetClosestPathPlane(motor.Transform.position, movingRight));
+                // Track previous DynamicPlane secondarily, and new one primarily, forgetting any other tracked DynamicPlane
+                currentDynamicPlanes[1] = currentDynamicPlanes[0];
+                currentDynamicPlanes[0] = dynamicPlane;
             }
         }
+        else
+            // Track new DynamicPlane primarily
+            currentDynamicPlanes[0] = dynamicPlane;
     }
 
+    /// <summary>
+    /// End tracking previously entered DynamicPlane 
+    /// </summary>
+    /// <param name="col"> The collider of the DynamicPlane trigger exited</param>
     private void ExitDynamicPlane(Collider col)
     {
+        // If exited DynamicPlane was tracked primarily
         if (currentDynamicPlanes[0].gameObject == col.gameObject)
         {
+            // Shift over potential secondarily tracked DynamicPlane so that it is now tracked primarily
+            // If there was no DynamicPlane, then there is no longer any tracked DynamicPlane
             currentDynamicPlanes[0] = currentDynamicPlanes[1];
+            // Stop tracking secondary DynamicPlane
             currentDynamicPlanes[1] = null;
         }
+        // If exited DynamicPlane was only tracked secondarily  
         else if (currentDynamicPlanes[1].gameObject == col.gameObject)
         {
+            // Stop tracking it
             currentDynamicPlanes[1] = null;
         }
     }
 
+    /// <summary>
+    /// Begin tracking newly entered PlaneBreaker
+    /// </summary>
+    /// <param name="motor"> The player's kinematic motor</param>
+    /// <param name="planeBreaker">The PlaneBreaker entered</param>
     private void EnterPlaneBreaker(KinematicCharacterMotor motor, PlaneBreaker planeBreaker)
     {
-        if (currentPlaneBreakers[0] != null && currentPlaneBreakers[0].prioritize)
+        // If PlaneBreaker overlaps with another the player is already in
+        if (currentPlaneBreakers[0] != null)
         {
-            currentPlaneBreakers[1] = planeBreaker;
+            // If the previous PlaneBreaker is prioritized, keep new PlaneBreaker tracked secondarily
+            if (currentPlaneBreakers[0].prioritize)
+                currentPlaneBreakers[1] = planeBreaker;
+            else
+            {
+                // Track previous PlaneBreaker secondarily, and new one primarily, forgetting any other tracked PlaneBreaker
+                currentPlaneBreakers[1] = currentPlaneBreakers[0];
+                currentPlaneBreakers[0] = planeBreaker;
+
+                // Remember the plane that was broken
+                brokenPlane = currentPlane;
+            }
         }
         else
-        {    
-            if (currentPlaneBreakers[0] != null)
-                currentPlaneBreakers[1] = currentPlaneBreakers[0];
-
+        {
+            // Track new PlaneBreaker primarily
             currentPlaneBreakers[0] = planeBreaker;
+
+            // Remember the plane that was broken
             brokenPlane = currentPlane;
-            Vector3 planeRight = Vector3.Cross(Vector3.ProjectOnPlane(-physics.gravityDirection, motor.PlanarConstraintAxis).normalized, currentPlane.normal);
-            float dot = Vector3.Dot(motor.BaseVelocity, planeRight);
-            bool movingRight = dot > 0;
-            if(motor.IsGroundedThisUpdate)
-                SetCurrentPlane(motor, planeBreaker.GetClosestPathPlane(motor.Transform.position, movingRight), true);
         }
     }
 
+    /// <summary>
+    /// End tracking previously entered PlaneBreaker 
+    /// </summary>
+    /// <param name="col"> The collider of the PlaneBreaker trigger exited</param>
     private void ExitPlaneBreaker(Collider col)
     {
+        // If exited PlaneBreaker was tracked primarily
         if (currentPlaneBreakers[0].gameObject == col.gameObject)
         {
+            // Shift over potential secondarily tracked PlaneBreaker so that it is now tracked primarily
+            // If there was no PlaneBreaker, then there is no longer any tracked PlaneBreaker
             currentPlaneBreakers[0] = currentPlaneBreakers[1];
+            // Stop tracking secondary PlaneBreaker
             currentPlaneBreakers[1] = null;
-            if (currentPlaneBreakers[0] == null && currentDynamicPlanes[0] == null)
-                currentPlane = brokenPlane;
+
+            // if There was no secondarily tracked PlaneBreaker
+            if (currentPlaneBreakers[0] == null)
+            {
+                // Restore broken plane in the case that there is no current Dynamic Plane
+                if (currentDynamicPlanes[0] == null)
+                    settingPlane = brokenPlane; ////currentPlane = brokenPlane;
+                
+                // Stop Tracking the broken plane
+                brokenPlane = new Plane(Vector3.zero, Vector3.zero);
+            }
         }
+        // If exited PlaneBreaker was only tracked secondarily  
         else if (currentPlaneBreakers[1].gameObject == col.gameObject)
         {
+            // Stop tracking it
             currentPlaneBreakers[1] = null;
         }
     }
 #endregion
 
 #region Movement Effector Handling
+
+    /// <summary>
+    /// Apply any overrides from an entered MovementEffector
+    /// </summary>
+    /// <param name="effector"> The MovementEffector entered </param>
     private void EnterMovementEffector(MovementEffector effector)
     {
+        // Apply base Movement value overrides
         for (int i = 0; i < effector.movementOverrides.Count; i++)
         {
             ApplyOverride(effector.movementOverrides[i].item1, effector.movementOverrides[i].item2);
         }
 
+        // Apply Physics value overrides
         for (int i = 0; i < effector.physicsOverrides.Count; i++)
         {
             physics.ApplyOverride(effector.physicsOverrides[i].item1, effector.physicsOverrides[i].item2);
         }
 
+        // Apply Action value overrides
         for (int i = 0; i < effector.actionOverrides.Count; i++)
         {
             action.ApplyOverride(effector.actionOverrides[i].item1, effector.actionOverrides[i].item2);
         }
 
+        // Apply appropriate Ability value overrides 
         ability.EnterMovementEffector(effector);
     }
 
+    /// <summary>
+    /// Remove any overrides from an exited MovementEffector
+    /// </summary>
+    /// <param name="effector"> The MovementEffector exited </param>
     private void ExitMovementEffector(MovementEffector effector)
     {
+        // Remove base Movement value overrides
         for (int i = 0; i < effector.movementOverrides.Count; i++)
         {
             RemoveOverride(effector.movementOverrides[i].item1, effector.movementOverrides[i].item2);
         }
 
+        // Remove Physics value overrides
         for (int i = 0; i < effector.physicsOverrides.Count; i++)
         {
             physics.RemoveOverride(effector.physicsOverrides[i].item1, effector.physicsOverrides[i].item2);
         }
 
+        // Remove Action value overrides
         for (int i = 0; i < effector.actionOverrides.Count; i++)
         {
             action.RemoveOverride(effector.actionOverrides[i].item1, effector.actionOverrides[i].item2);
         }
 
+        // Remove appropriate Ability value overrides 
         ability.ExitMovementEffector(effector);
     }
 #endregion
 
 #region Ability Movement Override Handling
+    /// <summary>
+    /// Handle the event triggered by Ability wishing to apply an override
+    /// ? Possibly find a way to combine this nicely with movement effector so there's less copy and paste?
+    /// </summary>
+    /// <param name="args"> The Abilty Overrides given </param>
     private void AddAbilityOverride(AbilityOverrideArgs args)
     {
+        // Apply base Movement value overrides
         for (int i = 0; i < args.movementOverrides.Count; i++)
         {
             ApplyOverride(args.movementOverrides[i].item1, args.movementOverrides[i].item2);
         }
 
+        // Apply Physics value overrides
         for (int i = 0; i < args.physicsOverrides.Count; i++)
         {
             physics.ApplyOverride(args.physicsOverrides[i].item1, args.physicsOverrides[i].item2);
         }
 
+        // Apply Action value overrides
         for (int i = 0; i < args.actionOverrides.Count; i++)
         {
             action.ApplyOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
         }
     }
 
+    /// <summary>
+    /// Handle the event triggered by Ability wishing to remove an override
+    /// ? Possibly find a way to combine this nicely with movement effector so there's less copy and paste?
+    /// </summary>
+    /// <param name="args"> The Abilty Overrides given </param>
     private void RemoveAbilityOverride(AbilityOverrideArgs args)
     {
+         // Remove base Movement value overrides
         for (int i = 0; i < args.movementOverrides.Count; i++)
         {
             RemoveOverride(args.movementOverrides[i].item1, args.movementOverrides[i].item2);
         }
 
+        // Remove Physics value overrides
         for (int i = 0; i < args.physicsOverrides.Count; i++)
         {
             physics.RemoveOverride(args.physicsOverrides[i].item1, args.physicsOverrides[i].item2);
         }
 
+        // Remove Action value overrides
         for (int i = 0; i < args.actionOverrides.Count; i++)
         {
             action.RemoveOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
@@ -1251,7 +1354,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     public void ResetState(KinematicCharacterMotor motor)
     {
         // Resets the the motor state (used as a makeshift "level restart")
-        SetCurrentPlane(motor, startPlane);
+        settingPlane = startPlane;
         motor.ApplyState(startState);
         motor.BaseVelocity = Vector3.zero;
     }

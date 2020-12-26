@@ -113,34 +113,33 @@ public abstract class PlanePath : MonoBehaviour
             pathPlanes[i] = new Plane(normal, path.GetPoint(i));
         }
 
-        /*
-        pointForwardPlanes = new Plane[path.NumPoints];
-        pointBackwardPlanes = new Plane[path.NumPoints];
-        for (int i = 0; i < path.NumPoints; i++)
-        {
-            Vector3 forwardNormal;
-            Vector3 backwardNormal;
+        
+        ////pointForwardPlanes = new Plane[path.NumPoints];
+        ////pointBackwardPlanes = new Plane[path.NumPoints];
+        ////for (int i = 0; i < path.NumPoints; i++)
+        ////{
+        ////    Vector3 forwardNormal;
+        ////    Vector3 backwardNormal;
+        
+        ////    if (i == 0)
+        ////    {  
+        ////        backwardNormal = (path.GetPoint(i + 1) - path.GetPoint(i)).normalized;
+        ////        forwardNormal = -backwardNormal;
+        ////    }
+        ////    else if (i == path.NumPoints-1)
+        ////    {
+        ////        forwardNormal = (path.GetPoint(i - 1) - path.GetPoint(i)).normalized;
+        ////        backwardNormal = -forwardNormal;
+        ////    }
+        ////    else
+        ////    {
+        ////        forwardNormal = (path.GetPoint(i - 1) - path.GetPoint(i)).normalized;
+        ////        backwardNormal = (path.GetPoint(i + 1) - path.GetPoint(i)).normalized;
+        ////    }
 
-            if (i == 0)
-            {  
-                backwardNormal = (path.GetPoint(i + 1) - path.GetPoint(i)).normalized;
-                forwardNormal = -backwardNormal;
-            }
-            else if (i == path.NumPoints-1)
-            {
-                forwardNormal = (path.GetPoint(i - 1) - path.GetPoint(i)).normalized;
-                backwardNormal = -forwardNormal;
-            }
-            else
-            {
-                forwardNormal = (path.GetPoint(i - 1) - path.GetPoint(i)).normalized;
-                backwardNormal = (path.GetPoint(i + 1) - path.GetPoint(i)).normalized;
-            }
-
-            pointForwardPlanes[i] = new Plane(forwardNormal, path.GetPoint(i));
-            pointBackwardPlanes[i] = new Plane(backwardNormal, path.GetPoint(i));
-        }
-        */
+        ////    pointForwardPlanes[i] = new Plane(forwardNormal, path.GetPoint(i));
+        ////    pointBackwardPlanes[i] = new Plane(backwardNormal, path.GetPoint(i));
+        ////}
 
         AdditionalSetPointInfo();
     }
@@ -203,25 +202,23 @@ public abstract class PlanePath : MonoBehaviour
         return pathPlanes[GetPathPlane(path.GetClosestTimeOnPath(point), movingRight == forwardIsRight)];
     }
 
-    /*
-    public Plane GetApproachingPlaneTransition(Vector3 position, bool movingRight, out Plane traversalPlane)
-    {   
-        bool movingForward = (movingRight == forwardIsRight);
-        int traversalPlaneIndex = GetPathPlane(path.GetClosestTimeOnPath(position), movingForward);
-        traversalPlane = pathPlanes[traversalPlaneIndex];
+    ////public Plane GetApproachingPlaneTransition(Vector3 position, bool movingRight, out Plane traversalPlane)
+    ////{   
+    ////    bool movingForward = (movingRight == forwardIsRight);
+    ////    int traversalPlaneIndex = GetPathPlane(path.GetClosestTimeOnPath(position), movingForward);
+    ////    traversalPlane = pathPlanes[traversalPlaneIndex];
 
-        // If off start point
-        if (traversalPlaneIndex == 0 && Vector3.Dot(position - path.GetPoint(0), pointForwardPlanes[0].normal) > 0)
-        {
-            return (movingForward) ? pointForwardPlanes[0] : new Plane(Vector3.zero, float.PositiveInfinity);
-        }
-        // If off end point
-        else if (traversalPlaneIndex == path.NumPoints - 1 && Vector3.Dot(position - path.GetPoint(path.NumPoints - 1), pointBackwardPlanes[path.NumPoints - 1].normal) > 0)
-        {
-            return (!movingForward) ? pointBackwardPlanes[path.NumPoints - 1] : new Plane(Vector3.zero, float.PositiveInfinity);
-        }
+    ////    // If off start point
+    ////    if (traversalPlaneIndex == 0 && Vector3.Dot(position - path.GetPoint(0), pointForwardPlanes[0].normal) > ////0)
+    ////    {
+    ////        return (movingForward) ? pointForwardPlanes[0] : new Plane(Vector3.zero, float.PositiveInfinity);
+    ////    }
+    ////    // If off end point
+    ////    else if (traversalPlaneIndex == path.NumPoints - 1 && Vector3.Dot(position - path.GetPoint(path.NumPoints ////- 1), pointBackwardPlanes[path.NumPoints - 1].normal) > 0)
+    ////    {
+    ////        return (!movingForward) ? pointBackwardPlanes[path.NumPoints - 1] : new Plane(Vector3.zero, float.////PositiveInfinity);
+    ////    }
 
-        return(movingForward) ? pointForwardPlanes[traversalPlaneIndex + 1] : pointBackwardPlanes[traversalPlaneIndex];
-    } 
-    */
+    ////    return(movingForward) ? pointForwardPlanes[traversalPlaneIndex + 1] : pointBackwardPlanes////[traversalPlaneIndex];
+    ////} 
 }
