@@ -474,6 +474,10 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// Current stored plane waiting to be set at the appropriate time in the update cycle
     /// </summary>
     public Plane settingPlane = new Plane(Vector3.zero, Vector3.zero);
+    /// <summary>
+    /// Set to true on new plane so that UpdateRotation can properly align the player with the new plane
+    /// </summary>
+    private bool setOrientationAlongPlane = false;
     #endregion
 
     // Debug
@@ -565,12 +569,13 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         slopeList = new SlopeList(5);
 
         SetCurrentPlane(motor, new Plane(motor.CharacterForward, motor.Transform.position));
+        currentPlane = new Plane(motor.CharacterForward, motor.transform.position);
         motor.PlanarConstraintAxis = currentPlane.normal;
         
         // Debug
         #region debug
         startState = motor.GetState();
-        startPlane = new Plane(motor.PlanarConstraintAxis, motor.Transform.position);
+        startPlane = currentPlane;
         #endregion
     }
     #endregion
@@ -608,7 +613,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
                 break;
             case ("Checkpoint") :
                 startState = motor.GetState();
-                startPlane = new Plane(motor.PlanarConstraintAxis, motor.Transform.position);
+                startPlane = new Plane(currentPlane.normal, motor.Transform.position);
                 break;
         }
     } 
@@ -639,7 +644,6 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
     /// <summary>
     /// Sets the rotation of the kinematic motor
-    /// TODO: Jesus FUCK fix the use of slerp factor and just make this entire function actually make sense
     /// ? Is this being done efficiently with how it uses Vector and Quaternion math?
     /// </summary>
     /// <param name="currentRotation"> Reference to the motor's rotation </param>
@@ -650,27 +654,11 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         //Hold the previous rotation info
         Quaternion prevRot = currentRotation;
         Vector3 initialCharacterBottomHemiCenter = motor.TransientPosition + (currentRotation * motor.CharacterTransformToCapsuleBottomHemi); 
-
-        // Factor for how smoothly the character rotates
-        // ? Should slerp even be used? Try making it instantaneous and handle smoothing via animation/interpolation
-        float slerpFactor = 30;
         
         // Handles reorienting the player onto the proper plane if not already
-        // ? Should this be done in SetPlane?
-        if (motor.CharacterForward != motor.PlanarConstraintAxis)
-        {
-            
-            // Calculate the intermediate forwards due to smoothing 
-            Vector3 smoothedForward;
-                if(Vector3.Dot(motor.CharacterForward, -motor.PlanarConstraintAxis) > 0.95f)
-                    smoothedForward = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-10 * deltaTime));
-                else 
-                    smoothedForward = Vector3.Slerp(motor.CharacterForward, motor.PlanarConstraintAxis, 1 - Mathf.Exp(-slerpFactor * deltaTime));
-            
-            // Set forward to match the current plane (with smoothing accounted for)
-            currentRotation = ////Quaternion.FromToRotation(motor.CharacterForward, motor.PlanarConstraintAxis) * currentRotation;
-                Quaternion.FromToRotation(motor.CharacterForward, smoothedForward) * currentRotation;
-        }
+        if (setOrientationAlongPlane)
+            // Set forward to match the current plane
+            currentRotation = Quaternion.FromToRotation(motor.CharacterForward, currentPlane.normal) * currentRotation;
 
         // See if the player should reorient itself back to the gravity-based ground
         bool reorient = false;
@@ -683,49 +671,33 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         
         if(motor.IsGroundedThisUpdate)
         {
-            // TODO: No need to be set every frame, set once on grounding 
-            internalAngularVelocity = Vector3.zero;
-
             // If player is attached to ground orientation
-            if(motor.BaseVelocity.magnitude >= values.attachThreshold)
-            {
-                // Smoothly reorient along slope
-                // ? Why smooth if it's so strong/quick?
-                slerpFactor = 1000;////30;
-                Vector3 smoothedGroundNormal = motor.GetEffectiveGroundNormal(); ////Vector3.Slerp(motor.CharacterUp, motor.GetEffectiveGroundNormal(), 1 - Mathf.Exp(-slerpFactor * deltaTime));
-                currentRotation = ////Quaternion.FromToRotation(motor.CharacterUp, motor.GetEffectiveGroundNormal()) * currentRotation;
-                    Quaternion.FromToRotation(motor.CharacterUp, smoothedGroundNormal) * currentRotation;
-            }
+            if(motor.BaseVelocity.sqrMagnitude >= values.attachThreshold * values.attachThreshold)
+                currentRotation = Quaternion.FromToRotation(motor.CharacterUp, motor.GetEffectiveGroundNormal()) * currentRotation;
             else
             {
-                // Smoothly reorient along gravity
-                // ? Why smooth if it's so strong/quick?
-                slerpFactor = 1000;////1;//3;;
-                Vector3 smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
-                
-                currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
+                currentRotation = Quaternion.FromToRotation(motor.CharacterUp, -physics.gravityDirection) * currentRotation;
             }
         }
         // If the player does not have angular momentum midair
-        // ? Can this be moved be an if/else with the directly negated if statement a few lines below?
+        // ? Can this be moved to be an if/else with the directly negated if statement a few lines below?
         else if(internalAngularVelocity == Vector3.zero)
         {
-            // Slowly smoothen if no ground to reorient towards and land on
-            // ? if animation is used instead of slerp, and actual movement-wise rotation is instant, this actually is the only time it would make sense to keep slerp, since it's supposed to have the character's orientation smoothly go towards gravity, smoothing isn't used pirmarily for visuals here
-            if(!reorient)
-                slerpFactor = 1;////3;//0;
-            // Quickly Smoothen if there is
-            // ? This would be handled by animation if that's used instead
+            if(reorient)
+                // Instantly set orientation to the floor if there is a ground to reorient onto 
+                currentRotation = Quaternion.FromToRotation(motor.CharacterUp, -physics.gravityDirection) * currentRotation;
             else
-                slerpFactor = 1000;////30;
-
-            // Smoothly reorient player along gravity 
-            Vector3 smoothedUp;
-            if(Vector3.Dot(motor.CharacterUp, physics.gravityDirection) > 0.95f)
-                smoothedUp = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
-            else
-                smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
-            currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
+            {
+                // Smoothly reorient player along gravity 
+                float slerpFactor = 1;////3;//0;
+                Vector3 smoothedUp;
+                if(Vector3.Dot(motor.CharacterUp, physics.gravityDirection) > 0.95f)
+                    smoothedUp = Vector3.Slerp((motor.CharacterUp - motor.CharacterRight * 0.05f).normalized, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
+                else
+                    smoothedUp = Vector3.Slerp(motor.CharacterUp, -physics.gravityDirection, 1 - Mathf.Exp(-slerpFactor * deltaTime));
+                    
+                currentRotation = Quaternion.FromToRotation(motor.CharacterUp, smoothedUp) * currentRotation;
+            }
         }
 
         // Handle Action related rotation updates, if active
@@ -742,15 +714,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         // Handle angular momentum 
         if(internalAngularVelocity != Vector3.zero)
         {
-            // Reorient  angluar momentum along plane
-            // ? Should this be done in SetPlane just once instead?
-            if (Mathf.Abs(Vector3.Dot(internalAngularVelocity, motor.PlanarConstraintAxis)) < 0.99) 
-            {
-                // Project rotational velocity
-                internalAngularVelocity = Vector3.Project(internalAngularVelocity, motor.PlanarConstraintAxis);
-                // Maintain rotational momentum but reorient
-            }
-            ////internalAngularVelocity = Vector3.project(internalAngularVelocity, motor.PlanarConstraintAxis).normalized * internalAngularVelocity.magnitude
+            // Reorient angluar momentum along plane
+            if (setOrientationAlongPlane) 
+                internalAngularVelocity = Quaternion.FromToRotation(internalAngularVelocity, currentPlane.normal) * internalAngularVelocity;
 
             // Add angular velocity to the rotation
             currentRotation = Quaternion.Euler(internalAngularVelocity * deltaTime) * currentRotation;
@@ -763,10 +729,13 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
             motor.SetTransientPosition((initialCharacterBottomHemiCenter - newCharacterBottomHemiCenter) + motor.TransientPosition);
         }
+
+        setOrientationAlongPlane = false;
     }
     
     /// <summary>
     /// Sets the velocity of the kinematic motor
+    /// ? Is this being done efficiently with how it uses Vector and Quaternion math?
     /// ? Is max move even necessary?
     /// </summary>
     /// <param name="currentVelocity"> Reference to the motor's velocity </param>
@@ -814,7 +783,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
             physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
 
         // Ensure velocity is locked to current 2.5D plane
-        currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
+        currentVelocity = Vector3.ProjectOnPlane(currentVelocity, currentPlane.normal);
         
         // Cap the velocity if over max speed
         if (currentVelocity.sqrMagnitude > values.maxSpeed * values.maxSpeed)
@@ -852,7 +821,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         // Set so that the update uses the proper plane that the player is currently on
 
         // If active on PlaneBreaker
-        if (currentPlaneBreakers[0] != null && motor.IsGroundedThisUpdate && motor.BaseVelocity.magnitude >= values.attachThreshold)
+        if (currentPlaneBreakers[0] != null && motor.IsGroundedThisUpdate && motor.BaseVelocity.sqrMagnitude >= values.attachThreshold * values.attachThreshold)
         {
             Vector3 planeRight = Vector3.Cross(currentPlaneBreakers[0].transform.up, currentPlane.normal);
             bool movingRight = Vector3.Dot(motor.BaseVelocity, planeRight) > 0;            
@@ -894,11 +863,16 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         // Used to see if angular velocity should be set for angular momentum when ungrounding
         bool setAngularVelocity = false;
 
-        if(motor.IsGroundedThisUpdate)
+        if (motor.IsGroundedThisUpdate)
         {
+            // If just landed
+            if (motor.WasGroundedLastUpdate)
+            {
+                internalAngularVelocity = Vector3.zero;
+            }
             // If speed drops enough, detatch from slope
-            // TODO: Simplify attach threshold so that a bool is set so that "isAttached" doesn't have to be calculated every time
-            if(Vector3.ProjectOnPlane(motor.BaseVelocity, motor.GetEffectiveGroundNormal()).magnitude < values.attachThreshold && Vector3.Angle(-physics.gravityDirection, motor.GetEffectiveGroundNormal()) > motor.MaxStableSlopeAngle)
+            // TODO: Simplify attach threshold so that a bool is set here so that "isAttached" doesn't have to be calculated every time it's needed in other parts of the class
+            if(Vector3.ProjectOnPlane(motor.BaseVelocity, motor.GetEffectiveGroundNormal()).sqrMagnitude < values.attachThreshold * values.attachThreshold && Vector3.Angle(-physics.gravityDirection, motor.GetEffectiveGroundNormal()) > motor.MaxStableSlopeAngle)
             {
                 motor.ForceUnground();
                 setAngularVelocity = true;
@@ -926,7 +900,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         if(setAngularVelocity)
         {
             // Set angular velocity (if any) using slope tracking info and reset the tracker
-            internalAngularVelocity = slopeList.GetAngularVelocity(motor.BaseVelocity, motor.PlanarConstraintAxis, values.ungroundRotationFactor, values.ungroundRotationMinSpeed, values.ungroundRotationMaxSpeed);
+            internalAngularVelocity = slopeList.GetAngularVelocity(motor.BaseVelocity, currentPlane.normal, values.ungroundRotationFactor, values.ungroundRotationMinSpeed, values.ungroundRotationMaxSpeed);
             slopeList.Reset();
         }
 
@@ -1107,12 +1081,16 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         if (plane.normal == Vector3.zero || (plane.normal == currentPlane.normal && plane.distance == currentPlane.distance))
             return; 
 
+        // Set the currentPlane
+        currentPlane = plane;
         // Rotate Velocity along new plane without losing momentum
         motor.BaseVelocity = Quaternion.FromToRotation(currentPlane.normal, plane.normal) * motor.BaseVelocity;
         // Lock player movement on plane
         motor.PlanarConstraintAxis = plane.normal;
         // Move player to plane
         motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
+        // Reorient player rotation
+        setOrientationAlongPlane = true;
 
         // Trigger communication event on plane change
         planeChanged?.Invoke(new PlaneChangeArgs(plane.normal, breaker));
