@@ -240,11 +240,6 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// Triggered on Plane Change
     /// </summary>
     public event Action<PlaneChangeArgs> planeChanged;
-    /// <summary>
-    /// Triggerred Motor state update
-    /// TODO: Deprecate when referrence is done instead
-    /// </summary>
-    public event Action<KinematicCharacterMotorState> stateUpdated;
 #endregion
 
     /// <summary>
@@ -552,7 +547,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// <param name="communicator"> The internal commmunicator </param>
     public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
-        // SEt the communication
+        // Set the communication
         communicator.SetCommunication(this);
 
         // Set the helper classes' communications
@@ -916,8 +911,6 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     public void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
         ability.AfterCharacterUpdate(motor, deltaTime);
-        // TODO: Remove with communication being handled by reference
-        stateUpdated?.Invoke(motor.GetState());
 
         // Reset Ability and Action Input
         ability.ResetInput();

@@ -4,11 +4,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using KinematicCharacterController;
 
-#region Helper Classes
+#region Communication Structs
 /// <summary>
 /// A wrapper for the Transform class that allows transform state to only be read
 /// </summary>
-public class ReadOnlyTransform
+public struct ReadOnlyTransform
 {
     private Transform transform;
 
@@ -24,7 +24,30 @@ public class ReadOnlyTransform
         transform = t;
     }
 }   
+
+/// <summary>
+/// A wrapper for the KinematicCharacterMotor class that allows a constant reference state to only be read
+/// </summary>
+public struct ReadOnlyKinematicMotor
+{
+    private KinematicCharacterMotor motor;
+
+    public Vector3 position { get { return motor.TransientPosition; } }
+    public Quaternion rotation { get { return motor.TransientRotation; } }
+    public Vector3 velocity { get { return motor.BaseVelocity; } }
+    public Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
+    public Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
+    public bool isGroundedThisUpdatesGrounded { get { return motor.IsGroundedThisUpdate; } }
+    public bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
+
+    public ReadOnlyKinematicMotor(KinematicCharacterMotor m)
+    {  
+        motor = m;
+    }
+}   
+
 #endregion
+
 /// <summary>
 /// Unity Component that controls all Player Character mechanics and scripting
 /// Abstract for specific character to derive from
@@ -186,13 +209,16 @@ public abstract class PlayerCharacter : MonoBehaviour
     {
         SetupConcreteCommunicators(out internalCommunicator, out externalCommunicator);
 
+        // Set internal Communications
         movement.SetCommunicationInterface(internalCommunicator);
         animation.SetCommunicationInterface(internalCommunicator);
         externalCommunicator.SetCommunicationInterface(internalCommunicator);
         
-        // ? Should this be handled in external communicator?
-        // TODO yes, yes it should
-        Camera.main.transform.parent.GetComponent<PlayerCamera>().SetPlayerExternalCommunication(externalCommunicator, new ReadOnlyTransform(transform));
+        // Set External Communications
+        // TODO: Have a better way to reference the camera than Camera.main.transform.parent
+        PlayerCamera camera = Camera.main.transform.parent.GetComponent<PlayerCamera>();
+        camera.SetPlayerExternalCommunication(externalCommunicator);
+        camera.SetReadOnlyReferences(new ReadOnlyTransform(transform), new ReadOnlyKinematicMotor(motor));
     }
 
     /// <summary>

@@ -28,13 +28,6 @@ public interface IPlayerMovementCommunication : IPlayerCommunication
     /// Event triggered when the player changes plane
     /// </summary>
     event Action<PlaneChangeArgs> planeChanged;
-    
-    /// <summary>
-    /// Event triggered when the kinematic motor state changes
-    /// TODO Really shouldn't be an event since it's gonna be triggered every physics tick
-    /// TODO find a way to wrap it as a a read only reference that updates every physics tick
-    /// </summary>
-    event Action<KinematicCharacterController.KinematicCharacterMotorState> stateUpdated;
 }
 
 /// <summary>
@@ -70,11 +63,6 @@ public interface IPlayerExternalCommunicatorCommunication : IPlayerCommunication
     /// </summary>
     /// <param name="planeChangeInfo">Info about the plane change</param>
     void HandlePlayerPlaneChanged(PlaneChangeArgs planeChangeInfo);
-    /// <summary>
-    /// Called when the player's kinematic motor state changes
-    /// </summary>
-    /// <param name="state">The state of the player</param>
-    void HandleMovementStateUpdated(KinematicCharacterController.KinematicCharacterMotorState state);
     /// <summary>
     /// Called when the players gravity direction changes
     /// </summary>
@@ -149,7 +137,6 @@ public abstract class PlayerInternalCommunicator
     {
         movement = communication;
         movement.planeChanged += PlaneChangedHandler;
-        movement.stateUpdated += HandleMovementStateUpdate;
     }
 
     /// <summary>
@@ -192,14 +179,6 @@ public abstract class PlayerInternalCommunicator
     #endregion
 
     #region External Communicator Notifiers
-    /// <summary>
-    /// Event Handler for when the kinematic motor state changes
-    /// </summary>
-    /// <param name="state">The KinematicMotor state</param>
-    private void HandleMovementStateUpdate(KinematicCharacterController.KinematicCharacterMotorState state)
-    {
-        externalCommunicator.HandleMovementStateUpdated(state);
-    }
 
     /// <summary>
     /// Event Handler for when the player's plane changes
