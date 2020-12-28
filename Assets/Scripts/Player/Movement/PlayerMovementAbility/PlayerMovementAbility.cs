@@ -5,16 +5,16 @@ using KinematicCharacterController;
 using System;
 
 [System.Serializable]
-public class AbilityOverrideArgs : EventArgs
+public struct AbilityOverrideArgs
 {
     [SerializeField]
-    public List<MutableTuple<PlayerMovementValues, PlayerMovementOverrideType>> movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerMovementOverrideType>>();
+    public List<MutableTuple<PlayerMovementValues, PlayerOverrideType>> movementOverrides;
 
     [SerializeField]
-    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerMovementOverrideType>> physicsOverrides = new List<MutableTuple<PlayerMovementPhysicsValues, PlayerMovementOverrideType>>();
+    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>> physicsOverrides;
 
     [SerializeField]
-    public List<MutableTuple<PlayerMovementActionValues, PlayerMovementOverrideType>> actionOverrides = new List<MutableTuple<PlayerMovementActionValues, PlayerMovementOverrideType>>();
+    public List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>> actionOverrides;
 
 }
 
@@ -122,18 +122,18 @@ public interface IPlayerMovementAbility : IPlayerCommunication
 
     void ExitMovementEffector(MovementEffector effector);
     
-    event EventHandler<AbilityOverrideArgs> addingMovementOverrides;
-    event EventHandler<AbilityOverrideArgs> removingMovementOverrides;
+    event Action<AbilityOverrideArgs> addingMovementOverrides;
+    event Action<AbilityOverrideArgs> removingMovementOverrides;
 
 }
 
 [System.Serializable]
-public abstract class PlayerMovementAbility<Values> : PlayerMovementOverridableAttribute<Values>, IPlayerMovementAbility where Values : PlayerMovementOverridableValues, new()
+public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute<Values>, IPlayerMovementAbility where Values : PlayerOverridableValues, new()
 {
-    public abstract event EventHandler<AbilityOverrideArgs> addingMovementOverrides;
-    public abstract event EventHandler<AbilityOverrideArgs> removingMovementOverrides;
+    public abstract event Action<AbilityOverrideArgs> addingMovementOverrides;
+    public abstract event Action<AbilityOverrideArgs> removingMovementOverrides;
 
-    public abstract void SetCommunication(PlayerInternalCommunicator communicator);
+    public abstract void SetCommunicationInterface(PlayerInternalCommunicator communicator);
 
     protected abstract override void SetDefaultBaseValues();
 

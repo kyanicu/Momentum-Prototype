@@ -5,7 +5,7 @@ using KinematicCharacterController;
 using System;
 
 [System.Serializable]
-public class PlayerMovementActionValues : PlayerMovementOverridableValues
+public class PlayerMovementActionValues : PlayerOverridableValues
 {
     /// <summary>
     /// The acceleration of the player when actively running on the ground
@@ -79,171 +79,143 @@ public class PlayerMovementActionValues : PlayerMovementOverridableValues
     /// </summary>
     public int invertRight;
 
-    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
+    protected override void SetValueCounts()
     {
-        runAccel = DefaultFloat(overrideType);
-        runKickOffSpeed = DefaultFloat(overrideType);
-        autoRunKickOffSpeed = DefaultFloat(overrideType);
-        autoRunKickOffSlopeThreshold = DefaultFloat(overrideType);
-        runMaxSpeed = DefaultFloat(overrideType);
-        brakeDecel = DefaultFloat(overrideType);
-        looseAirMoveAccel = DefaultFloat(overrideType);
-        looseAirMoveBrakeDecel = DefaultFloat(overrideType);
-        preciseAirMoveAccel = DefaultFloat(overrideType);
-        preciseAirMoveBrakeDecel = DefaultFloat(overrideType);
-        airSpeedThreshold = DefaultFloat(overrideType);
-        airMoveMaxSpeed = DefaultFloat(overrideType);
-        jumpSpeed = DefaultFloat(overrideType);
-        jumpRotationFactor = DefaultFloat(overrideType);
-        jumpCancelSpeed = DefaultFloat(overrideType);
-        jumpCancelThreshold = DefaultFloat(overrideType);
-        invertRight = DefaultInt(overrideType);
-    }
-    
-    public override void AddBy(PlayerMovementOverridableValues ov) 
-    {
-        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
-
-        runAccel = Add(runAccel, v.runAccel);
-        runKickOffSpeed = Add(runKickOffSpeed, v.runKickOffSpeed);
-        autoRunKickOffSpeed = Add(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
-        autoRunKickOffSlopeThreshold = Add(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
-        runMaxSpeed = Add(runMaxSpeed, v.runMaxSpeed);
-        brakeDecel = Add(brakeDecel, v.brakeDecel);
-        looseAirMoveAccel = Add(looseAirMoveAccel, v.looseAirMoveAccel);
-        looseAirMoveBrakeDecel = Add(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
-        preciseAirMoveAccel = Add(preciseAirMoveAccel, v.preciseAirMoveAccel);
-        preciseAirMoveBrakeDecel = Add(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
-        airSpeedThreshold = Add(airSpeedThreshold, v.airSpeedThreshold);
-        airMoveMaxSpeed = Add(airMoveMaxSpeed, v.airMoveMaxSpeed);
-        jumpSpeed = Add(jumpSpeed, v.jumpSpeed);
-        jumpRotationFactor = Add(jumpRotationFactor, v.jumpRotationFactor);
-        jumpCancelSpeed = Add(jumpCancelSpeed, v.jumpCancelSpeed);
-        jumpCancelThreshold = Add(jumpCancelThreshold, v.jumpCancelThreshold);
-        invertRight = Add(invertRight, v.invertRight);
+        floatValuesCount = 16;
+        intValuesCount = 1;
+        vector3ValuesCount = 0;
     }
 
-    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    protected override float GetFloatValue(int i)
     {
-        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
-
-        runAccel = Subtract(runAccel, v.runAccel);
-        runKickOffSpeed = Subtract(runKickOffSpeed, v.runKickOffSpeed);
-        autoRunKickOffSpeed = Subtract(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
-        autoRunKickOffSlopeThreshold = Subtract(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
-        runMaxSpeed = Subtract(runMaxSpeed, v.runMaxSpeed);
-        brakeDecel = Subtract(brakeDecel, v.brakeDecel);
-        looseAirMoveAccel = Subtract(looseAirMoveAccel, v.looseAirMoveAccel);
-        looseAirMoveBrakeDecel = Subtract(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
-        preciseAirMoveAccel = Subtract(preciseAirMoveAccel, v.preciseAirMoveAccel);
-        preciseAirMoveBrakeDecel = Subtract(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
-        airSpeedThreshold = Subtract(airSpeedThreshold, v.airSpeedThreshold);
-        airMoveMaxSpeed = Subtract(airMoveMaxSpeed, v.airMoveMaxSpeed);
-        jumpSpeed = Subtract(jumpSpeed, v.jumpSpeed);
-        jumpRotationFactor = Subtract(jumpRotationFactor, v.jumpRotationFactor);
-        jumpCancelSpeed = Subtract(jumpCancelSpeed, v.jumpCancelSpeed);
-        jumpCancelThreshold = Subtract(jumpCancelThreshold, v.jumpCancelThreshold);
-        invertRight = Subtract(invertRight, v.invertRight);
+        switch (i) 
+        {
+            case (0) :
+                return runAccel;
+            case (1) :
+                return runKickOffSpeed;
+            case (2) :
+                return autoRunKickOffSpeed;
+            case (3) :
+                return autoRunKickOffSlopeThreshold;
+            case (4) :
+                return runMaxSpeed;
+            case (5) :
+                return brakeDecel;
+            case (6) :
+                return looseAirMoveAccel;
+            case (7) :
+                return looseAirMoveBrakeDecel;
+            case (8) :
+                return preciseAirMoveAccel;
+            case (9) :
+                return preciseAirMoveBrakeDecel;
+            case (10) :
+                return airSpeedThreshold;
+            case (11) :
+                return airMoveMaxSpeed;
+            case (12) :
+                return jumpSpeed;
+            case (13) :
+                return jumpRotationFactor;
+            case (14) :
+                return jumpCancelSpeed;
+            case (15) :
+                return jumpCancelThreshold;
+            default :
+                return 0;
+        }
     }
-
-    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    protected override void SetFloatValue(int i, float value)
     {
-        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
-
-        runAccel = Multiply(runAccel, v.runAccel);
-        runKickOffSpeed = Multiply(runKickOffSpeed, v.runKickOffSpeed);
-        autoRunKickOffSpeed = Multiply(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
-        autoRunKickOffSlopeThreshold = Multiply(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
-        runMaxSpeed = Multiply(runMaxSpeed, v.runMaxSpeed);
-        brakeDecel = Multiply(brakeDecel, v.brakeDecel);
-        looseAirMoveAccel = Multiply(looseAirMoveAccel, v.looseAirMoveAccel);
-        looseAirMoveBrakeDecel = Multiply(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
-        preciseAirMoveAccel = Multiply(preciseAirMoveAccel, v.preciseAirMoveAccel);
-        preciseAirMoveBrakeDecel = Multiply(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
-        airSpeedThreshold = Multiply(airSpeedThreshold, v.airSpeedThreshold);
-        airMoveMaxSpeed = Multiply(airMoveMaxSpeed, v.airMoveMaxSpeed);
-        jumpSpeed = Multiply(jumpSpeed, v.jumpSpeed);
-        jumpRotationFactor = Multiply(jumpRotationFactor, v.jumpRotationFactor);
-        jumpCancelSpeed = Multiply(jumpCancelSpeed, v.jumpCancelSpeed);
-        jumpCancelThreshold = Multiply(jumpCancelThreshold, v.jumpCancelThreshold);
-        invertRight = Multiply(invertRight, v.invertRight);
+        switch (i) 
+        {
+            case (0) :
+                runAccel = value;
+                break;
+            case (1) :
+                runKickOffSpeed = value;
+                break;
+            case (2) :
+                autoRunKickOffSpeed = value;
+                break;
+            case (3) :
+                autoRunKickOffSlopeThreshold = value;
+                break;
+            case (4) :
+                runMaxSpeed = value;
+                break;
+            case (5) :
+                brakeDecel = value;
+                break;
+            case (6) :
+                looseAirMoveAccel = value;
+                break;
+            case (7) :
+                looseAirMoveBrakeDecel = value;
+                break;
+            case (8) :
+                preciseAirMoveAccel = value;
+                break;
+            case (9) :
+                preciseAirMoveBrakeDecel = value;
+                break;
+            case (10) :
+                airSpeedThreshold = value;
+                break;
+            case (11) :
+                airMoveMaxSpeed = value;
+                break;
+            case (12) :
+                jumpSpeed = value;
+                break;
+            case (13) :
+                jumpRotationFactor = value;
+                break;
+            case (14) :
+                jumpCancelSpeed = value;
+                break;
+            case (15) :
+                jumpCancelThreshold = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    protected override int GetIntValue(int i)
     {
-        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
-
-        runAccel = Divide(runAccel, v.runAccel);
-        runKickOffSpeed = Divide(runKickOffSpeed, v.runKickOffSpeed);
-        autoRunKickOffSpeed = Divide(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
-        autoRunKickOffSlopeThreshold = Divide(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
-        runMaxSpeed = Divide(runMaxSpeed, v.runMaxSpeed);
-        brakeDecel = Divide(brakeDecel, v.brakeDecel);
-        looseAirMoveAccel = Divide(looseAirMoveAccel, v.looseAirMoveAccel);
-        looseAirMoveBrakeDecel = Divide(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
-        preciseAirMoveAccel = Divide(preciseAirMoveAccel, v.preciseAirMoveAccel);
-        preciseAirMoveBrakeDecel = Divide(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
-        airSpeedThreshold = Divide(airSpeedThreshold, v.airSpeedThreshold);
-        airMoveMaxSpeed = Divide(airMoveMaxSpeed, v.airMoveMaxSpeed);
-        jumpSpeed = Divide(jumpSpeed, v.jumpSpeed);
-        jumpRotationFactor = Divide(jumpRotationFactor, v.jumpRotationFactor);
-        jumpCancelSpeed = Divide(jumpCancelSpeed, v.jumpCancelSpeed);
-        jumpCancelThreshold = Divide(jumpCancelThreshold, v.jumpCancelThreshold);
-        invertRight = Divide(invertRight, v.invertRight);
+        switch (i) 
+        {
+            case (0) :
+                return invertRight;
+            default :
+                return 0;
+        }
     }
-
-    public override void OrBy(PlayerMovementOverridableValues ov) 
+    protected override void SetIntValue(int i, int value)
     {
-        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
-
-        runAccel = Or(runAccel, v.runAccel);
-        runKickOffSpeed = Or(runKickOffSpeed, v.runKickOffSpeed);
-        autoRunKickOffSpeed = Or(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
-        autoRunKickOffSlopeThreshold = Or(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
-        runMaxSpeed = Or(runMaxSpeed, v.runMaxSpeed);
-        brakeDecel = Or(brakeDecel, v.brakeDecel);
-        looseAirMoveAccel = Or(looseAirMoveAccel, v.looseAirMoveAccel);
-        looseAirMoveBrakeDecel = Or(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
-        preciseAirMoveAccel = Or(preciseAirMoveAccel, v.preciseAirMoveAccel);
-        preciseAirMoveBrakeDecel = Or(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
-        airSpeedThreshold = Or(airSpeedThreshold, v.airSpeedThreshold);
-        airMoveMaxSpeed = Or(airMoveMaxSpeed, v.airMoveMaxSpeed);
-        jumpSpeed = Or(jumpSpeed, v.jumpSpeed);
-        jumpRotationFactor = Or(jumpRotationFactor, v.jumpRotationFactor);
-        jumpCancelSpeed = Or(jumpCancelSpeed, v.jumpCancelSpeed);
-        jumpCancelThreshold = Or(jumpCancelThreshold, v.jumpCancelThreshold);
-        invertRight = Or(invertRight, v.invertRight);
+        switch (i) 
+        {
+            case (0) :
+                invertRight = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void AndBy(PlayerMovementOverridableValues ov) 
+    protected override Vector3 GetVector3Value(int i)
     {
-        PlayerMovementActionValues v = ov as PlayerMovementActionValues;
-
-        runAccel = And(runAccel, v.runAccel);
-        runKickOffSpeed = And(runKickOffSpeed, v.runKickOffSpeed);
-        autoRunKickOffSpeed = And(autoRunKickOffSpeed, v.autoRunKickOffSpeed);
-        autoRunKickOffSlopeThreshold = And(autoRunKickOffSlopeThreshold, v.autoRunKickOffSlopeThreshold);
-        runMaxSpeed = And(runMaxSpeed, v.runMaxSpeed);
-        brakeDecel = And(brakeDecel, v.brakeDecel);
-        looseAirMoveAccel = And(looseAirMoveAccel, v.looseAirMoveAccel);
-        looseAirMoveBrakeDecel = And(looseAirMoveBrakeDecel, v.looseAirMoveBrakeDecel);
-        preciseAirMoveAccel = And(preciseAirMoveAccel, v.preciseAirMoveAccel);
-        preciseAirMoveBrakeDecel = And(preciseAirMoveBrakeDecel, v.preciseAirMoveBrakeDecel);
-        airSpeedThreshold = And(airSpeedThreshold, v.airSpeedThreshold);
-        airMoveMaxSpeed = And(airMoveMaxSpeed, v.airMoveMaxSpeed);
-        jumpSpeed = And(jumpSpeed, v.jumpSpeed);
-        jumpRotationFactor = And(jumpRotationFactor, v.jumpRotationFactor);
-        jumpCancelSpeed = And(jumpCancelSpeed, v.jumpCancelSpeed);
-        jumpCancelThreshold = And(jumpCancelThreshold, v.jumpCancelThreshold);
-        invertRight = And(invertRight, v.invertRight);
+        return Vector3.zero;
     }
+    protected override void SetVector3Value(int i, Vector3 value) {}
+
 }
 
 /// <summary>
 /// Handles application of internally intended actions focused on moving the player
 /// </summary>
 [System.Serializable]
-public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMovementActionValues>, IPlayerMovementActionCommunication
+public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementActionValues>, IPlayerMovementActionCommunication
 {
     /// <summary>
     /// Struct that holds information on player input
@@ -308,7 +280,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
     }
 
     #region Events
-    public event EventHandler facingDirectionChanged;
+    public event Action facingDirectionChanged;
     #endregion
 
     /// <summary>
@@ -341,7 +313,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
         facingDirection = +1;
     }
 
-    public void SetCommunication(PlayerInternalCommunicator communicator)
+    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         communicator.SetCommunication(this);
     }
@@ -416,7 +388,7 @@ public class PlayerMovementAction : PlayerMovementOverridableAttribute<PlayerMov
                 if (faceDir != facingDirection)
                 {
                     facingDirection = faceDir;
-                    facingDirectionChanged?.Invoke(this, EventArgs.Empty);
+                    facingDirectionChanged?.Invoke();
                 }                
             }
         }

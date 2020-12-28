@@ -31,7 +31,7 @@ public class PlayerAnimation : IPlayerAnimationCommunication
         modelRoot = _modelRoot;
     }
 
-    public void SetCommunication(PlayerInternalCommunicator communicator)
+    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         communicator.SetCommunication(this);
     }

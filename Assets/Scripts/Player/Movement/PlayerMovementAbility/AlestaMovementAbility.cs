@@ -5,7 +5,7 @@ using KinematicCharacterController;
 using System;
 
 [System.Serializable]
-public class AlestaMovementAbilityValues : PlayerMovementOverridableValues
+public class AlestaMovementAbilityValues : PlayerOverridableValues
 {
     [SerializeField]
     public float permeationPushAccel;
@@ -16,73 +16,60 @@ public class AlestaMovementAbilityValues : PlayerMovementOverridableValues
     [SerializeField]
     public float permeationVelocityThreshold;
 
-    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
+    protected override void SetValueCounts()
     {
-        permeationPushAccel = DefaultFloat(overrideType);
-        permeationResistFactor = DefaultFloat(overrideType);
-        permeationGravityFactor = DefaultFloat(overrideType);
-        permeationVelocityThreshold = DefaultFloat(overrideType);
-    }
-    
-    public override void AddBy(PlayerMovementOverridableValues ov) 
-    {
-        AlestaMovementAbilityValues v = ov as AlestaMovementAbilityValues;
-
-        permeationPushAccel = Add(permeationPushAccel, v.permeationPushAccel);
-        permeationResistFactor = Add(permeationResistFactor, v.permeationResistFactor);
-        permeationGravityFactor = Add(permeationGravityFactor, v.permeationGravityFactor);
-        permeationVelocityThreshold = Add(permeationVelocityThreshold, v.permeationVelocityThreshold);
+        floatValuesCount = 4;
+        intValuesCount = 0;
+        vector3ValuesCount = 0;
     }
 
-    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    protected override float GetFloatValue(int i)
     {
-        AlestaMovementAbilityValues v = ov as AlestaMovementAbilityValues;
-
-        permeationPushAccel = Subtract(permeationPushAccel, v.permeationPushAccel);
-        permeationResistFactor = Subtract(permeationResistFactor, v.permeationResistFactor);
-        permeationGravityFactor = Subtract(permeationGravityFactor, v.permeationGravityFactor);
-        permeationVelocityThreshold = Subtract(permeationVelocityThreshold, v.permeationVelocityThreshold);
+        switch (i) 
+        {
+            case (0) :
+                return permeationPushAccel;
+            case (1) :
+                return permeationResistFactor;
+            case (2) :
+                return permeationGravityFactor;
+            case (3) :
+                return permeationVelocityThreshold;
+            default :
+                return 0;
+        }
     }
-
-    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    protected override void SetFloatValue(int i, float value)
     {
-        AlestaMovementAbilityValues v = ov as AlestaMovementAbilityValues;
-
-        permeationPushAccel = Multiply(permeationPushAccel, v.permeationPushAccel);
-        permeationResistFactor = Multiply(permeationResistFactor, v.permeationResistFactor);
-        permeationGravityFactor = Multiply(permeationGravityFactor, v.permeationGravityFactor);
-        permeationVelocityThreshold = Multiply(permeationVelocityThreshold, v.permeationVelocityThreshold);
+        switch (i) 
+        {
+            case (0) :
+                permeationPushAccel = value;
+                break;
+            case (1) :
+                permeationResistFactor = value;
+                break;
+            case (2) :
+                permeationGravityFactor = value;
+                break;
+            case (3) :
+                permeationVelocityThreshold = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    protected override int GetIntValue(int i)
     {
-        AlestaMovementAbilityValues v = ov as AlestaMovementAbilityValues;
-
-        permeationPushAccel = Divide(permeationPushAccel, v.permeationPushAccel);
-        permeationResistFactor = Divide(permeationResistFactor, v.permeationResistFactor);
-        permeationGravityFactor = Divide(permeationGravityFactor, v.permeationGravityFactor);
-        permeationVelocityThreshold = Divide(permeationVelocityThreshold, v.permeationVelocityThreshold);
+        return 0;
     }
-
-    public override void OrBy(PlayerMovementOverridableValues ov) 
+    protected override void SetIntValue(int i, int value) { }
+    protected override Vector3 GetVector3Value(int i)
     {
-        AlestaMovementAbilityValues v = ov as AlestaMovementAbilityValues;
-
-        permeationPushAccel = Or(permeationPushAccel, v.permeationPushAccel);
-        permeationResistFactor = Or(permeationResistFactor, v.permeationResistFactor);
-        permeationGravityFactor = Or(permeationGravityFactor, v.permeationGravityFactor);
-        permeationVelocityThreshold = Or(permeationVelocityThreshold, v.permeationVelocityThreshold);
+        return Vector3.zero;
     }
+    protected override void SetVector3Value(int i, Vector3 value) {}
 
-    public override void AndBy(PlayerMovementOverridableValues ov) 
-    {
-        AlestaMovementAbilityValues v = ov as AlestaMovementAbilityValues;
-
-        permeationPushAccel = And(permeationPushAccel, v.permeationPushAccel);
-        permeationResistFactor = And(permeationResistFactor, v.permeationResistFactor);
-        permeationGravityFactor = And(permeationGravityFactor, v.permeationGravityFactor);
-        permeationVelocityThreshold = And(permeationVelocityThreshold, v.permeationVelocityThreshold);
-    }
 }
 
 struct AlestaMovementAbilityInput : IPlayerMovementInput
@@ -109,8 +96,8 @@ struct AlestaMovementAbilityInput : IPlayerMovementInput
 public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbilityValues>, IAlestaMovementAbilityCommunication
 {
 
-    public override event EventHandler<AbilityOverrideArgs> addingMovementOverrides;
-    public override event EventHandler<AbilityOverrideArgs> removingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
 
     private AlestaMovementAbilityInput input;
 
@@ -125,11 +112,13 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
     public AlestaMovementAbility()
     {
         currentPermeationOverride = new AbilityOverrideArgs();
+        currentPermeationOverride.movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerOverrideType>>();
         PlayerMovementValues moveOverrides = new PlayerMovementValues();
-        moveOverrides.SetDefaultValues(PlayerMovementOverrideType.Addition);
+        moveOverrides.SetDefaultValues(PlayerOverrideType.Addition);
         moveOverrides.negateAction = 1;
         moveOverrides.negatePhysics = 1;
-        currentPermeationOverride.movementOverrides.Add(new MutableTuple<PlayerMovementValues, PlayerMovementOverrideType>(moveOverrides, PlayerMovementOverrideType.Addition));
+        Debug.Assert(currentPermeationOverride.movementOverrides != null);
+        currentPermeationOverride.movementOverrides.Add(new MutableTuple<PlayerMovementValues, PlayerOverrideType>(moveOverrides, PlayerOverrideType.Addition));
         
         input = new AlestaMovementAbilityInput();
     }
@@ -147,7 +136,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
         
     }
 
-    public override void SetCommunication(PlayerInternalCommunicator communicator)
+    public override void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         (communicator as AlestaInternalCommunicator).SetCommunication(this);
     }
@@ -301,7 +290,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
     {
         for (int i = 0; i < effector.alestaAbilityOverrides.Count; i++)
         {
-            AddOverride(effector.alestaAbilityOverrides[i].item1, effector.alestaAbilityOverrides[i].item2);
+            ApplyOverride(effector.alestaAbilityOverrides[i].item1, effector.alestaAbilityOverrides[i].item2);
         }
     }
 
@@ -341,7 +330,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
         currentPermeationNormal = Vector3.ProjectOnPlane(hitNormal, motor.PlanarConstraintAxis).normalized;
         float angularAccelSign = Mathf.Sign(Vector3.Dot(motor.PlanarConstraintAxis, angularVelocity));
         currentPermeationAngularAccel = (angularVelocity.magnitude / (velocity.magnitude/values.permeationPushAccel)) * angularAccelSign;
-        addingMovementOverrides(this, currentPermeationOverride);
+        addingMovementOverrides?.Invoke(currentPermeationOverride);
     }
 
     private void ExitPermeation()
@@ -350,7 +339,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
         inSurfaceCheck = false;
         currentPermeationAngularAccel = 0;
         currentPermeationNormal = Vector3.zero;
-        removingMovementOverrides(this, currentPermeationOverride);
+        removingMovementOverrides(currentPermeationOverride);
     }
 
 }

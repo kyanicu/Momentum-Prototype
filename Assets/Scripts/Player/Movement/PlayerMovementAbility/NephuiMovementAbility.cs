@@ -4,57 +4,49 @@ using UnityEngine;
 using KinematicCharacterController;
 using System;
 
-public class NephuiMovementAbilityValues : PlayerMovementOverridableValues
+public class NephuiMovementAbilityValues : PlayerOverridableValues
 {
     [SerializeField]
     public float test;
 
-    public override void SetDefaultValues(PlayerMovementOverrideType overrideType)
+    protected override void SetValueCounts()
     {
-        test = DefaultFloat(overrideType);
-    }
-    
-    public override void AddBy(PlayerMovementOverridableValues ov) 
-    {
-        NephuiMovementAbilityValues v = ov as NephuiMovementAbilityValues;
-
-        test = Add(test, v.test);
+        floatValuesCount = 1;
+        intValuesCount = 0;
+        vector3ValuesCount = 0;
     }
 
-    public override void SubtractBy(PlayerMovementOverridableValues ov) 
+    protected override float GetFloatValue(int i)
     {
-        NephuiMovementAbilityValues v = ov as NephuiMovementAbilityValues;
-
-        test = Subtract(test, v.test);
+        switch (i) 
+        {
+            case (0) :
+                return test;
+            default :
+                return 0;
+        }
     }
-
-    public override void MultiplyBy(PlayerMovementOverridableValues ov) 
+    protected override void SetFloatValue(int i, float value)
     {
-        NephuiMovementAbilityValues v = ov as NephuiMovementAbilityValues;
-
-        test = Multiply(test, v.test);
+        switch (i) 
+        {
+            case (0) :
+                test = value;
+                break;
+            default :
+                break;
+        }
     }
-
-    public override void DivideBy(PlayerMovementOverridableValues ov) 
+    protected override int GetIntValue(int i)
     {
-        NephuiMovementAbilityValues v = ov as NephuiMovementAbilityValues;
-
-        test = Divide(test, v.test);
+        return 0;
     }
-
-    public override void OrBy(PlayerMovementOverridableValues ov) 
+    protected override void SetIntValue(int i, int value) { }
+    protected override Vector3 GetVector3Value(int i)
     {
-        NephuiMovementAbilityValues v = ov as NephuiMovementAbilityValues;
-
-        test = Or(test, v.test);
+        return Vector3.zero;
     }
-
-    public override void AndBy(PlayerMovementOverridableValues ov) 
-    {
-        NephuiMovementAbilityValues v = ov as NephuiMovementAbilityValues;
-
-        test = And(test, v.test);
-    }
+    protected override void SetVector3Value(int i, Vector3 value) {}
 }
 
 struct NephuiMovementAbilityInput : IPlayerMovementInput
@@ -74,8 +66,8 @@ struct NephuiMovementAbilityInput : IPlayerMovementInput
 public class NephuiMovementAbility : PlayerMovementAbility<NephuiMovementAbilityValues>,  INephuiMovementAbilityCommunication
 {
 
-    public override event EventHandler<AbilityOverrideArgs> addingMovementOverrides;
-    public override event EventHandler<AbilityOverrideArgs> removingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
+    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
 
     private NephuiMovementAbilityInput input;
 
@@ -94,7 +86,7 @@ public class NephuiMovementAbility : PlayerMovementAbility<NephuiMovementAbility
         
     }
 
-    public override void SetCommunication(PlayerInternalCommunicator communicator)
+    public override void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         (communicator as NephuiInternalCommunicator).SetCommunication(this);
     }
@@ -223,7 +215,7 @@ public class NephuiMovementAbility : PlayerMovementAbility<NephuiMovementAbility
     {
         for (int i = 0; i < effector.nephuiAbilityOverrides.Count; i++)
         {
-            AddOverride(effector.nephuiAbilityOverrides[i].item1, effector.nephuiAbilityOverrides[i].item2);
+            ApplyOverride(effector.nephuiAbilityOverrides[i].item1, effector.nephuiAbilityOverrides[i].item2);
         }
     }
 
