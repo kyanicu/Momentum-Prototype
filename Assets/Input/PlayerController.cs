@@ -43,6 +43,14 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""interactions"": """"
                 },
                 {
+                    ""name"": ""VerticalDirection"",
+                    ""type"": ""Button"",
+                    ""id"": ""1259d71d-68d0-4b2a-81d5-b9cf51cbc9f3"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
                     ""name"": ""RunKickOff"",
                     ""type"": ""Button"",
                     ""id"": ""1357f26e-d977-4830-880d-ea80666c9be9"",
@@ -57,6 +65,14 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": ""MultiTap""
+                },
+                {
+                    ""name"": ""NeutralAttack"",
+                    ""type"": ""Button"",
+                    ""id"": ""b5cf88cf-3178-47d3-9778-feedafda90c2"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": ""Press""
                 },
                 {
                     ""name"": ""Permeation"",
@@ -234,6 +250,50 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""action"": ""CameraResetManualTilt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""359eb653-18e6-49a7-876b-c4a263e8b33f"",
+                    ""path"": ""<Keyboard>/j"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Standard"",
+                    ""action"": ""NeutralAttack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""7cfd2eaa-f9bc-4f98-8343-635651a79158"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""cc379067-4338-454b-849c-cfb3a2e4b993"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""56ff7664-2583-4c99-8cb6-8de0b1886bf6"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -257,8 +317,10 @@ public class @PlayerController : IInputActionCollection, IDisposable
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_JumpCancel = m_Player.FindAction("JumpCancel", throwIfNotFound: true);
         m_Player_Run = m_Player.FindAction("Run", throwIfNotFound: true);
+        m_Player_VerticalDirection = m_Player.FindAction("VerticalDirection", throwIfNotFound: true);
         m_Player_RunKickOff = m_Player.FindAction("RunKickOff", throwIfNotFound: true);
         m_Player_Pause = m_Player.FindAction("Pause", throwIfNotFound: true);
+        m_Player_NeutralAttack = m_Player.FindAction("NeutralAttack", throwIfNotFound: true);
         m_Player_Permeation = m_Player.FindAction("Permeation", throwIfNotFound: true);
         m_Player_CameraManualTilt = m_Player.FindAction("CameraManualTilt", throwIfNotFound: true);
         m_Player_CameraChangeSetting = m_Player.FindAction("CameraChangeSetting", throwIfNotFound: true);
@@ -315,8 +377,10 @@ public class @PlayerController : IInputActionCollection, IDisposable
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_JumpCancel;
     private readonly InputAction m_Player_Run;
+    private readonly InputAction m_Player_VerticalDirection;
     private readonly InputAction m_Player_RunKickOff;
     private readonly InputAction m_Player_Pause;
+    private readonly InputAction m_Player_NeutralAttack;
     private readonly InputAction m_Player_Permeation;
     private readonly InputAction m_Player_CameraManualTilt;
     private readonly InputAction m_Player_CameraChangeSetting;
@@ -328,8 +392,10 @@ public class @PlayerController : IInputActionCollection, IDisposable
         public InputAction @Jump => m_Wrapper.m_Player_Jump;
         public InputAction @JumpCancel => m_Wrapper.m_Player_JumpCancel;
         public InputAction @Run => m_Wrapper.m_Player_Run;
+        public InputAction @VerticalDirection => m_Wrapper.m_Player_VerticalDirection;
         public InputAction @RunKickOff => m_Wrapper.m_Player_RunKickOff;
         public InputAction @Pause => m_Wrapper.m_Player_Pause;
+        public InputAction @NeutralAttack => m_Wrapper.m_Player_NeutralAttack;
         public InputAction @Permeation => m_Wrapper.m_Player_Permeation;
         public InputAction @CameraManualTilt => m_Wrapper.m_Player_CameraManualTilt;
         public InputAction @CameraChangeSetting => m_Wrapper.m_Player_CameraChangeSetting;
@@ -352,12 +418,18 @@ public class @PlayerController : IInputActionCollection, IDisposable
                 @Run.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRun;
                 @Run.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRun;
                 @Run.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRun;
+                @VerticalDirection.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnVerticalDirection;
+                @VerticalDirection.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnVerticalDirection;
+                @VerticalDirection.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnVerticalDirection;
                 @RunKickOff.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRunKickOff;
                 @RunKickOff.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRunKickOff;
                 @RunKickOff.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRunKickOff;
                 @Pause.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPause;
                 @Pause.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPause;
                 @Pause.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPause;
+                @NeutralAttack.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnNeutralAttack;
+                @NeutralAttack.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnNeutralAttack;
+                @NeutralAttack.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnNeutralAttack;
                 @Permeation.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPermeation;
                 @Permeation.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPermeation;
                 @Permeation.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPermeation;
@@ -383,12 +455,18 @@ public class @PlayerController : IInputActionCollection, IDisposable
                 @Run.started += instance.OnRun;
                 @Run.performed += instance.OnRun;
                 @Run.canceled += instance.OnRun;
+                @VerticalDirection.started += instance.OnVerticalDirection;
+                @VerticalDirection.performed += instance.OnVerticalDirection;
+                @VerticalDirection.canceled += instance.OnVerticalDirection;
                 @RunKickOff.started += instance.OnRunKickOff;
                 @RunKickOff.performed += instance.OnRunKickOff;
                 @RunKickOff.canceled += instance.OnRunKickOff;
                 @Pause.started += instance.OnPause;
                 @Pause.performed += instance.OnPause;
                 @Pause.canceled += instance.OnPause;
+                @NeutralAttack.started += instance.OnNeutralAttack;
+                @NeutralAttack.performed += instance.OnNeutralAttack;
+                @NeutralAttack.canceled += instance.OnNeutralAttack;
                 @Permeation.started += instance.OnPermeation;
                 @Permeation.performed += instance.OnPermeation;
                 @Permeation.canceled += instance.OnPermeation;
@@ -419,8 +497,10 @@ public class @PlayerController : IInputActionCollection, IDisposable
         void OnJump(InputAction.CallbackContext context);
         void OnJumpCancel(InputAction.CallbackContext context);
         void OnRun(InputAction.CallbackContext context);
+        void OnVerticalDirection(InputAction.CallbackContext context);
         void OnRunKickOff(InputAction.CallbackContext context);
         void OnPause(InputAction.CallbackContext context);
+        void OnNeutralAttack(InputAction.CallbackContext context);
         void OnPermeation(InputAction.CallbackContext context);
         void OnCameraManualTilt(InputAction.CallbackContext context);
         void OnCameraChangeSetting(InputAction.CallbackContext context);

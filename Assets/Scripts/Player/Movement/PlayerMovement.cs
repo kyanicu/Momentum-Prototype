@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*********************************
+* Copyright: © 2020 Katherine Leitao <kathleitao13@gmail.com> <github.com/kyanicu>
+* All Rights Reserved
+**********************************/
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -556,6 +560,15 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     }
 
     /// <summary>
+    /// Returns a readonly wrapper reference to action so that it's state may be communicated to other components that require it
+    /// </summary>
+    /// <returns> The read only reference to action </returns>
+    public ReadOnlyPlayerMovementAction GetReadOnlyAction()
+    {
+        return new ReadOnlyPlayerMovementAction(action);
+    }
+
+    /// <summary>
     /// Setup the class to be ready for gameplay
     /// Also initializes state info for debugging
     /// </summary>
@@ -997,7 +1010,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         }
 
         // Handles potentially innaccurate ledge detection possibly due to issues with concave mesh colliders
-        // TODO: Jesus Fucking Christ this is a mess PLEASE fix this or (better yet) just DON'T use concave mesh colliders. Commented out code is kept for later debugging
+        // TODO: This is a hacky mess of a bug fix. PLEASE fix this. Commented out code is kept for later debugging
         float dotEpsilon = 0.998f;////99998f;
         float ledgeHitDot;
         float groundHitDot;

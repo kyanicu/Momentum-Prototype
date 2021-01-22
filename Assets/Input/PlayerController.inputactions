@@ -30,6 +30,14 @@
                     "interactions": ""
                 },
                 {
+                    "name": "VerticalDirection",
+                    "type": "Button",
+                    "id": "1259d71d-68d0-4b2a-81d5-b9cf51cbc9f3",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
                     "name": "RunKickOff",
                     "type": "Button",
                     "id": "1357f26e-d977-4830-880d-ea80666c9be9",
@@ -44,6 +52,14 @@
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "MultiTap"
+                },
+                {
+                    "name": "NeutralAttack",
+                    "type": "Button",
+                    "id": "b5cf88cf-3178-47d3-9778-feedafda90c2",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "Press"
                 },
                 {
                     "name": "Permeation",
@@ -221,6 +237,50 @@
                     "action": "CameraResetManualTilt",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "359eb653-18e6-49a7-876b-c4a263e8b33f",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Standard",
+                    "action": "NeutralAttack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "1D Axis",
+                    "id": "7cfd2eaa-f9bc-4f98-8343-635651a79158",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "VerticalDirection",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "cc379067-4338-454b-849c-cfb3a2e4b993",
+                    "path": "<Keyboard>/s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "VerticalDirection",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "56ff7664-2583-4c99-8cb6-8de0b1886bf6",
+                    "path": "<Keyboard>/w",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "VerticalDirection",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 }
             ]
         }

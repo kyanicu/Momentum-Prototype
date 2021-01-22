@@ -28,6 +28,8 @@ public interface IPlayerMovementCommunication : IPlayerCommunication
     /// Event triggered when the player changes plane
     /// </summary>
     event Action<PlaneChangeArgs> planeChanged;
+
+    ReadOnlyPlayerMovementAction GetReadOnlyAction();
 }
 
 /// <summary>
@@ -46,11 +48,57 @@ public interface IPlayerMovementActionCommunication : IPlayerCommunication
 /// </summary>
 public interface IPlayerAnimationCommunication : IPlayerCommunication
 {
+
+    void SetReadOnlyReferences(ReadOnlyKinematicMotor motor, ReadOnlyPlayerMovementAction actions);
+
     /// <summary>
     /// Called when player changes facing direction
     /// </summary>
     void ChangeFacingDirection();
+
+    void AnimateNeutralAttack();
+    void AnimateDownAttack();
+    void AnimateUpAttack();
+    void AnimateRunningAttack();
+    void AnimateBrakingAttack();
+    void AnimateNeutralAerialAttack();
+    void AnimateBackAerialAttack();
+    void AnimateDownAerialAttack();
+    void AnimateUpAerialAttack();
+
+
+    event Action<AttackAnimationState> attackStateTransition;
 }
+
+/// <summary>
+/// Communication interface for player combat
+/// </summary>
+public interface IPlayerCombatCommunication : IPlayerCommunication
+{
+
+    void SetReadOnlyReferences(ReadOnlyKinematicMotor motor, ReadOnlyPlayerMovementAction action);
+
+    event Action neutralAttack;
+    event Action downAttack;
+    event Action upAttack;
+    event Action runningAttack;
+    event Action brakingAttack;
+    event Action neutralAerialAttack;
+    event Action backAerialAttack;
+    event Action downAerialAttack;
+    event Action upAerialAttack;
+
+    void AttackAnimationStateTransition(AttackAnimationState newState);
+} 
+
+/// <summary>
+/// Communication interface for player status
+/// </summary>
+public interface IPlayerStatusCommunication : IPlayerCommunication
+{
+    
+}
+
 
 /// <summary>
 /// Communication for the external communicator
@@ -123,6 +171,14 @@ public abstract class PlayerInternalCommunicator
     /// </summary>
     IPlayerAnimationCommunication animation;
     /// <summary>
+    /// Communication with player combat
+    /// </summary>
+    IPlayerCombatCommunication combat;
+    /// <summary>
+    /// Communication with player status
+    /// </summary>
+    IPlayerStatusCommunication status;
+    /// <summary>
     /// Communication with the external communicator
     /// </summary>
     IPlayerExternalCommunicatorCommunication externalCommunicator;
@@ -156,6 +212,35 @@ public abstract class PlayerInternalCommunicator
     public void SetCommunication(IPlayerAnimationCommunication communication)
     {
         animation = communication;
+        animation.attackStateTransition += AttackAnimationStateTransitionHandler;
+    }
+
+    /// <summary>
+    /// Sets communication with PlayerCombat
+    /// </summary>
+    /// <param name="communication"> PlayerCombat communication interface</param>
+    public void SetCommunication(IPlayerCombatCommunication communication)
+    {
+        combat = communication;
+        combat.neutralAttack += NuetralAttackHandler;
+        combat.downAttack += DownAttackHandler;
+        combat.upAttack += UpAttackHandler;
+        combat.runningAttack += RunningAttackHandler;
+        combat.brakingAttack += BrakingAttackHandler;
+        combat.neutralAerialAttack += NeutralAerialAttackHandler;
+        combat.backAerialAttack += BackAerialAttackHandler;
+        combat.downAerialAttack += DownAerialAttackHandler;
+        combat.upAerialAttack += UpAerialAttackHandler;
+        
+    }
+
+    /// <summary>
+    /// Sets communication with PlayerStatus
+    /// </summary>
+    /// <param name="communication"> PlayerStatus communication interface</param>
+    public void SetCommunication(IPlayerStatusCommunication communication)
+    {
+        status = communication;
     }
 
     /// <summary>
@@ -175,6 +260,43 @@ public abstract class PlayerInternalCommunicator
     private void FacingDirectionChangedHandler()
     {
         animation.ChangeFacingDirection();
+    }
+
+    private void NuetralAttackHandler()
+    {
+        animation.AnimateNeutralAttack();
+    }
+    void DownAttackHandler()
+    {
+        animation.AnimateDownAttack();
+    }
+    void UpAttackHandler()
+    {
+        animation.AnimateUpAttack();
+    }
+    void RunningAttackHandler()
+    {
+        animation.AnimateRunningAttack();
+    }
+    void BrakingAttackHandler()
+    {
+        animation.AnimateBrakingAttack();
+    }
+    void NeutralAerialAttackHandler()
+    {
+        animation.AnimateNeutralAerialAttack();
+    }
+    void BackAerialAttackHandler()
+    {
+        animation.AnimateBackAerialAttack();
+    }
+    void DownAerialAttackHandler()
+    {
+        animation.AnimateDownAerialAttack();
+    }
+    void UpAerialAttackHandler()
+    {
+        animation.AnimateUpAerialAttack();
     }
     #endregion
 
@@ -197,5 +319,13 @@ public abstract class PlayerInternalCommunicator
     {
         externalCommunicator.HandlePlayerGravityDirectionChanged(gravityDirection);
     }
+    #endregion
+
+    #region Combat Notifiers
+    private void AttackAnimationStateTransitionHandler(AttackAnimationState newState)
+    {
+        combat.AttackAnimationStateTransition(newState);
+    }
+
     #endregion
 }

@@ -4,6 +4,25 @@ using UnityEngine;
 using KinematicCharacterController;
 using System;
 
+
+#region Communication Structs
+/// <summary>
+/// A wrapper for the PlayerMovementAction class that allows it's state to referenced, but only be read
+/// </summary>
+public struct ReadOnlyPlayerMovementAction
+{
+    private PlayerMovementAction action;
+
+    public float facingDirection { get { return action.facingDirection; } }
+    public bool isBraking { get { return action.isBraking; } }
+
+    public ReadOnlyPlayerMovementAction(PlayerMovementAction a)
+    {  
+        action = a;
+    }
+}   
+#endregion
+
 [System.Serializable]
 public class PlayerMovementActionValues : PlayerOverridableValues
 {
@@ -301,7 +320,9 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
     /// </summary>
     private bool waitingToJumpCancel;
 
-    private float facingDirection;
+    public float facingDirection { get; private set; }
+
+    public bool isBraking { get; private set; }
 
     /// <summary>
     /// Constructor
@@ -376,6 +397,7 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
             if (Vector3.Dot(currentVelocity, runDirection) < 0)
             {
                 // Brake via deceleration
+                isBraking = true;
                 currentVelocity += runDirection * values.brakeDecel * deltaTime;
             }
             else
@@ -595,6 +617,7 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
             }
             */
         }
+        isBraking = false;
         // if the player is trying to run
         if(input.run != 0)
         {

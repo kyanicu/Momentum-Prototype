@@ -37,7 +37,7 @@ public struct ReadOnlyKinematicMotor
     public Vector3 velocity { get { return motor.BaseVelocity; } }
     public Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
     public Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
-    public bool isGroundedThisUpdatesGrounded { get { return motor.IsGroundedThisUpdate; } }
+    public bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
     public bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
 
     public ReadOnlyKinematicMotor(KinematicCharacterMotor m)
@@ -73,6 +73,10 @@ public abstract class PlayerCharacter : MonoBehaviour
     /// Handles the player's status
     /// </summary>
     [SerializeField] private PlayerStatus status;
+    /// <summary>
+    /// Handles the player's combat
+    /// </summary>
+    [SerializeField] private PlayerCombat combat;
 
     /// <summary>
     /// Handles communication between the components
@@ -147,6 +151,8 @@ public abstract class PlayerCharacter : MonoBehaviour
     {
         status.HandleTriggerEnter(col);
         movement.HandleTriggerEnter(motor, col);
+
+        Debug.Log("Player hit: " + col.gameObject.name);
     }
 
     /// <summary>
@@ -167,7 +173,6 @@ public abstract class PlayerCharacter : MonoBehaviour
         HandleInput(playerController.Player);
 
         animation.FrameUpdate();
- 
    }
    
     /// <summary>
@@ -189,7 +194,8 @@ public abstract class PlayerCharacter : MonoBehaviour
     private void SetupAbstractClass()
     {
         animation = new PlayerAnimation(transform.GetChild(0).gameObject);
-        status = new PlayerStatus();
+        status = new PlayerStatus(transform.GetChild(0).GetChild(2).gameObject);
+        combat = new PlayerCombat(transform.GetChild(0).GetChild(1).gameObject);
 
         SetupConcreteClass(out movement);
     }
@@ -212,6 +218,10 @@ public abstract class PlayerCharacter : MonoBehaviour
         // Set internal Communications
         movement.SetCommunicationInterface(internalCommunicator);
         animation.SetCommunicationInterface(internalCommunicator);
+        animation.SetReadOnlyReferences(new ReadOnlyKinematicMotor(motor), movement.GetReadOnlyAction());
+        combat.SetCommunicationInterface(internalCommunicator);
+        combat.SetReadOnlyReferences(new ReadOnlyKinematicMotor(motor), movement.GetReadOnlyAction());
+        status.SetCommunicationInterface(internalCommunicator);
         externalCommunicator.SetCommunicationInterface(internalCommunicator);
         
         // Set External Communications
@@ -237,6 +247,7 @@ public abstract class PlayerCharacter : MonoBehaviour
     public void HandleInput(PlayerController.PlayerActions controllerActions)
     {
         movement.HandleInput(controllerActions); 
+        combat.HandleInput(controllerActions);
 
         externalCommunicator.HandleInput(controllerActions); 
 
