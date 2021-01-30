@@ -26,7 +26,8 @@ public interface IDamageable
     void Stun(float stunTime);
 
     void TakeKinematicKnockback(Vector3 knockback, float time);
-    void TakeDynamicKnockback(Vector3 knockback, bool withTorque = false);
+    void TakeDynamicKnockback(Vector3 knockback);
+    void TakeDynamicKnockbackWithTorque(Vector3 knockback, Hitbox hitbox, Hurtbox hurtbox);
 }
 
 public class Hurtbox : MonoBehaviour
@@ -81,10 +82,10 @@ public class Hurtbox : MonoBehaviour
                     damageable.TakeKinematicKnockback(calculatedKnockback, attackInfo.kinematicKnockbackTime);
                     break;
                 case (KnockbackType.DYNAMIC) :
-                    damageable.TakeDynamicKnockback(calculatedKnockback, false);
+                    damageable.TakeDynamicKnockback(calculatedKnockback);
                     break;
                 case (KnockbackType.DYNAMIC_WITH_TORQUE) :
-                    damageable.TakeDynamicKnockback(calculatedKnockback, true);
+                    damageable.TakeDynamicKnockbackWithTorque(calculatedKnockback, hitbox, this);
                     break;
             }
         }

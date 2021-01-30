@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,6 +22,14 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
     [SerializeField, HideInInspector]
     private GameObject hurtboxes;
 
+    public event Action flinch;
+    public event Action halt;
+    public event Action forceUnground;
+    public event Action<float> stun;
+    public event Action<Vector3, float> takeKinematicKnockback;
+    public event Action<Vector3> takeDynamicKnockback;
+    public event Action<Vector3, Vector3> takeDynamicKnockbackWithTorque;
+
     public PlayerStatus(GameObject _hurtboxes)
     {
         hurtboxes = _hurtboxes;
@@ -31,6 +40,7 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
             hb.SetDamageable(this);
         }
     }
+
 
     public void HandleIncommingAttack(AttackInfo attackInfo)
     {
@@ -44,10 +54,7 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
 
     public void HandleTriggerEnter(Collider col)
     {
-        if (col.tag == "Crystal")
-        {
-            GameObject.Destroy(col.gameObject);
-        }
+
     }
 
     private void Down()
@@ -75,31 +82,37 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
 
     public void Flinch()
     {
-        throw new System.NotImplementedException();
+        flinch?.Invoke();
     }
 
     public void Halt()
     {
-        throw new System.NotImplementedException();
+        halt?.Invoke();
     }
 
     public void ForceUnground()
     {
-        throw new System.NotImplementedException();
+        forceUnground?.Invoke();
     }
 
     public void Stun(float stunTime)
     {
-        throw new System.NotImplementedException();
+        stun?.Invoke(stunTime);
     }
 
     public void TakeKinematicKnockback(Vector3 knockback, float time)
     {
-        throw new System.NotImplementedException();
+        takeKinematicKnockback?.Invoke(knockback, time);
     }
 
-    public void TakeDynamicKnockback(Vector3 knockback, bool withTorque = false)
+    public void TakeDynamicKnockback(Vector3 knockback)
     {
-        throw new System.NotImplementedException();
+        takeDynamicKnockback?.Invoke(knockback);
+    }
+
+    public void TakeDynamicKnockbackWithTorque(Vector3 knockback, Hitbox hitbox, Hurtbox hurtbox)
+    {
+        //Vector3 angularImpulse = (hitbox.transform.position - hurtbox.transform.position).Cross(knockback);
+        takeDynamicKnockbackWithTorque?.Invoke(knockback, hitbox.transform.position);
     }
 }

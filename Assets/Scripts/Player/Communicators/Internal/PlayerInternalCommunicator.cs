@@ -107,7 +107,13 @@ public interface IPlayerCombatCommunication : IPlayerCommunication, IPlayerMovem
 /// </summary>
 public interface IPlayerStatusCommunication : IPlayerCommunication
 {
-    
+    event Action flinch;
+    event Action halt;
+    event Action forceUnground;
+    event Action<float> stun;
+    event Action <Vector3, float> takeKinematicKnockback;
+    event Action<Vector3> takeDynamicKnockback;
+    event Action<Vector3, Vector3> takeDynamicKnockbackWithTorque;
 }
 
 
