@@ -3,6 +3,38 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct AttackInitInfo
+{
+
+    public AttackInitInfo(bool aerial)
+    {
+        movementOverride.movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerOverrideType>>();
+        movementOverride.movementOverrides.Add(new MutableTuple<PlayerMovementValues, PlayerOverrideType> (new PlayerMovementValues() , PlayerOverrideType.Set));
+        movementOverride.movementOverrides[0].item1.SetDefaultValues(movementOverride.movementOverrides[0].item2);
+        if(!aerial)
+            movementOverride.movementOverrides[0].item1.negateAction = 1;
+
+        movementOverride.physicsOverrides = new List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>>();
+        movementOverride.physicsOverrides.Add(new MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType> (new PlayerMovementPhysicsValues() , PlayerOverrideType.Set));
+        movementOverride.physicsOverrides[0].item1.SetDefaultValues(movementOverride.physicsOverrides[0].item2);
+        if(!aerial)
+        {
+            movementOverride.physicsOverrides[0].item1.kineticFriction = 100;
+            movementOverride.physicsOverrides[0].item1.gravityAccel = 0;
+        }
+        movementOverride.actionOverrides = new List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>>();
+    
+        movementOverride.alestaAbilityOverrides = new List<MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType>>();
+        movementOverride.nephuiAbilityOverrides = new List<MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType>>();
+        movementOverride.ilphineAbilityOverrides = new List<MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType>>();
+        movementOverride.cartiaAbilityOverrides = new List<MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType>>();
+
+    }
+    
+    public FullMovementOverride movementOverride;
+
+}
+
 [System.Serializable]
 public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 {
@@ -22,30 +54,34 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
     public event Action downAerialAttack;
     public event Action upAerialAttack;
 
+    public event Action<FullMovementOverride> ApplyMovementOverride;
+    public event Action<FullMovementOverride> RemoveMovementOverride;
+    
+
     [SerializeField]
-    private AttackInfo[] neutralAttackHitboxInfo; 
+    private AttackInitInfo neutralAttackInitInfo; 
     [SerializeField]
-    private AttackInfo[] downAttackHitboxInfo;
+    private AttackInitInfo downAttackInitInfo;
     [SerializeField]
-    private AttackInfo[] upAttackHitboxInfo;
+    private AttackInitInfo upAttackInitInfo;
     [SerializeField]
-    private AttackInfo[] runningAttackHitboxInfo;
+    private AttackInitInfo runningAttackInitInfo;
     [SerializeField]
     private float runningAttackMinSpeed;
     [SerializeField]
-    private AttackInfo[] brakingAttackHitboxInfo;
+    private AttackInitInfo brakingAttackInitInfo;
     [SerializeField]
     private float brakingAttackMinSpeed;
     [SerializeField]
-    private AttackInfo[] neutralAerialAttackHitboxInfo;
+    private AttackInitInfo neutralAerialAttackInitInfo;
     [SerializeField]
-    private AttackInfo[] backAerialAttackHitboxInfo;
+    private AttackInitInfo backAerialAttackInitInfo;
     [SerializeField]
-    private AttackInfo[] downAerialAttackHitboxInfo;
+    private AttackInitInfo downAerialAttackInitInfo;
     [SerializeField]
-    private AttackInfo[] upAerialAttackHitboxInfo;
+    private AttackInitInfo upAerialAttackInitInfo;
 
-    private AttackInfo[] settingHitBoxInfo;
+    private AttackInitInfo settingAttackInitInfo;
 
     private bool attackBuffered;
 
@@ -58,7 +94,6 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
         hitboxes = new Hitbox[_hitboxes.transform.childCount];
         for (int i = 0; i < _hitboxes.transform.childCount; i++)
         {
-            Debug.Log("hIt");
             hitboxes[i] = _hitboxes.transform.GetChild(i).GetComponent<Hitbox>();
             hitboxes[i].SetAttacker(this);
         }
@@ -67,36 +102,26 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 
     private void SetDefaultValues()
     {
-        neutralAttackHitboxInfo = new AttackInfo[1];
-        neutralAttackHitboxInfo[0].baseDamage = 5;
+        neutralAttackInitInfo = new AttackInitInfo(false);
 
-        downAttackHitboxInfo = new AttackInfo[1];
-        downAttackHitboxInfo[0].baseDamage = 5;
+        downAttackInitInfo = new AttackInitInfo(false);
 
-        upAttackHitboxInfo = new AttackInfo[1];
-        upAttackHitboxInfo[0].baseDamage = 5;
+        upAttackInitInfo = new AttackInitInfo(false);
 
-        runningAttackHitboxInfo = new AttackInfo[2];
-        runningAttackHitboxInfo[0].baseDamage = 5;
-        runningAttackHitboxInfo[1].baseDamage = 5;
+        runningAttackInitInfo = new AttackInitInfo(false);
+        runningAttackInitInfo.movementOverride.physicsOverrides[0].item1.kineticFriction = 0;
         runningAttackMinSpeed = 14;
 
-        brakingAttackHitboxInfo = new AttackInfo[2];
-        brakingAttackHitboxInfo[0].baseDamage = 5;
-        brakingAttackHitboxInfo[1].baseDamage = 5;
+        brakingAttackInitInfo = new AttackInitInfo(false);
         brakingAttackMinSpeed = 10;
 
-        neutralAerialAttackHitboxInfo = new AttackInfo[1];
-        neutralAerialAttackHitboxInfo[0].baseDamage = 5;
+        neutralAerialAttackInitInfo = new AttackInitInfo(true);
 
-        backAerialAttackHitboxInfo = new AttackInfo[1];
-        backAerialAttackHitboxInfo[0].baseDamage = 5;
+        backAerialAttackInitInfo = new AttackInitInfo(true);
 
-        downAerialAttackHitboxInfo = new AttackInfo[1];
-        downAerialAttackHitboxInfo[0].baseDamage = 5;
+        downAerialAttackInitInfo = new AttackInitInfo(true);
 
-        upAerialAttackHitboxInfo = new AttackInfo[1];
-        upAerialAttackHitboxInfo[0].baseDamage = 5;
+        upAerialAttackInitInfo = new AttackInitInfo(true);
     }
 
     public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
@@ -117,77 +142,77 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
         if (newState == AttackAnimationState.STARTUP)
         {
             attackBuffered = false;
-            SetHitboxAttackInfo(settingHitBoxInfo);
+            ApplyAttackInitInfo(settingAttackInitInfo);
+        }
+        else if (newState == AttackAnimationState.FINISHED)
+        {
+            ResetAttackInitInfo(settingAttackInitInfo);
         }
     }
 
     private void NeutralAttack()
     {
-        settingHitBoxInfo = neutralAttackHitboxInfo;
+        settingAttackInitInfo = neutralAttackInitInfo;
         neutralAttack?.Invoke();
     }
 
     private void DownAttack()
     {
-        settingHitBoxInfo = downAttackHitboxInfo;
+        settingAttackInitInfo = downAttackInitInfo;
         downAttack?.Invoke();
     }
 
     private void UpAttack()
     {
-        settingHitBoxInfo = upAttackHitboxInfo;
+        settingAttackInitInfo = upAttackInitInfo;
         upAttack?.Invoke();
     }
 
     private void RunningAttack()
     {
-        settingHitBoxInfo = runningAttackHitboxInfo;
+        settingAttackInitInfo = runningAttackInitInfo;
         runningAttack?.Invoke();
     }
 
     private void BrakingAttack()
     {
-        settingHitBoxInfo = brakingAttackHitboxInfo;
+        settingAttackInitInfo = brakingAttackInitInfo;
         brakingAttack?.Invoke();
     }
 
     private void NeutralAerialAttack()
     {
-        settingHitBoxInfo = neutralAerialAttackHitboxInfo;
+        settingAttackInitInfo = neutralAerialAttackInitInfo;
         neutralAerialAttack?.Invoke();
     }
 
     private void UpAerialAttack()
     {
-        settingHitBoxInfo = upAerialAttackHitboxInfo;
+        settingAttackInitInfo = upAerialAttackInitInfo;
         upAerialAttack?.Invoke();
     }
 
     private void DownAerialAttack()
     {
-        settingHitBoxInfo = downAerialAttackHitboxInfo;
+        settingAttackInitInfo = downAerialAttackInitInfo;
         downAerialAttack?.Invoke();
     }
 
     private void BackAerialAttack()
     {
-        settingHitBoxInfo = backAerialAttackHitboxInfo;
+        settingAttackInitInfo = backAerialAttackInitInfo;
         backAerialAttack?.Invoke();
     }
 
 
-    private void SetHitboxAttackInfo(AttackInfo[] attackInfo)
+    private void ApplyAttackInitInfo(AttackInitInfo info)
     {
-        int len = attackInfo.Length;
-        for (int i = 0; i < len; i++)
-        {
-            hitboxes[i].SetAttackInfo(attackInfo[i]);
-        }
+        ApplyMovementOverride?.Invoke(info.movementOverride);
     }
 
-    public void HandleOutgoingAttack(AttackInfo attackInfo)
+    private void ResetAttackInitInfo(AttackInitInfo info)
     {
-        
+        RemoveMovementOverride?.Invoke(info.movementOverride);
     }
 
     public AttackerInfo GetAttackerInfo()
@@ -233,5 +258,15 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
                     NeutralAerialAttack();
             } 
         }
+    }
+
+    public void TakeKinematicRecoil(Vector3 knockback, float time)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void TakeDynamicRecoil(Vector3 knockback, bool withTorque = false)
+    {
+        throw new NotImplementedException();
     }
 }

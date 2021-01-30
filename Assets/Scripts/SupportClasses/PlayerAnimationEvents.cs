@@ -35,5 +35,4 @@ public class PlayerAnimationEvents : MonoBehaviour
     {
         attackStateTransition?.Invoke(AttackAnimationState.FINISHED);
     }
-
 }

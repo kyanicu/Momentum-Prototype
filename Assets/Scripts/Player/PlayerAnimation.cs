@@ -27,9 +27,6 @@ public class PlayerAnimation : IPlayerAnimationCommunication
 
     [SerializeField, HideInInspector]
     private Animator rootAnimator;
-    
-    ////[SerializeField, HideInInspector]
-    ////private Animator modelAnimator;
 
     private PlayerAnimationEvents animationEvents;
     public event Action<AttackAnimationState> attackStateTransition;
@@ -58,7 +55,6 @@ public class PlayerAnimation : IPlayerAnimationCommunication
     {
         modelRoot = _modelRoot;
         rootAnimator = modelRoot.GetComponent<Animator>();
-        ////modelAnimator = modelRoot.GetComponentInChildren<Animator>();
         animationEvents = modelRoot.GetComponent<PlayerAnimationEvents>();
 
         animationEvents.attackStateTransition += AttackStateTransition;
@@ -88,47 +84,38 @@ public class PlayerAnimation : IPlayerAnimationCommunication
     public void AnimateNeutralAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["NeutralAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["NeutralAttack"]);
     }
     public void AnimateDownAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["DownAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["DownAttack"]);
     }
     public void AnimateUpAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["UpAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["UpAttack"]);
     }
     public void AnimateRunningAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["RunningAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["RunningAttack"]);
     }
     public void AnimateBrakingAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["BrakingAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["BrakingAttack"]);
     }
     public void AnimateNeutralAerialAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["NeutralAerialAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["NeutralAerialAttack"]);
     }
     public void AnimateBackAerialAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["BackAerialAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["BackAerialAttack"]);
     }
     public void AnimateDownAerialAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["DownAerialAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["DownAerialAttack"]);
     }
     public void AnimateUpAerialAttack()
     {
         rootAnimator.SetTrigger(animatorParameterNameToID["UpAerialAttack"]);
-        ////modelAnimator.SetTrigger(animatorParameterNameToID["UpAerialAttack"]);
     }
 
     public void FrameUpdate()

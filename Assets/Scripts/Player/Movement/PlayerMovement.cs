@@ -1277,6 +1277,60 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     }
 #endregion
 
+#region External Movement Override Handling
+    /// <summary>
+    /// Handle the event triggered by Ability wishing to apply an override
+    /// ? Possibly find a way to combine this nicely with movement effector so there's less copy and paste?
+    /// </summary>
+    /// <param name="overrides"> The Abilty Overrides given </param>
+    public void ApplyMovementOverride(FullMovementOverride overrides)
+    {
+        // Apply base Movement value overrides
+        for (int i = 0; i < overrides.movementOverrides.Count; i++)
+        {
+            ApplyOverride(overrides.movementOverrides[i].item1, overrides.movementOverrides[i].item2);
+        }
+
+        // Apply Physics value overrides
+        for (int i = 0; i < overrides.physicsOverrides.Count; i++)
+        {
+            physics.ApplyOverride(overrides.physicsOverrides[i].item1, overrides.physicsOverrides[i].item2);
+        }
+
+        // Apply Action value overrides
+        for (int i = 0; i < overrides.actionOverrides.Count; i++)
+        {
+            action.ApplyOverride(overrides.actionOverrides[i].item1, overrides.actionOverrides[i].item2);
+        }
+    }
+
+    /// <summary>
+    /// Handle the event triggered by Ability wishing to remove an override
+    /// ? Possibly find a way to combine this nicely with movement effector so there's less copy and paste?
+    /// </summary>
+    /// <param name="overrides"> The Abilty Overrides given </param>
+    public void RemoveMovementOverride(FullMovementOverride overrides)
+    {
+        // Remove base Movement value overrides
+        for (int i = 0; i < overrides.movementOverrides.Count; i++)
+        {
+            RemoveOverride(overrides.movementOverrides[i].item1, overrides.movementOverrides[i].item2);
+        }
+
+        // Remove Physics value overrides
+        for (int i = 0; i < overrides.physicsOverrides.Count; i++)
+        {
+            physics.RemoveOverride(overrides.physicsOverrides[i].item1, overrides.physicsOverrides[i].item2);
+        }
+
+        // Remove Action value overrides
+        for (int i = 0; i < overrides.actionOverrides.Count; i++)
+        {
+            action.RemoveOverride(overrides.actionOverrides[i].item1, overrides.actionOverrides[i].item2);
+        }
+    }
+#endregion
+
 #region Ability Movement Override Handling
     /// <summary>
     /// Handle the event triggered by Ability wishing to apply an override

@@ -19,6 +19,12 @@ public interface IPlayerCommunication
     void SetCommunicationInterface(PlayerInternalCommunicator communicator);
 }
 
+public interface IPlayerMovementOverrider
+{
+    event Action<FullMovementOverride> ApplyMovementOverride;
+    event Action<FullMovementOverride> RemoveMovementOverride;
+}
+
 /// <summary>
 /// Communication interface for PlayerMovement
 /// </summary>
@@ -30,6 +36,11 @@ public interface IPlayerMovementCommunication : IPlayerCommunication
     event Action<PlaneChangeArgs> planeChanged;
 
     ReadOnlyPlayerMovementAction GetReadOnlyAction();
+
+    void ApplyMovementOverride(FullMovementOverride overrides);
+    
+    void RemoveMovementOverride(FullMovementOverride overrides);
+
 }
 
 /// <summary>
@@ -73,7 +84,7 @@ public interface IPlayerAnimationCommunication : IPlayerCommunication
 /// <summary>
 /// Communication interface for player combat
 /// </summary>
-public interface IPlayerCombatCommunication : IPlayerCommunication
+public interface IPlayerCombatCommunication : IPlayerCommunication, IPlayerMovementOverrider
 {
 
     void SetReadOnlyReferences(ReadOnlyKinematicMotor motor, ReadOnlyPlayerMovementAction action);
@@ -231,7 +242,9 @@ public abstract class PlayerInternalCommunicator
         combat.backAerialAttack += BackAerialAttackHandler;
         combat.downAerialAttack += DownAerialAttackHandler;
         combat.upAerialAttack += UpAerialAttackHandler;
-        
+
+        combat.ApplyMovementOverride += movement.ApplyMovementOverride;
+        combat.RemoveMovementOverride += movement.RemoveMovementOverride;
     }
 
     /// <summary>

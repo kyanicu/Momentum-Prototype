@@ -15,6 +15,32 @@ public struct MutableTuple<i,j>
     }
 }
 
+[System.Serializable]
+public struct FullMovementOverride
+{
+    [SerializeField]
+    public List<MutableTuple<PlayerMovementValues, PlayerOverrideType>> movementOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>> physicsOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>> actionOverrides;
+
+
+    [SerializeField]
+    public List<MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType>> alestaAbilityOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType>> nephuiAbilityOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType>> cartiaAbilityOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType>> ilphineAbilityOverrides;
+}
+
 public class MovementEffector : MonoBehaviour
 {
 
