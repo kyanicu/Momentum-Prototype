@@ -66,11 +66,11 @@ public class PlayerMovementValues : PlayerOverridableValues
     /// </summary>
     [SerializeField]
     public float attachThreshold;
-    /// <summary>
-    /// The acceleration off the current slope needed to force unground the character
-    /// </summary>
-    [SerializeField]
-    public float pushOffGroundThreshold;
+    //// <summary>
+    //// The acceleration off the current slope needed to force unground the character
+    //// </summary>
+    ////[SerializeField]
+    ////public float pushOffGroundThreshold;
     /// <summary>
     /// The max time for a slope to stay registered in the slope tracking for determining rotational momentum
     /// </summary>
@@ -109,7 +109,7 @@ public class PlayerMovementValues : PlayerOverridableValues
     /// </summary>
     protected override void SetValueCounts()
     {
-        floatValuesCount = 7;
+        floatValuesCount = 6;
         intValuesCount = 2;
         vector3ValuesCount = 0;
     }
@@ -125,15 +125,15 @@ public class PlayerMovementValues : PlayerOverridableValues
                 return maxSpeed;
             case (1) :
                 return attachThreshold;
+            ////case (2) :
+            ////    return pushOffGroundThreshold;
             case (2) :
-                return pushOffGroundThreshold;
-            case (3) :
                 return maxSlopeTrackTime;
-            case (4) :
+            case (3) :
                 return ungroundRotationFactor;
-            case (5) :
+            case (4) :
                 return ungroundRotationMinSpeed;
-            case (6) :
+            case (5) :
                 return ungroundRotationMaxSpeed;
             default :
                 return 0;
@@ -154,19 +154,19 @@ public class PlayerMovementValues : PlayerOverridableValues
             case (1) :
                 attachThreshold = value;
                 break;
+            ////case (2) :
+            ////    pushOffGroundThreshold = value;
+            ////    break;
             case (2) :
-                pushOffGroundThreshold = value;
-                break;
-            case (3) :
                 maxSlopeTrackTime = value;
                 break;
-            case (4) :
+            case (3) :
                 ungroundRotationFactor = value;
                 break;
-            case (5) :
+            case (4) :
                 ungroundRotationMinSpeed = value;
                 break;
-            case (6) :
+            case (5) :
                 ungroundRotationMaxSpeed = value;
                 break;
             default :
@@ -421,7 +421,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// </summary>
     [SerializeField]
     private IPlayerMovementAbility ability;
-    #endregion
+#endregion
 
     /// <summary>
     /// The list of tracked slopes for calculating rotational momentum
@@ -447,6 +447,12 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// </summary>
     /// <value></value>
     public Vector3 externalVelocity { private get; set; }
+#region flags
+    private int velocityLocked = 0;
+    ////private int angularVelocityLocked = 0;
+    private bool forceUngrounding = false;
+
+#endregion
 
 #region Dynamic Plane Info
     /// <summary>
@@ -492,6 +498,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     Plane startPlane;
     #endregion
 
+#region References
+    private ReadOnlyKinematicMotor readOnlyMotor;
+#endregion
 #region ClassSetup
     /// <summary>
     /// Default constructor
@@ -526,7 +535,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         // Set default field values
         baseValues.maxSpeed = 125;
         baseValues.attachThreshold = 8;
-        baseValues.pushOffGroundThreshold = 1;
+        ////baseValues.pushOffGroundThreshold = 1;
         baseValues.maxSlopeTrackTime = 0.5f;
         baseValues.ungroundRotationFactor = 1.25f;
         baseValues.ungroundRotationMinSpeed = 15;
@@ -546,29 +555,6 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     }
 
     /// <summary>
-    /// Initializes communication with the Player's internal communcator
-    /// </summary>
-    /// <param name="communicator"> The internal commmunicator </param>
-    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
-    {
-        // Set the communication
-        communicator.SetCommunication(this);
-
-        // Set the helper classes' communications
-        action.SetCommunicationInterface(communicator);
-        ability.SetCommunicationInterface(communicator);
-    }
-
-    /// <summary>
-    /// Returns a readonly wrapper reference to action so that it's state may be communicated to other components that require it
-    /// </summary>
-    /// <returns> The read only reference to action </returns>
-    public ReadOnlyPlayerMovementAction GetReadOnlyAction()
-    {
-        return new ReadOnlyPlayerMovementAction(action);
-    }
-
-    /// <summary>
     /// Setup the class to be ready for gameplay
     /// Also initializes state info for debugging
     /// </summary>
@@ -580,6 +566,8 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         currentPlane = new Plane(motor.CharacterForward, motor.transform.position);
         motor.PlanarConstraintAxis = currentPlane.normal;
         
+        readOnlyMotor = new ReadOnlyKinematicMotor(motor);
+
         // Debug
         #region debug
         startState = motor.GetState();
@@ -647,6 +635,73 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         }
     } 
     #endregion
+
+#region Communication Methods
+    /// <summary>
+    /// Initializes communication with the Player's internal communcator
+    /// </summary>
+    /// <param name="communicator"> The internal commmunicator </param>
+    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
+    {
+        // Set the communication
+        communicator.SetCommunication(this);
+
+        // Set the helper classes' communications
+        action.SetCommunicationInterface(communicator);
+        ability.SetCommunicationInterface(communicator);
+    }
+
+    public void ZeroVelocity(bool _zeroAngularVelocity = false)
+    {
+        externalVelocity -= readOnlyMotor.velocity;
+        internalAngularVelocity = Vector3.zero;
+    }
+
+    public void LockVelocity(float time)////, bool _lockAngularVelocity = false)
+    {
+        velocityLocked++;
+        ////if(_lockAngularVelocity)
+            ////angularVelocityLocked++;
+        GameManager.Instance.TimerViaGameTime(time, UnlockVelocity);
+    }
+
+    public void UnlockVelocity()
+    {
+        velocityLocked--;
+        ////angularVelocityLocked--;
+    }
+
+    public void Flinch()
+    {
+        action.Flinch();
+        ability.Flinch();
+    }
+
+    public void ForceUnground()
+    {
+        forceUngrounding = true;
+    }
+
+    public void AddImpulse(Vector3 impulse)
+    {
+        externalVelocity += impulse;
+    }
+
+    public void AddImpulseAtPoint(Vector3 impulse, Vector3 point)
+    {
+        externalVelocity += impulse;
+        internalAngularVelocity += Vector3.Cross(point - readOnlyMotor.position, impulse);
+    }
+
+    /// <summary>
+    /// Returns a readonly wrapper reference to action so that it's state may be communicated to other components that require it
+    /// </summary>
+    /// <returns> The read only reference to action </returns>
+    public ReadOnlyPlayerMovementAction GetReadOnlyAction()
+    {
+        return new ReadOnlyPlayerMovementAction(action);
+    }
+#endregion
 
 #region CharacterControllerInterface
 
@@ -752,20 +807,22 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// <param name="deltaTime"> Motor update time </param>
     public void UpdateVelocity(ref Vector3 currentVelocity, ref float maxMove, KinematicCharacterMotor motor, float deltaTime)
     {
+        Vector3 prevVel = currentVelocity;
+
         // Handle velocity projection on a surface if grounded
         if (motor.IsGroundedThisUpdate)
         {
-            // The dot between the ground normal and the external velocity addition
-            float dot = Vector3.Dot(externalVelocity, motor.GetEffectiveGroundNormal());
-            // The velocity off the ground
-            Vector3 projection = dot * motor.GetEffectiveGroundNormal();
-            // If external velocity off ground is strong enough
-            if(dot > 0  && projection.sqrMagnitude >= values.pushOffGroundThreshold * values.pushOffGroundThreshold)
-            {
-                motor.ForceUnground();
-            }
-            else
-            {
+            ////// The dot between the ground normal and the external velocity addition
+            ////float dot = Vector3.Dot(externalVelocity, motor.GetEffectiveGroundNormal());
+            ////// The velocity off the ground
+            ////Vector3 projection = dot * motor.GetEffectiveGroundNormal();
+            ////// If external velocity off ground is strong enough
+            ////if(dot > 0  && projection.sqrMagnitude >= values.pushOffGroundThreshold * values.////pushOffGroundThreshold)
+            ////{
+            ////    motor.ForceUnground();
+            ////}
+            ////else
+            ////{
                 // if just landed or slope hasn't changed
                 if (!motor.WasGroundedLastUpdate || motor.GetEffectiveGroundNormal() == motor.GetLastEffectiveGroundNormal())
                     // Project velocity onto ground
@@ -775,8 +832,8 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
                     currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.GetEffectiveGroundNormal()).normalized * currentVelocity.magnitude;
 
                 // Snap external velocity to ground
-                externalVelocity -= projection;
-            }
+                externalVelocity = Vector3.ProjectOnPlane(externalVelocity, motor.GetEffectiveGroundNormal()); ////-= projection;
+            ////}
         }
 
         // Add external velocity and reset back to zero
@@ -816,6 +873,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         wallHits.hitCeiling = Vector3.zero;
         wallHits.hitLeftWall = Vector3.zero;
         wallHits.hitRightWall = Vector3.zero;
+
+        if(velocityLocked > 0)
+            currentVelocity = prevVel;
     }
 
     /// <summary>
@@ -825,6 +885,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// <param name="deltaTime"> Motor update time </param>
     public void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
+        if (forceUngrounding)
+            motor.ForceUnground();
+
         // Handle setting the current plane 
         // Set so that the update uses the proper plane that the player is currently on
 

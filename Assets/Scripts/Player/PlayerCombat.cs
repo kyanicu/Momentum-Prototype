@@ -56,6 +56,10 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 
     public event Action<FullMovementOverride> ApplyMovementOverride;
     public event Action<FullMovementOverride> RemoveMovementOverride;
+
+    public event Action<Vector3,float> takeKinematicRecoil;
+    public event Action<Vector3> takeDynamicRecoil;
+    public event Action<Vector3,Vector3> takeDynamicRecoilWithTorque;
     
 
     [SerializeField]
@@ -150,6 +154,14 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
         }
     }
 
+    public void Flinch()
+    {
+        AttackAnimationStateTransition(AttackAnimationState.FINISHED);
+        attackBuffered = false;
+        foreach (Hitbox hb in hitboxes)
+            hb.enabled = false;
+    }
+
     private void NeutralAttack()
     {
         settingAttackInitInfo = neutralAttackInitInfo;
@@ -204,7 +216,6 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
         backAerialAttack?.Invoke();
     }
 
-
     private void ApplyAttackInitInfo(AttackInitInfo info)
     {
         ApplyMovementOverride?.Invoke(info.movementOverride);
@@ -224,6 +235,7 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 
     public void HandleInput(PlayerController.PlayerActions controllerActions)
     {
+
         if (controllerActions.NeutralAttack.triggered && !attackBuffered &&
             (attackAnimationState == AttackAnimationState.FINISHED || (attackBuffered = (attackAnimationState == AttackAnimationState.BUFFER))))
         {
@@ -260,13 +272,24 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
         }
     }
 
-    public void TakeKinematicRecoil(Vector3 knockback, float time)
+    public void TakeKinematicRecoil(Vector3 recoil, float time)
     {
-        throw new NotImplementedException();
+        Debug.Log("Took Kinematic Recoil for " + time + "Seconds");
+        Debug.DrawRay(GameObject.Find("Player").transform.position, recoil, Color.green, 5);
+        takeKinematicRecoil?.Invoke(recoil, time);
     }
 
-    public void TakeDynamicRecoil(Vector3 knockback, bool withTorque = false)
+    public void TakeDynamicRecoil(Vector3 recoil)
     {
-        throw new NotImplementedException();
+        Debug.Log("Took Dynamic Recoil");
+        Debug.DrawRay(GameObject.Find("Player").transform.position, recoil, Color.cyan, 5);
+        takeDynamicRecoil?.Invoke(recoil);
+    }
+
+    public void TakeDynamicRecoilWithTorque(Vector3 recoil, Vector3 atPoint)
+    {
+        Debug.Log("Took Dynamic Recoil With Torque");
+        Debug.DrawRay(atPoint, recoil, Color.blue, 5);
+        takeDynamicRecoilWithTorque?.Invoke(recoil, atPoint);
     }
 }

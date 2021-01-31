@@ -13,9 +13,19 @@ public class GameManager : Singleton<GameManager>
         functionToCall();
     }
 
+    private IEnumerator TimerViaGameTimeCoroutine(float t, Action functionToCall)
+    {
+        yield return new WaitForSeconds(t);
+        functionToCall();
+    }
+
     public void TimerViaRealTime(float t, Action functionToCall)
     {
         StartCoroutine(TimerViaRealTimeCoroutine(t, functionToCall));
+    }
+    public void TimerViaGameTime(float t, Action functionToCall)
+    {
+        StartCoroutine(TimerViaGameTimeCoroutine(t, functionToCall));
     }
 
     private IEnumerator TimedConditionalCheckViaRealTimeCoroutine(float t, Func<bool> conditional, Action functionToCall)
@@ -31,9 +41,11 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
+
     public void TimedConditionalCheckViaRealTime(float t, Func<bool> conditional, Action functionToCall)
     {
         StartCoroutine(TimedConditionalCheckViaRealTimeCoroutine(t, conditional, functionToCall));
     }
+    
 
 }

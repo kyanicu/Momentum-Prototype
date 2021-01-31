@@ -19,6 +19,14 @@ public interface IPlayerCommunication
     void SetCommunicationInterface(PlayerInternalCommunicator communicator);
 }
 
+/// <summary>
+/// Communication interface for PlayerCharacter
+/// </summary>
+public interface IPlayerCharacterCommunication : IPlayerCommunication
+{
+    void LockInput(float time);
+}
+
 public interface IPlayerMovementOverrider
 {
     event Action<FullMovementOverride> ApplyMovementOverride;
@@ -40,6 +48,13 @@ public interface IPlayerMovementCommunication : IPlayerCommunication
     void ApplyMovementOverride(FullMovementOverride overrides);
     
     void RemoveMovementOverride(FullMovementOverride overrides);
+
+    void ZeroVelocity(bool zeroAngularVelocity = false);
+    void LockVelocity(float time);////, bool lockAngularVelocity = false);
+    void Flinch();
+    void ForceUnground();
+    void AddImpulse(Vector3 Impulse);
+    void AddImpulseAtPoint(Vector3 impulse, Vector3 point);
 
 }
 
@@ -77,6 +92,10 @@ public interface IPlayerAnimationCommunication : IPlayerCommunication
     void AnimateDownAerialAttack();
     void AnimateUpAerialAttack();
 
+    void AnimateFlinch();
+
+    void StartIFrames();
+    void EndIFrames();
 
     event Action<AttackAnimationState> attackStateTransition;
 }
@@ -99,7 +118,13 @@ public interface IPlayerCombatCommunication : IPlayerCommunication, IPlayerMovem
     event Action downAerialAttack;
     event Action upAerialAttack;
 
+    event Action<Vector3,float> takeKinematicRecoil;
+    event Action<Vector3> takeDynamicRecoil;
+    event Action<Vector3,Vector3> takeDynamicRecoilWithTorque;
+
     void AttackAnimationStateTransition(AttackAnimationState newState);
+
+    void Flinch();
 } 
 
 /// <summary>
@@ -114,6 +139,9 @@ public interface IPlayerStatusCommunication : IPlayerCommunication
     event Action <Vector3, float> takeKinematicKnockback;
     event Action<Vector3> takeDynamicKnockback;
     event Action<Vector3, Vector3> takeDynamicKnockbackWithTorque;
+
+    event Action iFramesStarted;
+    event Action iFramesEnded;
 }
 
 
@@ -134,7 +162,7 @@ public interface IPlayerExternalCommunicatorCommunication : IPlayerCommunication
     /// <param name="gravityDirection">New direction of gravity</param>
     void HandlePlayerGravityDirectionChanged(Vector3 gravityDirection);
 }
-#endregion`````
+#endregion
 
 #region Action Event Handler Argument Structs
 /// <summary>
@@ -176,6 +204,10 @@ public abstract class PlayerInternalCommunicator
     
     #region Communications
     /// <summary>
+    /// Communication with PlayerCharacter
+    /// </summary>
+    IPlayerCharacterCommunication character;
+    /// <summary>
     /// Communication with PlayerMovement
     /// </summary>
     IPlayerMovementCommunication movement;
@@ -202,6 +234,15 @@ public abstract class PlayerInternalCommunicator
     #endregion
 
     #region SetCommunication() Methods
+    /// <summary>
+    /// Sets communication with PlayerMovement
+    /// </summary>
+    /// <param name="communication"> PlayerMovement communication interface</param>
+    public void SetCommunication(IPlayerCharacterCommunication communication)
+    {
+        character = communication;
+    }
+
     /// <summary>
     /// Sets communication with PlayerMovement
     /// </summary>
@@ -251,6 +292,10 @@ public abstract class PlayerInternalCommunicator
 
         combat.ApplyMovementOverride += movement.ApplyMovementOverride;
         combat.RemoveMovementOverride += movement.RemoveMovementOverride;
+
+        combat.takeKinematicRecoil += TakeKinematicRecoilHandler;
+        combat.takeDynamicRecoil += TakeDynamicRecoilHandler;
+        combat.takeDynamicRecoilWithTorque += TakeDynamicRecoilWithTorqueHandler;
     }
 
     /// <summary>
@@ -260,6 +305,17 @@ public abstract class PlayerInternalCommunicator
     public void SetCommunication(IPlayerStatusCommunication communication)
     {
         status = communication;
+
+        status.flinch += FlinchHandler;
+        status.halt += HaltHandler;
+        status.forceUnground += ForceUngroundHandler;
+        status.stun += StunHandler;
+        status.takeKinematicKnockback += TakeKinematicKnockbackHandler;
+        status.takeDynamicKnockback += TakeDynamicKnockbackHandler;
+        status.takeDynamicKnockbackWithTorque += TakeDynamicKnockbackWithTorqueHandler;
+
+        status.iFramesStarted += IFrameStartedHandler;
+        status.iFramesEnded += IFrameEndedHandler;        
     }
 
     /// <summary>
@@ -344,6 +400,70 @@ public abstract class PlayerInternalCommunicator
     private void AttackAnimationStateTransitionHandler(AttackAnimationState newState)
     {
         combat.AttackAnimationStateTransition(newState);
+    }
+    #endregion
+
+    #region Status Events
+
+    private void IFrameStartedHandler()
+    {
+        animation.StartIFrames();
+    }
+
+    private void IFrameEndedHandler()
+    {
+        animation.EndIFrames();
+    }
+
+    private void FlinchHandler()
+    {
+        movement.Flinch();
+        combat.Flinch();
+        animation.AnimateFlinch();
+    }
+
+    private void HaltHandler()
+    {
+        movement.ZeroVelocity(true);
+    }
+    private void ForceUngroundHandler()
+    {
+        movement.ForceUnground();
+    }
+    private void StunHandler(float time)
+    {
+        character.LockInput(time);
+    }
+    private void TakeKinematicKnockbackHandler(Vector3 knockback, float time)
+    {
+        movement.LockVelocity(time);
+        movement.AddImpulse(knockback);
+    }
+    private void TakeDynamicKnockbackHandler(Vector3 knockback)
+    {
+        movement.AddImpulse(knockback);
+    }
+    private void TakeDynamicKnockbackWithTorqueHandler(Vector3 knockback, Vector3 atPoint)
+    {
+        movement.AddImpulseAtPoint(knockback, atPoint);
+    }
+    #endregion
+
+    #region Combat Events
+    private void TakeKinematicRecoilHandler(Vector3 recoil, float time)
+    {
+        movement.LockVelocity(time);
+        movement.AddImpulse(recoil);
+    }
+
+    private void TakeDynamicRecoilHandler(Vector3 recoil)
+    {
+        movement.AddImpulse(recoil);
+    }
+
+    private void TakeDynamicRecoilWithTorqueHandler(Vector3 recoil, Vector3 atPoint)
+    {
+        movement.AddImpulseAtPoint(recoil, atPoint);
     }
 
     #endregion

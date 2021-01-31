@@ -52,7 +52,7 @@ public struct ReadOnlyKinematicMotor
 /// Unity Component that controls all Player Character mechanics and scripting
 /// Abstract for specific character to derive from
 /// </summary>
-public abstract class PlayerCharacter : MonoBehaviour
+public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
 {
     // TODO move up to InputManager/PlayerInputController
     /// <summary>
@@ -94,6 +94,11 @@ public abstract class PlayerCharacter : MonoBehaviour
     /// Used by PlayerMovement to handle player movement mechanics
     /// </summary>
     private KinematicCharacterMotor motor;
+#endregion
+
+#region fields
+    bool inputLocked = false;
+    Coroutine inputLockTimer;
 #endregion
 
 #region Unity MonoBehaviour Messages
@@ -172,7 +177,7 @@ public abstract class PlayerCharacter : MonoBehaviour
         // TODO move up to InputManager/PlayerInputController
         HandleInput(playerController.Player);
 
-        animation.FrameUpdate();
+        animation.FrameUpdate(Time.deltaTime);
    }
    
     /// <summary>
@@ -216,6 +221,7 @@ public abstract class PlayerCharacter : MonoBehaviour
         SetupConcreteCommunicators(out internalCommunicator, out externalCommunicator);
 
         // Set internal Communications
+        
         movement.SetCommunicationInterface(internalCommunicator);
         animation.SetCommunicationInterface(internalCommunicator);
         animation.SetReadOnlyReferences(new ReadOnlyKinematicMotor(motor), movement.GetReadOnlyAction());
@@ -239,6 +245,29 @@ public abstract class PlayerCharacter : MonoBehaviour
     protected abstract void SetupConcreteCommunicators(out PlayerInternalCommunicator internComm, out PlayerExternalCommunicator externComm);
 #endregion
 
+#region Communication Methods
+    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
+    {
+        // Set the communication
+        communicator.SetCommunication(this);
+    }
+
+    public void LockInput(float time)
+    {
+        if(inputLockTimer != null)
+            StopCoroutine(inputLockTimer);
+
+        inputLockTimer = StartCoroutine(LockInputTimer(time));
+    }
+#endregion
+
+    private IEnumerator LockInputTimer(float time)
+    {
+        inputLocked = true;
+        yield return new WaitForSeconds(time);
+        inputLocked = false;
+    }
+
     // TODO Change to SetInput(), which should be called only once on initialization, and set actions/handlers for input action being triggered
     /// <summary>
     /// Handle input via PlayerController
@@ -246,6 +275,8 @@ public abstract class PlayerCharacter : MonoBehaviour
     /// <param name="controllerActions">The controller actions state</param>
     public void HandleInput(PlayerController.PlayerActions controllerActions)
     {
+        if (inputLocked)
+            controllerActions = new PlayerController.PlayerActions(playerController);
         movement.HandleInput(controllerActions); 
         combat.HandleInput(controllerActions);
 

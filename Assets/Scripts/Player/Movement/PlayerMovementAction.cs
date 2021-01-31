@@ -628,6 +628,12 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
         }
     }
 
+    public void Flinch()
+    {
+        if (isJumping)
+            input.jumpCancel = true;
+    }
+
     /*
     private void SetInputJumpTrue()
     {

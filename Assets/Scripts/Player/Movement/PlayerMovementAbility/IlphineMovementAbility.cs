@@ -212,6 +212,11 @@ public class IlphineMovementAbility : PlayerMovementAbility<IlphineMovementAbili
 
     }
 
+    public override void Flinch()
+    {
+        
+    }
+
     public override void EnterMovementEffector(MovementEffector effector)
     {
         for (int i = 0; i < effector.movementOverrides.Count; i++)

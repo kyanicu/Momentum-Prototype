@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public enum HitValidity
@@ -8,6 +9,7 @@ public enum HitValidity
     IFRAME,
     BLOCK,
     PHASE,
+    CLANK,
     TEMPORARY_IMMUNITY,
     PERMANENT_IMMUNITY,
 
@@ -16,7 +18,6 @@ public enum HitValidity
 public interface IDamageable
 {
     HitValidity ValidHit(Hitbox hitbox, Hurtbox hurtbox);
-    float iFrameTimer { get; }
 
     void TakeDamage(float damage);
     void ActivateIFrames(float iFrameTimeOverride = 0);
@@ -27,7 +28,8 @@ public interface IDamageable
 
     void TakeKinematicKnockback(Vector3 knockback, float time);
     void TakeDynamicKnockback(Vector3 knockback);
-    void TakeDynamicKnockbackWithTorque(Vector3 knockback, Hitbox hitbox, Hurtbox hurtbox);
+    void TakeDynamicKnockbackWithTorque(Vector3 knockback, Vector3 atPoint);
+
 }
 
 public class Hurtbox : MonoBehaviour
@@ -85,7 +87,7 @@ public class Hurtbox : MonoBehaviour
                     damageable.TakeDynamicKnockback(calculatedKnockback);
                     break;
                 case (KnockbackType.DYNAMIC_WITH_TORQUE) :
-                    damageable.TakeDynamicKnockbackWithTorque(calculatedKnockback, hitbox, this);
+                    damageable.TakeDynamicKnockbackWithTorque(calculatedKnockback, hitbox.transform.position);
                     break;
             }
         }

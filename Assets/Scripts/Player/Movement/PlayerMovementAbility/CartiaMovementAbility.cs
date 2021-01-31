@@ -228,6 +228,11 @@ public class CartiaMovementAbility : PlayerMovementAbility<CartiaMovementAbility
         }
     }
 
+    public override void Flinch()
+    {
+        
+    }
+
     public override void RegisterInput(PlayerController.PlayerActions controllerActions)
     {
         input.RegisterInput(controllerActions);

@@ -11,6 +11,12 @@ TagManager:
   - Movement Effector
   - Teleporter
   - Checkpoint
+  - PlayerHitbox
+  - EnemyHitbox
+  - FriendlyFireEnemyHitbox
+  - PlayerHurtbox
+  - EnemyHurtbox
+  - EnemyImmuneHurtbox
   layers:
   - Default
   - TransparentFX

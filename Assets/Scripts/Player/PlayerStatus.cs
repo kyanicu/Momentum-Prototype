@@ -16,8 +16,8 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
 
     [SerializeField]
     private float iFrameTime = 1f;
-    private float _iFrameTimer;
-    public float iFrameTimer { get { return _iFrameTimer; } private set { _iFrameTimer = value; } }
+    private bool _iFramesActive;
+    public bool iFramesActive { get { return _iFramesActive; } private set { _iFramesActive = value; } }
 
     [SerializeField, HideInInspector]
     private GameObject hurtboxes;
@@ -30,6 +30,9 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
     public event Action<Vector3> takeDynamicKnockback;
     public event Action<Vector3, Vector3> takeDynamicKnockbackWithTorque;
 
+    public event Action iFramesStarted;
+    public event Action iFramesEnded;
+
     public PlayerStatus(GameObject _hurtboxes)
     {
         hurtboxes = _hurtboxes;
@@ -39,12 +42,6 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
         {
             hb.SetDamageable(this);
         }
-    }
-
-
-    public void HandleIncommingAttack(AttackInfo attackInfo)
-    {
-        health -= attackInfo.baseDamage;
     }
 
     public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
@@ -64,7 +61,7 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
 
     public HitValidity ValidHit(Hitbox hitbox, Hurtbox hurtbox)
     {
-        if (iFrameTimer > 0)
+        if (iFramesActive)
             return HitValidity.IFRAME;
         else
             return HitValidity.VALID;
@@ -72,47 +69,66 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
 
     public void TakeDamage(float damage)
     {
+        Debug.Log("Took " + damage + "Damage");
         health -= damage;
     }
 
     public void ActivateIFrames(float iFrameTimeOverride = 0)
     {
-        iFrameTimer = (iFrameTimeOverride != 0) ? iFrameTimeOverride : iFrameTime;
+        Debug.Log("iFramesActive for " + ((iFrameTimeOverride != 0) ? iFrameTimeOverride : iFrameTime) + " Seconds");
+        GameManager.Instance.TimerViaGameTime((iFrameTimeOverride != 0) ? iFrameTimeOverride : iFrameTime, DeactivateIFrames);
+        iFramesActive = true;
+        iFramesStarted?.Invoke();
+    }
+
+    public void DeactivateIFrames()
+    {
+        iFramesActive = true;
+        iFramesEnded?.Invoke();
     }
 
     public void Flinch()
     {
+        Debug.Log("Flinched");
         flinch?.Invoke();
     }
 
     public void Halt()
     {
+        Debug.Log("Halted");
         halt?.Invoke();
     }
 
     public void ForceUnground()
     {
+        Debug.Log("Force Ungrounded");
         forceUnground?.Invoke();
     }
 
     public void Stun(float stunTime)
     {
+        Debug.Log("Stunned");
         stun?.Invoke(stunTime);
     }
 
     public void TakeKinematicKnockback(Vector3 knockback, float time)
     {
+        Debug.Log("Took Kinematic Knockback for " + time + "Seconds");
+        Debug.DrawRay(GameObject.Find("Player").transform.position, knockback, Color.yellow, 5);
         takeKinematicKnockback?.Invoke(knockback, time);
     }
 
     public void TakeDynamicKnockback(Vector3 knockback)
     {
+        Debug.Log("Took Dynamic Knockback");
+        Debug.DrawRay(GameObject.Find("Player").transform.position, knockback, Color.yellow + Color.red, 5);
         takeDynamicKnockback?.Invoke(knockback);
     }
 
-    public void TakeDynamicKnockbackWithTorque(Vector3 knockback, Hitbox hitbox, Hurtbox hurtbox)
+    public void TakeDynamicKnockbackWithTorque(Vector3 knockback, Vector3 atPoint)
     {
-        //Vector3 angularImpulse = (hitbox.transform.position - hurtbox.transform.position).Cross(knockback);
-        takeDynamicKnockbackWithTorque?.Invoke(knockback, hitbox.transform.position);
+        Debug.Log("Took Dynamic Knockback With Torque");
+        Debug.DrawRay(atPoint, knockback, Color.red, 5);
+        takeDynamicKnockbackWithTorque?.Invoke(knockback, atPoint);
     }
 }

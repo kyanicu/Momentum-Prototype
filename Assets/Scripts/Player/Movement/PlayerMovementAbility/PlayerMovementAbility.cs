@@ -111,6 +111,8 @@ public interface IPlayerMovementAbility : IPlayerCommunication
     /// <param name="hitCollider"> The detected collider </param>
     void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider);
 
+    void Flinch();
+
     void RegisterInput(PlayerController.PlayerActions controllerActions);
 
     /// <summary>
@@ -224,6 +226,8 @@ public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider"> The detected collider </param>
     public abstract void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider);
+
+    public abstract void Flinch();
 
     public abstract void RegisterInput(PlayerController.PlayerActions controllerActions);
 

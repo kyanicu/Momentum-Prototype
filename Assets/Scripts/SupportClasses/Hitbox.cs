@@ -29,7 +29,7 @@ public struct StatusEffect
 public struct AttackInfo
 {
 
-    public static readonly AttackInfo NormalAttack = new AttackInfo
+    public static readonly AttackInfo normalAttack = new AttackInfo
     {
         baseDamage = 5,
         continousDamageRate = 0,
@@ -196,11 +196,30 @@ public interface IAttacker
     AttackerInfo GetAttackerInfo();
 
     void TakeKinematicRecoil(Vector3 knockback, float time);
-    void TakeDynamicRecoil(Vector3 knockback, bool withTorque = false);
+    void TakeDynamicRecoil(Vector3 knockback);
+    void TakeDynamicRecoilWithTorque(Vector3 knockback, Vector3 atPoint);
 }
 
 public class Hitbox : MonoBehaviour
 {
+
+    static Dictionary<(string, string), bool> hitboxHurtboxCollision = new Dictionary<(string, string), bool>
+    {
+        [("PlayerHitbox", "PlayerHurtbox")] = false,
+        [("PlayerHitbox", "EnemyHurtbox")] = true,
+        [("PlayerHitbox", "EnemyImmuneHurtbox")] = true,
+
+        [("EnemyHitbox", "EnemyHurtbox")] = false,
+        [("EnemyHitbox", "PlayerHurtbox")] = true,
+        [("EnemyHitbox", "EnemyImmuneHurtbox")] = false,
+
+        [("FriendlyFireEnemyHitbox", "EnemyHurtbox")] = true,
+        [("FriendlyFireEnemyHitbox", "PlayerHurtbox")] = true,
+        [("FriendlyFireEnemyHitbox", "EnemyImmuneHurtbox")] = false,
+
+        [("Untagged", "Untagged")] = true,
+
+    };
 
     public AttackInfo attackInfo;
     private IAttacker _attacker;
@@ -264,10 +283,10 @@ public class Hitbox : MonoBehaviour
                     attacker.TakeKinematicRecoil(calculatedRecoil, attackInfo.kinematicRecoilTime);
                     break;
                 case (KnockbackType.DYNAMIC) :
-                    attacker.TakeDynamicRecoil(calculatedRecoil, false);
+                    attacker.TakeDynamicRecoil(calculatedRecoil);
                     break;
                 case (KnockbackType.DYNAMIC_WITH_TORQUE) :
-                    attacker.TakeDynamicRecoil(calculatedRecoil, true);
+                    attacker.TakeDynamicRecoilWithTorque(calculatedRecoil, this.transform.position);
                     break;
             }
         } 
@@ -275,15 +294,18 @@ public class Hitbox : MonoBehaviour
 
     void OnTriggerEnter(Collider col)
     {
-        Hurtbox hurtbox = col.GetComponent<Hurtbox>();
-        if (hurtbox != null)
+        if (hitboxHurtboxCollision[(this.tag, col.tag)])
         {
-            manager.RegisterOverlap(this, hurtbox);
+            Hurtbox hurtbox = col.GetComponent<Hurtbox>();
+            if (hurtbox != null)
+            {
+                manager.RegisterOverlap(this, hurtbox);
+            }
         }
     }
     void OnTriggerExit(Collider col)
     {
-        if (deregisterOnExit)
+        if (deregisterOnExit && hitboxHurtboxCollision[(this.tag, col.tag)])
         {
             Hurtbox hurtbox = col.GetComponent<Hurtbox>();
             if (hurtbox != null)
@@ -297,6 +319,7 @@ public class Hitbox : MonoBehaviour
     {
         if (!deregisterOnExit)
             manager.DeregisterAllOverlaps(this);
+        attackInfo = new AttackInfo();
     }
 }
 

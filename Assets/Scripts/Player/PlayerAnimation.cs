@@ -19,9 +19,12 @@ public class PlayerAnimation : IPlayerAnimationCommunication
         ["UpAerialAttack"] = Animator.StringToHash("UpAerialAttack"),
         ["Braking"] = Animator.StringToHash("Braking"),
         ["RunSpeed"] = Animator.StringToHash("RunSpeed"),
-        ["Falling"] = Animator.StringToHash("Falling")
+        ["Falling"] = Animator.StringToHash("Falling"),
+        ["Flinch"] = Animator.StringToHash("Flinch")
     };
 
+    [SerializeField, HideInInspector]
+    private GameObject root;
     [SerializeField, HideInInspector]
     private GameObject modelRoot;
 
@@ -48,14 +51,18 @@ public class PlayerAnimation : IPlayerAnimationCommunication
 
     Vector3 prevParentPosition = Vector3.zero;
     Quaternion prevParentRotation = Quaternion.identity;
-
     static private readonly Quaternion flipUp = Quaternion.Euler(0,180,0);
 
-    public PlayerAnimation(GameObject _modelRoot)
+    private Coroutine iFrameCoroutine;
+    [SerializeField]
+    private float iFrameBlinkRate = 0.1f;
+
+    public PlayerAnimation(GameObject _root)
     {
-        modelRoot = _modelRoot;
-        rootAnimator = modelRoot.GetComponent<Animator>();
-        animationEvents = modelRoot.GetComponent<PlayerAnimationEvents>();
+        root = _root;
+        modelRoot = root.transform.GetChild(0).gameObject;
+        rootAnimator = root.GetComponent<Animator>();
+        animationEvents = root.GetComponent<PlayerAnimationEvents>();
 
         animationEvents.attackStateTransition += AttackStateTransition;
     }
@@ -78,7 +85,7 @@ public class PlayerAnimation : IPlayerAnimationCommunication
 
     public void ChangeFacingDirection()
     {
-        modelRoot.transform.localRotation *= flipUp;
+        root.transform.localRotation *= flipUp;
     }
 
     public void AnimateNeutralAttack()
@@ -118,7 +125,38 @@ public class PlayerAnimation : IPlayerAnimationCommunication
         rootAnimator.SetTrigger(animatorParameterNameToID["UpAerialAttack"]);
     }
 
-    public void FrameUpdate()
+    public void AnimateFlinch()
+    {
+        rootAnimator.SetTrigger(animatorParameterNameToID["Flinch"]);
+    }
+
+    public void StartIFrames()
+    {
+        if (iFrameCoroutine != null)
+            GameManager.Instance.StopCoroutine(iFrameCoroutine);
+        iFrameCoroutine = GameManager.Instance.StartCoroutine(IFrames());
+        // modelRenderer.material.color = Color.red - (Color.clear/2);
+    }
+
+    public void EndIFrames()
+    {
+        if (iFrameCoroutine != null)
+            GameManager.Instance.StopCoroutine(iFrameCoroutine);
+        
+        modelRoot.SetActive(true);
+        // modelRenderer.material.color = Color.white
+    }
+
+    private IEnumerator IFrames()
+    {
+        while (true)
+        {
+            modelRoot.SetActive(!modelRoot.activeSelf);
+            yield return new WaitForSeconds(iFrameBlinkRate);
+        }
+    }
+
+    public void FrameUpdate(float deltaTime)
     {
         rootAnimator.SetBool(animatorParameterNameToID["Braking"], playerActions.isBraking && playerMotor.isGroundedThisUpdate);
         rootAnimator.SetBool(animatorParameterNameToID["Falling"], !playerMotor.isGroundedThisUpdate);

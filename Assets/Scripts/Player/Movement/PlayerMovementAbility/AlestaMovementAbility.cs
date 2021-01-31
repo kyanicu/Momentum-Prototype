@@ -302,6 +302,11 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
         }
     }
 
+    public override void Flinch()
+    {
+        
+    }
+
     public override void RegisterInput(PlayerController.PlayerActions controllerActions)
     {
         input.RegisterInput(controllerActions);

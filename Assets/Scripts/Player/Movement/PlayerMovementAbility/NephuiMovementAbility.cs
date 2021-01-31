@@ -211,6 +211,11 @@ public class NephuiMovementAbility : PlayerMovementAbility<NephuiMovementAbility
 
     }
 
+    public override void Flinch()
+    {
+        
+    }
+
     public override void EnterMovementEffector(MovementEffector effector)
     {
         for (int i = 0; i < effector.nephuiAbilityOverrides.Count; i++)
