@@ -324,6 +324,8 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
 
     public bool isBraking { get; private set; }
 
+    private bool stunned;
+
     /// <summary>
     /// Constructor
     /// </summary>
@@ -602,6 +604,9 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
             /*}*/
         }
 
+        if(stunned)
+            return;
+
         // if the player is trying to and able to jump
         if(input.jump)
         {
@@ -628,12 +633,28 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
         }
     }
 
+    public void StartStun()
+    {
+        stunned = true;
+        Flinch();
+        isBraking = false;
+    }
+
+    public void EndStun()
+    {
+        stunned = false;
+    }
+
     public void Flinch()
     {
         if (isJumping)
+        {
+            input.Reset();
             input.jumpCancel = true;
+        }
+        else
+            input.Reset();
     }
-
     /*
     private void SetInputJumpTrue()
     {
@@ -647,7 +668,8 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
     /// </summary>
     public void RegisterInput(PlayerController.PlayerActions controllerActions)
     {
-        input.RegisterInput(controllerActions);
+        if (!stunned)
+            input.RegisterInput(controllerActions);
     }
 
     public void ResetInput()

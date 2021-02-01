@@ -74,7 +74,7 @@ public class Hurtbox : MonoBehaviour
                     calculatedKnockback = transform.TransformDirection(calculatedKnockback);
                     break;
                 case (KnockbackDirectionCalculation.RADIAL) :
-                    calculatedKnockback = Quaternion.Euler(transform.position - hitbox.transform.position) * calculatedKnockback;
+                    calculatedKnockback = Quaternion.FromToRotation(Vector3.right, (transform.position - hitbox.transform.position).normalized) * calculatedKnockback;
                     break;
             }
 

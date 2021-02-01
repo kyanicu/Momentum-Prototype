@@ -93,6 +93,8 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 
     private ReadOnlyPlayerMovementAction playerMovementActionState;
 
+    private bool stunned;
+
     public PlayerCombat(GameObject _hitboxes)
     {
         hitboxes = new Hitbox[_hitboxes.transform.childCount];
@@ -151,12 +153,24 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
         else if (newState == AttackAnimationState.FINISHED)
         {
             ResetAttackInitInfo(settingAttackInitInfo);
+            settingAttackInitInfo = new AttackInitInfo();
         }
+    }
+
+    public void StartStun()
+    {
+        stunned = true;
+    }
+
+    public void EndStun()
+    {
+        stunned = false;
     }
 
     public void Flinch()
     {
-        AttackAnimationStateTransition(AttackAnimationState.FINISHED);
+        if (attackAnimationState != AttackAnimationState.FINISHED)
+            AttackAnimationStateTransition(AttackAnimationState.FINISHED);
         attackBuffered = false;
         foreach (Hitbox hb in hitboxes)
             hb.enabled = false;
@@ -235,7 +249,8 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 
     public void HandleInput(PlayerController.PlayerActions controllerActions)
     {
-
+        if(stunned)
+            return;
         if (controllerActions.NeutralAttack.triggered && !attackBuffered &&
             (attackAnimationState == AttackAnimationState.FINISHED || (attackBuffered = (attackAnimationState == AttackAnimationState.BUFFER))))
         {
@@ -275,14 +290,14 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
     public void TakeKinematicRecoil(Vector3 recoil, float time)
     {
         Debug.Log("Took Kinematic Recoil for " + time + "Seconds");
-        Debug.DrawRay(GameObject.Find("Player").transform.position, recoil, Color.green, 5);
+        Debug.DrawRay(GameObject.Find("Alesta").transform.position, recoil, Color.green, 5);
         takeKinematicRecoil?.Invoke(recoil, time);
     }
 
     public void TakeDynamicRecoil(Vector3 recoil)
     {
         Debug.Log("Took Dynamic Recoil");
-        Debug.DrawRay(GameObject.Find("Player").transform.position, recoil, Color.cyan, 5);
+        Debug.DrawRay(GameObject.Find("Alesta").transform.position, recoil, Color.cyan, 5);
         takeDynamicRecoil?.Invoke(recoil);
     }
 

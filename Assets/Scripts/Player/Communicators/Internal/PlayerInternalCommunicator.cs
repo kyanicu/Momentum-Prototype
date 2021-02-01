@@ -50,7 +50,7 @@ public interface IPlayerMovementCommunication : IPlayerCommunication
     void RemoveMovementOverride(FullMovementOverride overrides);
 
     void ZeroVelocity(bool zeroAngularVelocity = false);
-    void LockVelocity(float time);////, bool lockAngularVelocity = false);
+    void LockVelocity(float time, bool revertExtVelAfter);////, bool lockAngularVelocity = false);
     void Flinch();
     void ForceUnground();
     void AddImpulse(Vector3 Impulse);
@@ -436,8 +436,8 @@ public abstract class PlayerInternalCommunicator
     }
     private void TakeKinematicKnockbackHandler(Vector3 knockback, float time)
     {
-        movement.LockVelocity(time);
         movement.AddImpulse(knockback);
+        movement.LockVelocity(time, true);
     }
     private void TakeDynamicKnockbackHandler(Vector3 knockback)
     {
@@ -452,8 +452,9 @@ public abstract class PlayerInternalCommunicator
     #region Combat Events
     private void TakeKinematicRecoilHandler(Vector3 recoil, float time)
     {
-        movement.LockVelocity(time);
+        
         movement.AddImpulse(recoil);
+        movement.LockVelocity(time, true);
     }
 
     private void TakeDynamicRecoilHandler(Vector3 recoil)

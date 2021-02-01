@@ -449,6 +449,9 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     public Vector3 externalVelocity { private get; set; }
 #region flags
     private int velocityLocked = 0;
+    private Vector3 preLockedVel;
+    private bool revertLockedVelAfter;
+    private bool zeroingVel;
     ////private int angularVelocityLocked = 0;
     private bool forceUngrounding = false;
 
@@ -653,12 +656,22 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
     public void ZeroVelocity(bool _zeroAngularVelocity = false)
     {
-        externalVelocity -= readOnlyMotor.velocity;
+        if (velocityLocked > 0)
+            return;
+
+        zeroingVel = true;
+        externalVelocity = Vector3.zero;
         internalAngularVelocity = Vector3.zero;
     }
 
-    public void LockVelocity(float time)////, bool _lockAngularVelocity = false)
+    public void LockVelocity(float time, bool revertVelAfter)////, bool _lockAngularVelocity = false)
     {
+        if (revertLockedVelAfter = revertVelAfter)
+            if (zeroingVel)
+                preLockedVel = Vector3.zero;
+            else
+                preLockedVel = readOnlyMotor.velocity;
+
         velocityLocked++;
         ////if(_lockAngularVelocity)
             ////angularVelocityLocked++;
@@ -668,7 +681,26 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     public void UnlockVelocity()
     {
         velocityLocked--;
+
+        if (velocityLocked < 0)
+            velocityLocked = 0;
+        else if (velocityLocked == 0 && revertLockedVelAfter)
+        {
+            externalVelocity = -readOnlyMotor.velocity + preLockedVel;
+            preLockedVel = Vector3.zero;
+            revertLockedVelAfter = false;
+        }
         ////angularVelocityLocked--;
+    }
+    
+    public void StartStun()
+    {
+        action.StartStun();
+    }
+
+    public void EndStun()
+    {
+        action.EndStun();
     }
 
     public void Flinch()
@@ -684,11 +716,17 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
     public void AddImpulse(Vector3 impulse)
     {
+        if (velocityLocked > 0)
+            return;
+
         externalVelocity += impulse;
     }
 
     public void AddImpulseAtPoint(Vector3 impulse, Vector3 point)
     {
+        if (velocityLocked > 0)
+            return;
+
         externalVelocity += impulse;
         internalAngularVelocity += Vector3.Cross(point - readOnlyMotor.position, impulse);
     }
@@ -807,7 +845,12 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// <param name="deltaTime"> Motor update time </param>
     public void UpdateVelocity(ref Vector3 currentVelocity, ref float maxMove, KinematicCharacterMotor motor, float deltaTime)
     {
-        Vector3 prevVel = currentVelocity;
+
+        if (zeroingVel)
+        {
+            currentVelocity = Vector3.zero;
+            zeroingVel = false;
+        }
 
         // Handle velocity projection on a surface if grounded
         if (motor.IsGroundedThisUpdate)
@@ -840,12 +883,15 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         currentVelocity += externalVelocity;
         externalVelocity = Vector3.zero;
 
-        // Update velocity from components
-        if(values.negateAction == 0)
-            action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, wallHits, ref physics.negations, groundingActionBuffer, bufferedUngroundedNormal, deltaTime);
-        ability.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
-        if(values.negatePhysics == 0)
-            physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
+        if(velocityLocked == 0)
+        {
+            // Update velocity from components
+            if(values.negateAction == 0)
+                action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, wallHits, ref physics.negations, groundingActionBuffer, bufferedUngroundedNormal, deltaTime);
+            ability.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
+            if(values.negatePhysics == 0)
+                physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
+        }
 
         // Ensure velocity is locked to current 2.5D plane
         currentVelocity = Vector3.ProjectOnPlane(currentVelocity, currentPlane.normal);
@@ -873,9 +919,6 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         wallHits.hitCeiling = Vector3.zero;
         wallHits.hitLeftWall = Vector3.zero;
         wallHits.hitRightWall = Vector3.zero;
-
-        if(velocityLocked > 0)
-            currentVelocity = prevVel;
     }
 
     /// <summary>
@@ -886,8 +929,10 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     public void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
     {
         if (forceUngrounding)
+        {
             motor.ForceUnground();
-
+            forceUngrounding = false;
+        }
         // Handle setting the current plane 
         // Set so that the update uses the proper plane that the player is currently on
 

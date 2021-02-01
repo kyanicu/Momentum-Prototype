@@ -83,7 +83,7 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
 
     public void DeactivateIFrames()
     {
-        iFramesActive = true;
+        iFramesActive = false;
         iFramesEnded?.Invoke();
     }
 
@@ -114,14 +114,14 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
     public void TakeKinematicKnockback(Vector3 knockback, float time)
     {
         Debug.Log("Took Kinematic Knockback for " + time + "Seconds");
-        Debug.DrawRay(GameObject.Find("Player").transform.position, knockback, Color.yellow, 5);
+        Debug.DrawRay(GameObject.Find("Alesta").transform.position, knockback, Color.yellow, 5);
         takeKinematicKnockback?.Invoke(knockback, time);
     }
 
     public void TakeDynamicKnockback(Vector3 knockback)
     {
         Debug.Log("Took Dynamic Knockback");
-        Debug.DrawRay(GameObject.Find("Player").transform.position, knockback, Color.yellow + Color.red, 5);
+        Debug.DrawRay(GameObject.Find("Alesta").transform.position, knockback, Color.yellow + Color.red, 5);
         takeDynamicKnockback?.Invoke(knockback);
     }
 

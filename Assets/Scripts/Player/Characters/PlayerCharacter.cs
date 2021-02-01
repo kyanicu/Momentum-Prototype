@@ -221,7 +221,7 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
         SetupConcreteCommunicators(out internalCommunicator, out externalCommunicator);
 
         // Set internal Communications
-        
+        SetCommunicationInterface(internalCommunicator);
         movement.SetCommunicationInterface(internalCommunicator);
         animation.SetCommunicationInterface(internalCommunicator);
         animation.SetReadOnlyReferences(new ReadOnlyKinematicMotor(motor), movement.GetReadOnlyAction());
@@ -256,7 +256,7 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     {
         if(inputLockTimer != null)
             StopCoroutine(inputLockTimer);
-
+        
         inputLockTimer = StartCoroutine(LockInputTimer(time));
     }
 #endregion
@@ -264,8 +264,12 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     private IEnumerator LockInputTimer(float time)
     {
         inputLocked = true;
+        movement.StartStun();
+        combat.StartStun();
         yield return new WaitForSeconds(time);
         inputLocked = false;
+        movement.EndStun();
+        combat.EndStun();
     }
 
     // TODO Change to SetInput(), which should be called only once on initialization, and set actions/handlers for input action being triggered
@@ -275,8 +279,7 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     /// <param name="controllerActions">The controller actions state</param>
     public void HandleInput(PlayerController.PlayerActions controllerActions)
     {
-        if (inputLocked)
-            controllerActions = new PlayerController.PlayerActions(playerController);
+
         movement.HandleInput(controllerActions); 
         combat.HandleInput(controllerActions);
 
