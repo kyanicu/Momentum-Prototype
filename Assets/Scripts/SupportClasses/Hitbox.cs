@@ -46,11 +46,6 @@ public struct AttackInfo
         baseKnockbackDirection = Vector3.right,
         knockbackDirectionCalculation = KnockbackDirectionCalculation.LOCAL_HITBOX,
         kinematicKnockbackTime = 0.25f,
-
-        recoilType = KnockbackType.DYNAMIC,
-        baseRecoilSpeed = 5,
-        baseRecoilDirection = Vector3.zero,
-        kinematicRecoilTime = 0,
     };
 
     public static readonly AttackInfo chipDamage = new AttackInfo
@@ -71,11 +66,6 @@ public struct AttackInfo
         baseKnockbackDirection = Vector3.zero,
         knockbackDirectionCalculation = KnockbackDirectionCalculation.GLOBAL,
         kinematicKnockbackTime = 0,
-
-        recoilType = KnockbackType.STATIC,
-        baseRecoilSpeed = 0,
-        baseRecoilDirection = Vector3.zero,
-        kinematicRecoilTime = 0,
     };
 
     public static readonly AttackInfo harmfulObject = new AttackInfo
@@ -96,11 +86,6 @@ public struct AttackInfo
         baseKnockbackDirection = Vector3.zero,
         knockbackDirectionCalculation = KnockbackDirectionCalculation.LOCAL_HURTBOX,
         kinematicKnockbackTime = 0,
-
-        recoilType = KnockbackType.STATIC,
-        baseRecoilSpeed = 0,
-        baseRecoilDirection = Vector3.zero,
-        kinematicRecoilTime = 0,
     };
 
     /// <summary>
@@ -162,28 +147,6 @@ public struct AttackInfo
     /// The time the attacked object is knocked back for kinematic knockback
     /// </summary>
     public float kinematicKnockbackTime;
-
-    /// <summary>
-    /// The type of recoil applied
-    /// </summary>
-    public KnockbackType recoilType;
-    /// <summary>
-    /// The speed at which the attacker is recoiled back
-    /// </summary>
-    public float baseRecoilSpeed;
-    /// <summary>
-    /// The direction at which the attacker is recoiled back
-    /// </summary>
-    public Vector3 baseRecoilDirection;
-    /// <summary>
-    /// The way the recoil direction is calculated
-    /// </summary>
-    public KnockbackDirectionCalculation recoilDirectionCalculation;
-    /// <summary>
-    /// The time the attacker is recoiled back for kinematic recoil
-    /// </summary>
-    public float kinematicRecoilTime;
-
 }
 
 public struct AttackerInfo
@@ -195,15 +158,13 @@ public interface IAttacker
 {
     AttackerInfo GetAttackerInfo();
 
-    void TakeKinematicRecoil(Vector3 knockback, float time);
-    void TakeDynamicRecoil(Vector3 knockback);
-    void TakeDynamicRecoilWithTorque(Vector3 knockback, Vector3 atPoint);
+    IDamageable damageable { get; }
 }
 
 public class Hitbox : MonoBehaviour
 {
 
-    static Dictionary<(string, string), bool> hitboxHurtboxCollision = new Dictionary<(string, string), bool>
+    public static Dictionary<(string, string), bool> hitboxHurtboxCollision = new Dictionary<(string, string), bool>
     {
         [("PlayerHitbox", "PlayerHurtbox")] = false,
         [("PlayerHitbox", "EnemyHurtbox")] = true,
@@ -221,7 +182,58 @@ public class Hitbox : MonoBehaviour
 
     };
 
+    public static void HandleAttackInfo(AttackInfo info, IDamageable damageable, Transform hit, Transform hurt, bool recoil = false)
+    {
+        if(info.baseDamage != 0)
+            damageable.TakeDamage(info.baseDamage);
+
+        if (info.activateIFrames)
+            damageable.ActivateIFrames(info.iFrameTimeOverride);
+
+        if (info.flinch)
+            damageable.Flinch();
+        if (info.halt)
+            damageable.Halt();
+        if (info.forceUnground)
+            damageable.ForceUnground();
+        if (info.stunTime != 0)
+            damageable.Stun(info.stunTime);
+
+        if (info.knockbackType != KnockbackType.STATIC)
+        {
+            Vector3 calculatedKnockback = info.baseKnockbackDirection * info.baseKnockbackSpeed;
+            switch (info.knockbackDirectionCalculation)
+            {
+                case (KnockbackDirectionCalculation.LOCAL_HITBOX) :
+                    calculatedKnockback = hit.TransformDirection(calculatedKnockback);
+                    break;
+                case (KnockbackDirectionCalculation.LOCAL_HURTBOX) :
+                    calculatedKnockback = hurt.TransformDirection(calculatedKnockback);
+                    break;
+                case (KnockbackDirectionCalculation.RADIAL) :
+                    calculatedKnockback = Quaternion.FromToRotation(Vector3.right, (hurt.position - hit.transform.position).normalized) * calculatedKnockback;
+                    break;
+            }
+
+            switch (info.knockbackType)
+            {
+                case (KnockbackType.KINEMATIC) :
+                    damageable.TakeKinematicKnockback(calculatedKnockback, info.kinematicKnockbackTime);
+                    break;
+                case (KnockbackType.DYNAMIC) :
+                    damageable.TakeDynamicKnockback(calculatedKnockback);
+                    break;
+                case (KnockbackType.DYNAMIC_WITH_TORQUE) :
+                    damageable.TakeDynamicKnockbackWithTorque(calculatedKnockback, hurt.position);
+                    break;
+            }
+        }
+    }
+
     public AttackInfo attackInfo;
+    public bool hasRecoilEffect = false;
+    [SerializeField]
+    private AttackInfo recoilInfo;
     private IAttacker _attacker;
     public IAttacker attacker { get { return _attacker; } private set { _attacker = value; } }
 
@@ -260,36 +272,10 @@ public class Hitbox : MonoBehaviour
 
     public void HandleOutgoingAttack(Hurtbox hurtbox)
     {
-        if (attackInfo.recoilType != KnockbackType.STATIC)
+        if(hasRecoilEffect && attacker != null && attacker.damageable != null)
         {
-
-            Vector3 calculatedRecoil = attackInfo.baseRecoilDirection * attackInfo.baseRecoilSpeed;
-            switch (attackInfo.recoilDirectionCalculation)
-            {
-                case (KnockbackDirectionCalculation.LOCAL_HITBOX) :
-                    calculatedRecoil = transform.TransformDirection(calculatedRecoil);
-                    break;
-                case (KnockbackDirectionCalculation.LOCAL_HURTBOX) :
-                    calculatedRecoil = hurtbox.transform.TransformDirection(calculatedRecoil);
-                    break;
-                case (KnockbackDirectionCalculation.RADIAL) :
-                    calculatedRecoil = Quaternion.Euler(hurtbox.transform.position - transform.position) * calculatedRecoil;
-                    break;
-            }
-
-            switch (attackInfo.recoilType)
-            {
-                case (KnockbackType.KINEMATIC) :
-                    attacker.TakeKinematicRecoil(calculatedRecoil, attackInfo.kinematicRecoilTime);
-                    break;
-                case (KnockbackType.DYNAMIC) :
-                    attacker.TakeDynamicRecoil(calculatedRecoil);
-                    break;
-                case (KnockbackType.DYNAMIC_WITH_TORQUE) :
-                    attacker.TakeDynamicRecoilWithTorque(calculatedRecoil, this.transform.position);
-                    break;
-            }
-        } 
+            HandleAttackInfo(recoilInfo, attacker.damageable, this.transform, hurtbox.transform);
+        }
     }
 
     void OnTriggerEnter(Collider col)
@@ -320,6 +306,8 @@ public class Hitbox : MonoBehaviour
         if (!deregisterOnExit)
             manager.DeregisterAllOverlaps(this);
         attackInfo = new AttackInfo();
+        recoilInfo = new AttackInfo();
+        hasRecoilEffect = false;
     }
 }
 

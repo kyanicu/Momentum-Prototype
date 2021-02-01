@@ -38,6 +38,8 @@ public struct AttackInitInfo
 [System.Serializable]
 public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 {
+    private IDamageable _damageable;
+    public IDamageable damageable { get { return _damageable; } private set { _damageable = value; } }
 
     [SerializeField, HideInInspector]
     private Hitbox[] hitboxes;
@@ -95,8 +97,10 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 
     private bool stunned;
 
-    public PlayerCombat(GameObject _hitboxes)
+    public PlayerCombat(GameObject _hitboxes, IDamageable status)
     {
+        damageable = status;
+
         hitboxes = new Hitbox[_hitboxes.transform.childCount];
         for (int i = 0; i < _hitboxes.transform.childCount; i++)
         {
@@ -285,26 +289,5 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
                     NeutralAerialAttack();
             } 
         }
-    }
-
-    public void TakeKinematicRecoil(Vector3 recoil, float time)
-    {
-        Debug.Log("Took Kinematic Recoil for " + time + "Seconds");
-        Debug.DrawRay(GameObject.Find("Alesta").transform.position, recoil, Color.green, 5);
-        takeKinematicRecoil?.Invoke(recoil, time);
-    }
-
-    public void TakeDynamicRecoil(Vector3 recoil)
-    {
-        Debug.Log("Took Dynamic Recoil");
-        Debug.DrawRay(GameObject.Find("Alesta").transform.position, recoil, Color.cyan, 5);
-        takeDynamicRecoil?.Invoke(recoil);
-    }
-
-    public void TakeDynamicRecoilWithTorque(Vector3 recoil, Vector3 atPoint)
-    {
-        Debug.Log("Took Dynamic Recoil With Torque");
-        Debug.DrawRay(atPoint, recoil, Color.blue, 5);
-        takeDynamicRecoilWithTorque?.Invoke(recoil, atPoint);
     }
 }

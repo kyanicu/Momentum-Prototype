@@ -200,7 +200,7 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     {
         animation = new PlayerAnimation(transform.GetChild(0).gameObject);
         status = new PlayerStatus(transform.GetChild(0).GetChild(2).gameObject);
-        combat = new PlayerCombat(transform.GetChild(0).GetChild(1).gameObject);
+        combat = new PlayerCombat(transform.GetChild(0).GetChild(1).gameObject, status);
 
         SetupConcreteClass(out movement);
     }
