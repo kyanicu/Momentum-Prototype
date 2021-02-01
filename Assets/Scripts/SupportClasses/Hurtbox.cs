@@ -47,7 +47,8 @@ public class Hurtbox : MonoBehaviour
     {
         AttackInfo attackInfo = hitbox.attackInfo;
         
-        damageable.TakeDamage(attackInfo.baseDamage);
+        if(attackInfo.baseDamage != 0)
+            damageable.TakeDamage(attackInfo.baseDamage);
         
         if (attackInfo.activateIFrames)
             damageable.ActivateIFrames(attackInfo.iFrameTimeOverride);

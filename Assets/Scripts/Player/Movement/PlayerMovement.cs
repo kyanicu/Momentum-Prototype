@@ -246,6 +246,16 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     public event Action<PlaneChangeArgs> planeChanged;
 #endregion
 
+    private struct KinematicPath
+    {
+        public Vector3 velocity;
+        
+        public Vector3 velocityAfter;
+
+        public Coroutine timer;
+                
+    }
+
     /// <summary>
     /// Hold information on recently changed slopes
     /// Used primarily to handle calculating rotational momentum on ungrounding
@@ -447,10 +457,11 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// </summary>
     /// <value></value>
     public Vector3 externalVelocity { private get; set; }
+    private KinematicPath? kinematicPath = null;
 #region flags
-    private int velocityLocked = 0;
-    private Vector3 preLockedVel;
-    private bool revertLockedVelAfter;
+////    private int velocityLocked = 0;
+////    private Vector3 preLockedVel;
+////    private bool revertLockedVelAfter;
     private bool zeroingVel;
     ////private int angularVelocityLocked = 0;
     private bool forceUngrounding = false;
@@ -656,7 +667,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
     public void ZeroVelocity(bool _zeroAngularVelocity = false)
     {
-        if (velocityLocked > 0)
+        if (kinematicPath != null)
             return;
 
         zeroingVel = true;
@@ -664,33 +675,31 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         internalAngularVelocity = Vector3.zero;
     }
 
-    public void LockVelocity(float time, bool revertVelAfter)////, bool _lockAngularVelocity = false)
-    {
-        if (revertLockedVelAfter = revertVelAfter)
-            if (zeroingVel)
-                preLockedVel = Vector3.zero;
-            else
-                preLockedVel = readOnlyMotor.velocity;
+    public void SetKinematicPath(Vector3 vel, float time)
+    {   
+        if (kinematicPath != null)
+            EndKinematicPath();
 
-        velocityLocked++;
-        ////if(_lockAngularVelocity)
-            ////angularVelocityLocked++;
-        GameManager.Instance.TimerViaGameTime(time, UnlockVelocity);
+        KinematicPath kp = new KinematicPath 
+        { 
+            velocity = vel,
+            velocityAfter = (zeroingVel ? Vector3.zero : readOnlyMotor.velocity + externalVelocity),
+            timer = GameManager.Instance.TimerViaGameTime(time, EndKinematicPath)
+        };
+        
+        kinematicPath = kp;
+
+        externalVelocity += vel;
+        
     }
 
-    public void UnlockVelocity()
+    public void EndKinematicPath()
     {
-        velocityLocked--;
+        GameManager.Instance.StopCoroutine(kinematicPath.Value.timer);
 
-        if (velocityLocked < 0)
-            velocityLocked = 0;
-        else if (velocityLocked == 0 && revertLockedVelAfter)
-        {
-            externalVelocity = -readOnlyMotor.velocity + preLockedVel;
-            preLockedVel = Vector3.zero;
-            revertLockedVelAfter = false;
-        }
-        ////angularVelocityLocked--;
+        externalVelocity = -readOnlyMotor.velocity + kinematicPath.Value.velocityAfter;
+
+        kinematicPath = null;
     }
     
     public void StartStun()
@@ -716,7 +725,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
     public void AddImpulse(Vector3 impulse)
     {
-        if (velocityLocked > 0)
+        if (kinematicPath != null)
             return;
 
         externalVelocity += impulse;
@@ -724,7 +733,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
 
     public void AddImpulseAtPoint(Vector3 impulse, Vector3 point)
     {
-        if (velocityLocked > 0)
+        if (kinematicPath != null)
             return;
 
         externalVelocity += impulse;
@@ -883,7 +892,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
         currentVelocity += externalVelocity;
         externalVelocity = Vector3.zero;
 
-        if(velocityLocked == 0)
+        if(kinematicPath == null)
         {
             // Update velocity from components
             if(values.negateAction == 0)
