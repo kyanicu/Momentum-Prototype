@@ -25,34 +25,34 @@ public struct ReadOnlyTransform
     }
 }   
 
-/// <summary>
-/// A wrapper for the KinematicCharacterMotor class that allows a constant reference state to only be read
-/// </summary>
-public struct ReadOnlyKinematicMotor
-{
-    private KinematicCharacterMotor motor;
-
-    public Vector3 position { get { return motor.TransientPosition; } }
-    public Quaternion rotation { get { return motor.TransientRotation; } }
-    public Vector3 velocity { get { return motor.BaseVelocity; } }
-    public Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
-    public Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
-    public bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
-    public bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
-
-    public ReadOnlyKinematicMotor(KinematicCharacterMotor m)
-    {  
-        motor = m;
-    }
-}   
+/////// <summary>
+/////// A wrapper for the KinematicCharacterMotor class that allows a constant reference state to only be read
+/////// </summary>
+////public struct ReadOnlyKinematicMotor
+////{
+////    private KinematicCharacterMotor motor;
+////
+////    public Vector3 position { get { return motor.TransientPosition; } }
+////    public Quaternion rotation { get { return motor.TransientRotation; } }
+////    public Vector3 velocity { get { return motor.BaseVelocity; } }
+////    public Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
+////    public Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
+////    public bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
+////    public bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
+////
+////    public ReadOnlyKinematicMotor(KinematicCharacterMotor m)
+////    {  
+////        motor = m;
+////    }
+////}   
 
 #endregion
 
 /// <summary>
-/// Unity Component that controls all Player Character mechanics and scripting
+/// Unity Component that controls all Character mechanics and scripting
 /// Abstract for specific character to derive from
 /// </summary>
-public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
+public abstract class Character : MonoBehaviour 
 {
     // TODO move up to InputManager/PlayerInputController
     /// <summary>
@@ -249,7 +249,7 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         // Set the communication
-        communicator.SetCommunication(this);
+        ////communicator.SetCommunication(this);
     }
 
     public void LockInput(float time)

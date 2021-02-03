@@ -236,7 +236,7 @@ public class PlayerMovementValues : PlayerOverridableValues
 /// Implements IPlayerMovementCmmunication to allow communication between other Player components
 /// </summary>
 [System.Serializable]
-public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication
+public abstract class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, ICharacterController, IPlayerMovementCommunication
 {
 
 #region MovementEvents
@@ -519,11 +519,17 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// <summary>
     /// Default constructor
     /// </summary>
-    private PlayerMovement()
+    public PlayerMovement()
     {
         // Instantiate helper components
         physics = new PlayerMovementPhysics();
         action = new PlayerMovementAction();
+
+        SetAbility(out ability);
+        
+        // Set Ability event handlers
+        ability.addingMovementOverrides += AddAbilityOverride;
+        ability.removingMovementOverrides += RemoveAbilityOverride;
     } 
 
     /// <summary>
@@ -532,14 +538,7 @@ public class PlayerMovement : PlayerOverridableAttribute<PlayerMovementValues>, 
     /// </summary>
     /// <param name="_ability"> The PlayerMovementAbility to be used</param>
     /// <returns></returns>
-    public PlayerMovement(IPlayerMovementAbility _ability) : this()
-    {
-        ability = _ability;
-
-        // Set Ability event handlers
-        ability.addingMovementOverrides += AddAbilityOverride;
-        ability.removingMovementOverrides += RemoveAbilityOverride;
-    }
+    protected abstract void SetAbility(out IPlayerMovementAbility _ability);
     
     /// <summary>
     /// Sets the default base overridable values

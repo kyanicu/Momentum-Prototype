@@ -3,18 +3,22 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Class representing the playable character of Nephui
+/// Class representing the playable character of Ilphine
 /// Overrides PlayerCharacter to handle specific character aspects
 /// </summary>
-public class NephuiCharacter : PlayerCharacter
+public class IlphineCharacter : PlayerCharacter
 {
+    [SerializeField]
+    private IlphineMovement movement;
+
     /// <summary>
     /// Initializes concrete class
     /// </summary>
     /// <param name="_movement">The movement field in PlayerCharacter to be set by concrete class</param>
     protected override void SetupConcreteClass(out PlayerMovement _movement)
     {
-        _movement = new PlayerMovement(new NephuiMovementAbility());
+        movement = new IlphineMovement();
+        _movement = movement;
     }
 
     /// <summary>
@@ -24,7 +28,7 @@ public class NephuiCharacter : PlayerCharacter
     /// <param name="externComm">The external communicator field in PlayerCharacter to be set</param>
     protected override void SetupConcreteCommunicators(out PlayerInternalCommunicator internComm, out PlayerExternalCommunicator externComm)
     {
-        internComm = new NephuiInternalCommunicator();
-        externComm = new NephuiExternalCommunicator();
+        internComm = new IlphineInternalCommunicator();
+        externComm = new IlphineExternalCommunicator();
     }
 }
