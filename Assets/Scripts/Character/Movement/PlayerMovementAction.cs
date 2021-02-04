@@ -24,7 +24,7 @@ public struct ReadOnlyPlayerMovementAction
 #endregion
 
 [System.Serializable]
-public class PlayerMovementActionValues : PlayerOverridableValues
+public class PlayerMovementActionValues : CharacterOverridableValues
 {
     /// <summary>
     /// The acceleration of the player when actively running on the ground
@@ -98,143 +98,73 @@ public class PlayerMovementActionValues : PlayerOverridableValues
     /// </summary>
     public int invertRight;
 
-    protected override void SetValueCounts()
-    {
-        floatValuesCount = 16;
-        intValuesCount = 1;
-        vector3ValuesCount = 0;
+    protected override float[] floatValues 
+    { 
+    	get
+        {
+            return new float[]
+    		{
+				runAccel,
+				runKickOffSpeed,
+				autoRunKickOffSpeed,
+				autoRunKickOffSlopeThreshold,
+				runMaxSpeed,
+				brakeDecel,
+				looseAirMoveAccel,
+				looseAirMoveBrakeDecel,
+				preciseAirMoveAccel,
+				preciseAirMoveBrakeDecel,
+				airSpeedThreshold,
+				airMoveMaxSpeed,
+				jumpSpeed,
+				jumpRotationFactor,
+				jumpCancelSpeed,
+				jumpCancelThreshold,
+				invertRight,
+            };
+        }
+    	set
+        {
+			runAccel = value[0];
+			runKickOffSpeed = value[1];
+			autoRunKickOffSpeed = value[2];
+			autoRunKickOffSlopeThreshold = value[3];
+			runMaxSpeed = value[4];
+			brakeDecel = value[5];
+			looseAirMoveAccel = value[6];
+			looseAirMoveBrakeDecel = value[7];
+			preciseAirMoveAccel = value[8];
+			preciseAirMoveBrakeDecel = value[9];
+			airSpeedThreshold = value[10];
+			airMoveMaxSpeed = value[11];
+			jumpSpeed = value[12];
+			jumpRotationFactor = value[13];
+			jumpCancelSpeed = value[14];
+ 			jumpCancelThreshold = value[15];
+        } 
     }
 
-    protected override float GetFloatValue(int i)
+    protected override int[] intValues 
     {
-        switch (i) 
+        get
         {
-            case (0) :
-                return runAccel;
-            case (1) :
-                return runKickOffSpeed;
-            case (2) :
-                return autoRunKickOffSpeed;
-            case (3) :
-                return autoRunKickOffSlopeThreshold;
-            case (4) :
-                return runMaxSpeed;
-            case (5) :
-                return brakeDecel;
-            case (6) :
-                return looseAirMoveAccel;
-            case (7) :
-                return looseAirMoveBrakeDecel;
-            case (8) :
-                return preciseAirMoveAccel;
-            case (9) :
-                return preciseAirMoveBrakeDecel;
-            case (10) :
-                return airSpeedThreshold;
-            case (11) :
-                return airMoveMaxSpeed;
-            case (12) :
-                return jumpSpeed;
-            case (13) :
-                return jumpRotationFactor;
-            case (14) :
-                return jumpCancelSpeed;
-            case (15) :
-                return jumpCancelThreshold;
-            default :
-                return 0;
+			return new int[]
+            {
+                invertRight,
+            };
+        } 
+    	set 
+        {
+			invertRight = value[0];
         }
     }
-    protected override void SetFloatValue(int i, float value)
-    {
-        switch (i) 
-        {
-            case (0) :
-                runAccel = value;
-                break;
-            case (1) :
-                runKickOffSpeed = value;
-                break;
-            case (2) :
-                autoRunKickOffSpeed = value;
-                break;
-            case (3) :
-                autoRunKickOffSlopeThreshold = value;
-                break;
-            case (4) :
-                runMaxSpeed = value;
-                break;
-            case (5) :
-                brakeDecel = value;
-                break;
-            case (6) :
-                looseAirMoveAccel = value;
-                break;
-            case (7) :
-                looseAirMoveBrakeDecel = value;
-                break;
-            case (8) :
-                preciseAirMoveAccel = value;
-                break;
-            case (9) :
-                preciseAirMoveBrakeDecel = value;
-                break;
-            case (10) :
-                airSpeedThreshold = value;
-                break;
-            case (11) :
-                airMoveMaxSpeed = value;
-                break;
-            case (12) :
-                jumpSpeed = value;
-                break;
-            case (13) :
-                jumpRotationFactor = value;
-                break;
-            case (14) :
-                jumpCancelSpeed = value;
-                break;
-            case (15) :
-                jumpCancelThreshold = value;
-                break;
-            default :
-                break;
-        }
-    }
-    protected override int GetIntValue(int i)
-    {
-        switch (i) 
-        {
-            case (0) :
-                return invertRight;
-            default :
-                return 0;
-        }
-    }
-    protected override void SetIntValue(int i, int value)
-    {
-        switch (i) 
-        {
-            case (0) :
-                invertRight = value;
-                break;
-            default :
-                break;
-        }
-    }
-    protected override Vector3 GetVector3Value(int i)
-    {
-        return Vector3.zero;
-    }
-    protected override void SetVector3Value(int i, Vector3 value) {}
 
 }
 
 /// <summary>
 /// Handles application of internally intended actions focused on moving the player
 /// </summary>
-[System.Serializable]
-public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementActionValues>, IPlayerMovementActionCommunication
+public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunication
 {
     /// <summary>
     /// Struct that holds information on player input
@@ -275,7 +205,7 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
         public bool doubleTapRun { get { return _doubleTapRun; } set {  if (!_doubleTapRun) _doubleTapRun = value; } }
 
         public void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
+    	{
         jump = controllerActions.Jump.triggered;
 
         jumpCancel = controllerActions.JumpCancel.triggered;
@@ -284,7 +214,7 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
         resetRun = false;
 
         doubleTapRun = controllerActions.RunKickOff.triggered;
-    }
+    	}
 
         /// <summary>
         /// Reset to default values
@@ -326,10 +256,13 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
 
     private bool stunned;
 
+    [SerializeField]
+	public CharacterOverridableAttribute<PlayerMovementActionValues> overridableAttribute = new CharacterOverridableAttribute<PlayerMovementActionValues>();
+
     /// <summary>
     /// Constructor
     /// </summary>
-    public PlayerMovementAction()
+    void Awake()
     {
         // Set input values
         input = new MovementActionInput();
@@ -341,31 +274,26 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
         communicator.SetCommunication(this);
     }
 
-    protected override void SetDefaultBaseValues()
+    private void Reset()
     {
         // Set default values
-        baseValues.runAccel = 15;
-        baseValues.runKickOffSpeed = 15;
-        baseValues.autoRunKickOffSpeed = 2;
-        baseValues.autoRunKickOffSlopeThreshold = 14;
-        baseValues.runMaxSpeed = 18;
-        baseValues.brakeDecel = 50;
-        baseValues.looseAirMoveAccel = 10;
-        baseValues.looseAirMoveBrakeDecel = 15;
-        baseValues.preciseAirMoveAccel = 30;
-        baseValues.preciseAirMoveBrakeDecel = 70; 
-        baseValues.airSpeedThreshold = 12;
-        baseValues.airMoveMaxSpeed = 18;
-        baseValues.jumpSpeed = 22;
-        baseValues.jumpRotationFactor = 2; 
-        baseValues.jumpCancelSpeed = 4;
-        baseValues.jumpCancelThreshold = 20;
-        baseValues.invertRight = 0;
-    }
-
-    protected override void ValidateBaseValues()
-    {
-        
+        overridableAttribute.baseValues.runAccel = 15;
+        overridableAttribute.baseValues.runKickOffSpeed = 15;
+        overridableAttribute.baseValues.autoRunKickOffSpeed = 2;
+        overridableAttribute.baseValues.autoRunKickOffSlopeThreshold = 14;
+        overridableAttribute.baseValues.runMaxSpeed = 18;
+        overridableAttribute.baseValues.brakeDecel = 50;
+        overridableAttribute.baseValues.looseAirMoveAccel = 10;
+        overridableAttribute.baseValues.looseAirMoveBrakeDecel = 15;
+        overridableAttribute.baseValues.preciseAirMoveAccel = 30;
+        overridableAttribute.baseValues.preciseAirMoveBrakeDecel = 70; 
+        overridableAttribute.baseValues.airSpeedThreshold = 12;
+        overridableAttribute.baseValues.airMoveMaxSpeed = 18;
+        overridableAttribute.baseValues.jumpSpeed = 22;
+        overridableAttribute.baseValues.jumpRotationFactor = 2; 
+        overridableAttribute.baseValues.jumpCancelSpeed = 4;
+        overridableAttribute.baseValues.jumpCancelThreshold = 20;
+        overridableAttribute.baseValues.invertRight = 0;
     }
 
     /// <summary>
@@ -384,14 +312,14 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
         // Calculate current square speed
         float sqrSpeed = currentVelocity.sqrMagnitude;
         // Direction attempting to run in
-        Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized * (values.invertRight > 0 ? -1 : +1);
+        Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
         
         float autoRunKickOffBuffer = 0.25f;
         // If manual run kick off was activated successfully
-        if (input.doubleTapRun && sqrSpeed < (values.runKickOffSpeed-autoRunKickOffBuffer) * (values.runKickOffSpeed-autoRunKickOffBuffer))
+        if (input.doubleTapRun && sqrSpeed < (overridableAttribute.values.runKickOffSpeed-autoRunKickOffBuffer) * (overridableAttribute.values.runKickOffSpeed-autoRunKickOffBuffer))
             RunKickOff(ref currentVelocity, runDirection, physicsNegations, false);
         // If automatic run kick off was triggered
-        else if (sqrSpeed == 0 && Vector3.Dot(runDirection, gravityDirection) < 0 && Vector3.Angle(motor.GetEffectiveGroundNormal(), -gravityDirection) >= values.autoRunKickOffSlopeThreshold)
+        else if (sqrSpeed == 0 && Vector3.Dot(runDirection, gravityDirection) < 0 && Vector3.Angle(motor.GetEffectiveGroundNormal(), -gravityDirection) >= overridableAttribute.values.autoRunKickOffSlopeThreshold)
             RunKickOff(ref currentVelocity, runDirection, physicsNegations, true);
         else
         {
@@ -400,15 +328,15 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
             {
                 // Brake via deceleration
                 isBraking = true;
-                currentVelocity += runDirection * values.brakeDecel * deltaTime;
+                currentVelocity += runDirection * overridableAttribute.values.brakeDecel * deltaTime;
             }
             else
             {
                 // If possible run along ground via acceleration
-                if (sqrSpeed < values.runMaxSpeed * values.runMaxSpeed)
-                    currentVelocity += runDirection * values.runAccel * deltaTime;
+                if (sqrSpeed < overridableAttribute.values.runMaxSpeed * overridableAttribute.values.runMaxSpeed)
+                    currentVelocity += runDirection * overridableAttribute.values.runAccel * deltaTime;
 
-                float faceDir = Mathf.Sign(input.run) * (values.invertRight > 0 ? -1 : +1);
+                float faceDir = Mathf.Sign(input.run) * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
                 if (faceDir != facingDirection)
                 {
                     facingDirection = faceDir;
@@ -431,7 +359,7 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
             physicsNegations.gravityNegated = true;
 
         // Determine whether to use auto or manula run kick off speed
-        float speed = (auto) ? values.autoRunKickOffSpeed : values.runKickOffSpeed;
+        float speed = (auto) ? overridableAttribute.values.autoRunKickOffSpeed : overridableAttribute.values.runKickOffSpeed;
         
         // Set velocity
         currentVelocity = speed * runDirection;
@@ -452,14 +380,14 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
         // The squared speed perpendicular to gravity 
         float flattenedSqrSpeed = flattenedVelocity.sqrMagnitude;
         // Direction attempting to move in
-        Vector3 airMoveDirection = Vector3.Cross(-gravityDirection, motor.PlanarConstraintAxis) * input.run * (values.invertRight > 0 ? -1 : +1);
+        Vector3 airMoveDirection = Vector3.Cross(-gravityDirection, motor.PlanarConstraintAxis) * input.run * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
 
         // Ensure drag does not activate
         physicsNegations.airDragNegated = true;
 
         // Determine which air move values to use
-        float airMoveAccel = (flattenedSqrSpeed >= values.airSpeedThreshold * values.airSpeedThreshold) ? values.looseAirMoveAccel : values.preciseAirMoveAccel;
-        float airMoveBrakeAccel = (flattenedSqrSpeed >= values.airSpeedThreshold * values.airSpeedThreshold) ? values.looseAirMoveBrakeDecel : values.preciseAirMoveBrakeDecel;
+        float airMoveAccel = (flattenedSqrSpeed >= overridableAttribute.values.airSpeedThreshold * overridableAttribute.values.airSpeedThreshold) ? overridableAttribute.values.looseAirMoveAccel : overridableAttribute.values.preciseAirMoveAccel;
+        float airMoveBrakeAccel = (flattenedSqrSpeed >= overridableAttribute.values.airSpeedThreshold * overridableAttribute.values.airSpeedThreshold) ? overridableAttribute.values.looseAirMoveBrakeDecel : overridableAttribute.values.preciseAirMoveBrakeDecel;
 
         Vector3 intoWallNormal = Vector3.zero;
         float intoWallDot = 0;
@@ -489,7 +417,7 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
                 currentVelocity += airMoveDirection * airMoveBrakeAccel * deltaTime;
             }
             // If possible move in air via acceleration
-            else if (flattenedSqrSpeed < values.airMoveMaxSpeed * values.airMoveMaxSpeed)
+            else if (flattenedSqrSpeed < overridableAttribute.values.airMoveMaxSpeed * overridableAttribute.values.airMoveMaxSpeed)
             {
                 currentVelocity += airMoveDirection * airMoveAccel * deltaTime;
             }
@@ -504,7 +432,7 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
     private void Jump(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 groundNormal)
     {
         // Jump perpendicular to the current slope
-        currentVelocity += Vector3.ProjectOnPlane(values.jumpSpeed * groundNormal, motor.PlanarConstraintAxis);
+        currentVelocity += Vector3.ProjectOnPlane(overridableAttribute.values.jumpSpeed * groundNormal, motor.PlanarConstraintAxis);
 
         // Unground the motor
         motor.ForceUnground();
@@ -514,7 +442,7 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
 
     private void HandleJumpRotation(ref Vector3 internalAngularVelocity)
     {
-        internalAngularVelocity *= values.jumpRotationFactor;
+        internalAngularVelocity *= overridableAttribute.values.jumpRotationFactor;
     }
 
     /// <summary>
@@ -541,13 +469,13 @@ public class PlayerMovementAction : PlayerOverridableAttribute<PlayerMovementAct
         // Get the velocity in the direction of gravity
         Vector3 velocityAlongGravity = Vector3.Project(currentVelocity, gravityDirection);
 
-        if(velocityAlongGravity.sqrMagnitude < values.jumpCancelSpeed * values.jumpCancelSpeed)
+        if(velocityAlongGravity.sqrMagnitude < overridableAttribute.values.jumpCancelSpeed * overridableAttribute.values.jumpCancelSpeed)
             waitingToJumpCancel = false;
         // If jump cancel is valid
-        else if (velocityAlongGravity.sqrMagnitude <= values.jumpCancelThreshold * values.jumpCancelThreshold)
+        else if (velocityAlongGravity.sqrMagnitude <= overridableAttribute.values.jumpCancelThreshold * overridableAttribute.values.jumpCancelThreshold)
         {
             // Perform jump cancel
-            currentVelocity = (currentVelocity - velocityAlongGravity) + (-gravityDirection * values.jumpCancelSpeed);
+            currentVelocity = (currentVelocity - velocityAlongGravity) + (-gravityDirection *overridableAttribute. values.jumpCancelSpeed);
             waitingToJumpCancel = false;
         }
         else // Remember to check next motor update

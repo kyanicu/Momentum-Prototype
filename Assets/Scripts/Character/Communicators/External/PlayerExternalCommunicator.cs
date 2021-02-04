@@ -50,7 +50,7 @@ public interface IPlayerCameraCommunication : IPlayerExternalCommunication
 /// Handles communication between the PlayerCharacter and other GameObjects
 /// Works in the same way as InternalCommunicator, but applied to classes outside of PlayerCharacter 
 /// </summary>
-public abstract class PlayerExternalCommunicator : IPlayerExternalCommunicatorCommunication
+public class PlayerExternalCommunicator : IPlayerExternalCommunicatorCommunication
 {
 
     #region Communications

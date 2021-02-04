@@ -18,127 +18,12 @@ public struct AbilityOverrideArgs
 
 }
 
-public interface IPlayerMovementAbility : IPlayerCommunication
-{
-
-    void OnValidate();
-
-    /// <summary>
-    /// This is called when the motor wants to know what its rotation should be right now
-    /// </summary>
-    /// <param name="currentRotation"> Reference to the player's rotation </param>
-    /// <param name="currentAngularVelocity"> Reference to the player's angular velocity</param>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="deltaTime"> Motor update time </param>
-    void UpdateRotation(ref Quaternion currentRotation, ref Vector3 currentAngularVelocity, KinematicCharacterMotor motor, float deltaTime);
-    
-    /// <summary>
-    /// This is called when the motor wants to know what its rotation should be right now
-    /// </summary>
-    /// <param name="currentVelocity"> Reference to the player's velocity</param>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="gravityDirection"> The direction of gravity </param>
-    /// <param name="physicsOverride"> Determines overrides to player physics values </param>
-    /// <param name="deltaTime"> Motor update time</param>
-    void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime);
-
-    /// <summary>
-    /// This is called before the motor does anything
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="deltaTime"> Motor update time </param>
-    void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime);
-
-    /// <summary>
-    /// This is called after the motor has finished its ground probing, but before PhysicsMover/Velocity/etc.... handling
-    /// Primarily used currently to handle the slope tracking for the ungrounding angular momentum mechanic
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="deltaTime"> Motor update time </param>
-    void PostGroundingUpdate(KinematicCharacterMotor motor, float deltaTime);
-
-    /// <summary>
-    /// This is called after the motor has finished everything in its update
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="deltaTime"> Motor update time </param>
-    void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime);
-
-    /// <summary>
-    /// This is called after when the motor wants to know if the collider can be collided with (or if we just go through it)
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="coll"> The collider being checked </param>
-    bool IsColliderValidForCollisions(KinematicCharacterMotor motor, Collider coll);
-
-    /// <summary>
-    /// This is called when the motor's ground probing detects a ground hit
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="hitCollider">The ground collider </param>
-    /// <param name="hitNormal"> The ground normal </param>
-    /// <param name="hitPoint"> The ground point </param>
-    /// <param name="hitStabilityReport"> The ground stability </param>
-    void OnGroundHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport);
-
-    /// <summary>
-    /// This is called when the motor's movement logic detects a hit
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="hitCollider"> The hit collider </param>
-    /// <param name="hitNormal"> The hit normal </param>
-    /// <param name="hitPoint"> The hit point </param>
-    /// <param name="hitStabilityReport"> The hit stability </param>
-    void OnMovementHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport);
-
-    /// <summary>
-    /// This is called after every move hit, to give you an opportunity to modify the HitStabilityReport to your liking
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="hitCollider"> The hit collider </param>
-    /// <param name="hitNormal"> The hit normal </param>
-    /// <param name="hitPoint"> The hit point </param>
-    /// <param name="hitPoint"></param>
-    /// <param name="atCharacterPosition"> The character position on hit </param>
-    /// <param name="atCharacterRotation"> The character rotation on hit </param>
-    /// <param name="hitStabilityReport"> The hit stability </param>
-    void ProcessHitStabilityReport(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport);
-
-    /// <summary>
-    /// This is called when the character detects discrete collisions (collisions that don't result from the motor's capsuleCasts when moving)
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="hitCollider"> The detected collider </param>
-    void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider);
-
-    void Flinch();
-
-    void RegisterInput(PlayerController.PlayerActions controllerActions);
-
-    /// <summary>
-    /// Resets the input state
-    /// </summary>
-    void ResetInput();
-
-    void EnterMovementEffector(MovementEffector effector);
-
-    void ExitMovementEffector(MovementEffector effector);
-    
-    event Action<AbilityOverrideArgs> addingMovementOverrides;
-    event Action<AbilityOverrideArgs> removingMovementOverrides;
-
-}
-
-[System.Serializable]
-public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute<Values>, IPlayerMovementAbility where Values : PlayerOverridableValues, new()
+public abstract class PlayerMovementAbility : MonoBehaviour
 {
     public abstract event Action<AbilityOverrideArgs> addingMovementOverrides;
     public abstract event Action<AbilityOverrideArgs> removingMovementOverrides;
 
-    public abstract void SetCommunicationInterface(PlayerInternalCommunicator communicator);
-
-    protected abstract override void SetDefaultBaseValues();
-
+    public virtual void SetCommunicationInterface(PlayerInternalCommunicator communicator) { }
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
     /// </summary>
@@ -146,7 +31,7 @@ public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute
     /// <param name="currentAngularVelocity"> Reference to the player's angular velocity</param>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public abstract void UpdateRotation(ref Quaternion currentRotation, ref Vector3 currentAngularVelocity, KinematicCharacterMotor motor, float deltaTime);
+    public virtual void UpdateRotation(ref Quaternion currentRotation, ref Vector3 currentAngularVelocity, KinematicCharacterMotor motor, float deltaTime) { }
     
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
@@ -156,14 +41,14 @@ public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute
     /// <param name="gravityDirection"> The direction of gravity </param>
     /// <param name="physicsOverride"> Determines overrides to player physics values </param>
     /// <param name="deltaTime"> Motor update time</param>
-    public abstract void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime);
+    public virtual void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime) { }
 
     /// <summary>
     /// This is called before the motor does anything
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public abstract void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime);
+    public virtual void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime) { }
 
     /// <summary>
     /// This is called after the motor has finished its ground probing, but before PhysicsMover/Velocity/etc.... handling
@@ -171,21 +56,24 @@ public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public abstract void PostGroundingUpdate(KinematicCharacterMotor motor, float deltaTime);
+    public virtual void PostGroundingUpdate(KinematicCharacterMotor motor, float deltaTime) { }
 
     /// <summary>
     /// This is called after the motor has finished everything in its update
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="deltaTime"> Motor update time </param>
-    public abstract void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime);
+    public virtual void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime) { }
 
     /// <summary>
     /// This is called after when the motor wants to know if the collider can be collided with (or if we just go through it)
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="coll"> The collider being checked </param>
-    public abstract bool IsColliderValidForCollisions(KinematicCharacterMotor motor, Collider coll);
+    public virtual bool IsColliderValidForCollisions(KinematicCharacterMotor motor, Collider coll)
+    { 
+        return true;  
+    }
 
     /// <summary>
     /// This is called when the motor's ground probing detects a ground hit
@@ -195,7 +83,7 @@ public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute
     /// <param name="hitNormal"> The ground normal </param>
     /// <param name="hitPoint"> The ground point </param>
     /// <param name="hitStabilityReport"> The ground stability </param>
-    public abstract void OnGroundHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport);
+    public virtual void OnGroundHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport) { }
 
     /// <summary>
     /// This is called when the motor's movement logic detects a hit
@@ -205,7 +93,7 @@ public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute
     /// <param name="hitNormal"> The hit normal </param>
     /// <param name="hitPoint"> The hit point </param>
     /// <param name="hitStabilityReport"> The hit stability </param>
-    public abstract void OnMovementHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport);
+    public virtual void OnMovementHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport) { }
 
     /// <summary>
     /// This is called after every move hit, to give you an opportunity to modify the HitStabilityReport to your liking
@@ -218,14 +106,14 @@ public abstract class PlayerMovementAbility<Values> : PlayerOverridableAttribute
     /// <param name="atCharacterPosition"> The character position on hit </param>
     /// <param name="atCharacterRotation"> The character rotation on hit </param>
     /// <param name="hitStabilityReport"> The hit stability </param>
-    public abstract void ProcessHitStabilityReport(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport);
+    public virtual void ProcessHitStabilityReport(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport) { }
 
     /// <summary>
     /// This is called when the character detects discrete collisions (collisions that don't result from the motor's capsuleCasts when moving)
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
     /// <param name="hitCollider"> The detected collider </param>
-    public abstract void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider);
+    public virtual void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider) { }
 
     public abstract void Flinch();
 

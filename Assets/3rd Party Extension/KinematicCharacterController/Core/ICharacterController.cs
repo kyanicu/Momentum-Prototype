@@ -11,25 +11,23 @@ namespace KinematicCharacterController
         /// This is called when the motor wants to know what its rotation should be right now
         /// </summary>
         /// <param name="currentRotation"> Reference to the player's rotation </param>
-        /// <param name="motor"> The player's kinematic motor</param>
         /// <param name="deltaTime"> Motor update time </param>
-        void UpdateRotation(ref Quaternion currentRotation, KinematicCharacterMotor motor, float deltaTime);
+        void UpdateRotation(ref Quaternion currentRotation, float deltaTime);
         
         /// <summary>
         /// This is called hen the motor wants to know what its velocity should be right now
         /// </summary>
         /// <param name="currentVelocity"> Reference to the player's velocity </param>
         /// <param name="maxMove"> The max distance the player can move this update</param>
-        /// <param name="motor"> The player's kinematic motor</param>
         /// <param name="deltaTime"> Motor update time </param>
-        void UpdateVelocity(ref Vector3 currentVelocity, ref float maxMove, KinematicCharacterMotor motor, float deltaTime);
+        void UpdateVelocity(ref Vector3 currentVelocity, float deltaTime);
 
         /// <summary>
         /// This is called before the motor does anything
         /// </summary>
         /// <param name="motor"> The player's kinematic motor</param>
         /// <param name="deltaTime"> Motor update time </param>
-        void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime);
+        void BeforeCharacterUpdate(float deltaTime);
 
         /// <summary>
         /// This is called after the motor has finished its ground probing, but before PhysicsMover/Velocity/etc.... handling
@@ -37,20 +35,20 @@ namespace KinematicCharacterController
         /// </summary>
         /// <param name="motor"> The player's kinematic motor</param>
         /// <param name="deltaTime"> Motor update time </param>
-        void PostGroundingUpdate(KinematicCharacterMotor motor, float deltaTime);
+        void PostGroundingUpdate(float deltaTime);
         /// <summary>
         /// This is called after the motor has finished everything in its update
         /// </summary>
         /// <param name="motor"> The player's kinematic motor</param>
         /// <param name="deltaTime"> Motor update time </param>
-        void AfterCharacterUpdate(KinematicCharacterMotor motor, float deltaTime);
+        void AfterCharacterUpdate(float deltaTime);
 
         /// <summary>
         /// This is called after when the motor wants to know if the collider can be collided with (or if we just go through it)
         /// </summary>
         /// <param name="motor"> The player's kinematic motor</param>
         /// <param name="coll"> The collider being checked </param>
-        bool IsColliderValidForCollisions(KinematicCharacterMotor motor, Collider coll);
+        bool IsColliderValidForCollisions(Collider coll);
 
         /// <summary>
         /// This is called when the motor's ground probing detects a ground hit
@@ -60,7 +58,7 @@ namespace KinematicCharacterController
         /// <param name="hitNormal"> The ground normal </param>
         /// <param name="hitPoint"> The ground point </param>
         /// <param name="hitStabilityReport"> The ground stability </param>
-        void OnGroundHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport);
+        void OnGroundHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport);
 
         /// <summary>
         /// This is called when the motor's movement logic detects a hit
@@ -70,7 +68,7 @@ namespace KinematicCharacterController
         /// <param name="hitNormal"> The hit normal </param>
         /// <param name="hitPoint"> The hit point </param>
         /// <param name="hitStabilityReport"> The hit stability </param>
-        void OnMovementHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport);
+        void OnMovementHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport);
 
         /// <summary>
         /// This is called after every move hit, to give you an opportunity to modify the HitStabilityReport to your liking
@@ -83,13 +81,13 @@ namespace KinematicCharacterController
         /// <param name="atCharacterPosition"> The character position on hit </param>
         /// <param name="atCharacterRotation"> The character rotation on hit </param>
         /// <param name="hitStabilityReport"> The hit stability </param>
-        void ProcessHitStabilityReport(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport);
+        void ProcessHitStabilityReport(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport);
 
         /// <summary>
         /// This is called when the character detects discrete collisions (collisions that don't result from the motor's capsuleCasts when moving)
         /// </summary>
         /// <param name="motor"> The player's kinematic motor</param>
         /// <param name="hitCollider"> The detected collider </param>
-        void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider);
+        void OnDiscreteCollisionDetected(Collider hitCollider);
     }
 }

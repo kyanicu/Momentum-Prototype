@@ -25,34 +25,13 @@ using KinematicCharacterController;
 ////    }
 ////}   
 
-/// <summary>
-/// A wrapper for the KinematicCharacterMotor class that allows a constant reference state to only be read
-/// </summary>
-public struct ReadOnlyKinematicMotor
-{
-    private KinematicCharacterMotor motor;
-
-    public Vector3 position { get { return motor.TransientPosition; } }
-    public Quaternion rotation { get { return motor.TransientRotation; } }
-    public Vector3 velocity { get { return motor.BaseVelocity; } }
-    public Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
-    public Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
-    public bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
-    public bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
-
-    public ReadOnlyKinematicMotor(KinematicCharacterMotor m)
-    {  
-        motor = m;
-    }
-}   
-
 #endregion
 
 /// <summary>
 /// Unity Component that controls all Player Character mechanics and scripting
 /// Abstract for specific character to derive from
 /// </summary>
-public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
+public class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
 {
     // TODO move up to InputManager/PlayerInputController
     /// <summary>
@@ -68,15 +47,15 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     /// <summary>
     /// Handles character animation
     /// </summary>
-    [SerializeField] private new PlayerAnimation animation;
+    private new PlayerAnimation animation;
     /// <summary>
     /// Handles the player's status
     /// </summary>
-    [SerializeField] private PlayerStatus status;
+    private PlayerStatus status;
     /// <summary>
     /// Handles the player's combat
     /// </summary>
-    [SerializeField] private PlayerCombat combat;
+    private PlayerCombat combat;
 
     /// <summary>
     /// Handles communication between the components
@@ -86,14 +65,6 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     /// Handles communication between the player and external game objects
     /// </summary>
     private PlayerExternalCommunicator externalCommunicator;
-#endregion
-
-#region Sibling Unity Component References 
-    /// <summary>
-    /// Unity Component that handles collision and kinematic movement
-    /// Used by PlayerMovement to handle player movement mechanics
-    /// </summary>
-    private KinematicCharacterMotor motor;
 #endregion
 
 #region fields
@@ -107,73 +78,21 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     /// </summary>
     void Awake()
     {
-        SetupAbstractClass();
+        animation = GetComponent<PlayerAnimation>();
+        status = GetComponent<PlayerStatus>();
+        combat = GetComponent<PlayerCombat>();
+        movement = GetComponent<PlayerMovement>();
 
         // TODO move up to InputManager/PlayerInputController
         playerController = new PlayerController();
         playerController.Enable();
+    }
 
-        motor = GetComponent<KinematicCharacterMotor>();
-
+    void Start()
+    {
         SetupCommunicators();
     }
 
-    ////void Reset()
-    ////{
-    ////    SetupAbstractClass();
-    ////}
-
-    /////// <summary>
-    /////// Validates state on inspector change
-    ///////  TODO Make unnecessary with editor script
-    /////// </summary>
-    ////void OnValidate()
-    ////{
-
-    ////    ////if (movement == null)
-    ////    ////    movement = new PlayerMovement();
-    ////    
-    ////    ////if (animation == null)
-    ////    ////    animation = new PlayerAnimation(transform.GetChild(0).gameObject);
-    ////    
-    ////    ////if (status == null)
-    ////    ////    status = new PlayerStatus();
-    ////    
-    ////    //  TODO Make unnecessary with editor script
-    ////    movement.OnValidate();
-    ////}
-
-    /// <summary>
-    /// Initializes GameObject for play
-    /// </summary>
-    void Start()
-    {
-        // Set motor's Character Controller Interface reference to the movement field
-        motor.CharacterController = (movement as ICharacterController);
-
-        movement.InitializeForPlay(motor);
-    }
-
-    /// <summary>
-    /// Handles when the kinematic character motor enters a trigger
-    /// </summary>
-    /// <param name="col">The trigger collider entered</param>
-    void OnTriggerEnter(Collider col)
-    {
-        status.HandleTriggerEnter(col);
-        movement.HandleTriggerEnter(motor, col);
-
-        Debug.Log("Player hit: " + col.gameObject.name);
-    }
-
-    /// <summary>
-    /// Handles when the kinematic character motor leaves a trigger
-    /// </summary>
-    /// <param name="col">The trigger collider exited</param>
-    void OnTriggerExit(Collider col)
-    {
-        movement.HandleTriggerExit(col);
-    }
 
     /// <summary>
     /// Called on frame update
@@ -182,8 +101,6 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     {
         // TODO move up to InputManager/PlayerInputController
         HandleInput(playerController.Player);
-
-        animation.FrameUpdate(Time.deltaTime);
    }
    
     /// <summary>
@@ -197,25 +114,6 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
 #endregion
 
 #region Class Setup
-    /// <summary>
-    /// Initializes class as a whole
-    /// Sets up everything shared between all derived classes,
-    ///   then calls abstract function to set up everything in derived class
-    /// </summary>
-    private void SetupAbstractClass()
-    {
-        animation = new PlayerAnimation(transform.GetChild(0).gameObject);
-        status = new PlayerStatus(transform.GetChild(0).GetChild(2).gameObject);
-        combat = new PlayerCombat(transform.GetChild(0).GetChild(1).gameObject, status);
-
-        SetupConcreteClass(out movement);
-    }
-
-    /// <summary>
-    /// Initializes concrete derived classes
-    /// </summary>
-    /// <param name="_movement">The movement field in PlayerCharacter to be set by concrete class</param>
-    protected abstract void SetupConcreteClass(out PlayerMovement _movement);
 
     /// <summary>
     /// Initializes communicator fields
@@ -224,7 +122,10 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
     /// </summary>
     private void SetupCommunicators()
     {
-        SetupConcreteCommunicators(out internalCommunicator, out externalCommunicator);
+        internalCommunicator = new PlayerInternalCommunicator();
+        externalCommunicator = new PlayerExternalCommunicator();
+        
+        KinematicCharacterMotor motor = GetComponent<KinematicCharacterMotor>();
 
         // Set internal Communications
         SetCommunicationInterface(internalCommunicator);
@@ -242,13 +143,6 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
         camera.SetPlayerExternalCommunication(externalCommunicator);
         camera.SetReadOnlyReferences(new ReadOnlyTransform(transform), new ReadOnlyKinematicMotor(motor));
     }
-
-    /// <summary>
-    /// Initializes communicators for appropriate concrete class usage
-    /// </summary>
-    /// <param name="internComm">The internal communicator field in PlayerCharacter to be set by concrete class</param>
-    /// <param name="externComm">The external communicator field in PlayerCharacter to be set by concrete class</param>
-    protected abstract void SetupConcreteCommunicators(out PlayerInternalCommunicator internComm, out PlayerExternalCommunicator externComm);
 #endregion
 
 #region Communication Methods
@@ -297,7 +191,7 @@ public abstract class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunica
         // Resets the the motor state (used as a makeshift "level restart")
         if (controllerActions.Pause.triggered)
         {
-            movement.ResetState(motor);
+            movement.ResetState();
         }
         #endregion
     }

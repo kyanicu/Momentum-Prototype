@@ -390,7 +390,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh16928
+  m_Name: pb_Mesh18322
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -744,11 +744,22 @@ MonoBehaviour:
     baseKnockbackDirection: {x: -1, y: 0, z: 0}
     knockbackDirectionCalculation: 2
     kinematicKnockbackTime: 0.1
-    recoilType: 0
-    baseRecoilSpeed: 0
-    baseRecoilDirection: {x: 0, y: 0, z: 0}
-    recoilDirectionCalculation: 0
-    kinematicRecoilTime: 0
+  hasRecoilEffect: 0
+  recoilInfo:
+    baseDamage: 0
+    continousDamageRate: 0
+    flinch: 0
+    halt: 0
+    forceUnground: 0
+    stunTime: 0
+    activateIFrames: 0
+    iFrameTimeOverride: 0
+    allowHitAfterIFrames: 0
+    knockbackType: 0
+    baseKnockbackSpeed: 0
+    baseKnockbackDirection: {x: 0, y: 0, z: 0}
+    knockbackDirectionCalculation: 0
+    kinematicKnockbackTime: 0
   deregisterOnExit: 1
   _hitboxGroup: 0
 --- !u!65 &302674945
@@ -1037,7 +1048,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh16832
+  m_Name: pb_Mesh18222
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -1201,7 +1212,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh16900
+  m_Name: pb_Mesh18294
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -4363,7 +4374,7 @@ PrefabInstance:
     - target: {fileID: 7332030372497221724, guid: deeab88ee93be494298320486549cf9f,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.234
+      value: 0.211
       objectReference: {fileID: 0}
     - target: {fileID: 7332030372497221724, guid: deeab88ee93be494298320486549cf9f,
         type: 3}
@@ -4414,16 +4425,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Alesta
-      objectReference: {fileID: 0}
-    - target: {fileID: 7332030372497221730, guid: deeab88ee93be494298320486549cf9f,
-        type: 3}
-      propertyPath: CapsuleRadius
-      value: 0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 7332030372497221731, guid: deeab88ee93be494298320486549cf9f,
-        type: 3}
-      propertyPath: m_Radius
-      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 7352279843699406786, guid: deeab88ee93be494298320486549cf9f,
         type: 3}
@@ -5293,6 +5294,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7646547511497545414, guid: deeab88ee93be494298320486549cf9f, type: 3}
+    - {fileID: 7332030372497221725, guid: deeab88ee93be494298320486549cf9f, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: deeab88ee93be494298320486549cf9f, type: 3}
 --- !u!4 &1463442113 stripped
 Transform:

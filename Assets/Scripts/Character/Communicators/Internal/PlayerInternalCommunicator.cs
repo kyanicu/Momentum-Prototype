@@ -199,7 +199,7 @@ public struct PlaneChangeArgs
 /// An overloaded SetCommunication() function is required in this class for each communication interface
 /// This function takes in the appropriate communication interface and sets the reference in this class to it, and subscribes the appropriate event handlers here for the actions triggered in the communication
 /// </summary>
-public abstract class PlayerInternalCommunicator
+public class PlayerInternalCommunicator
 {
     
     #region Communications

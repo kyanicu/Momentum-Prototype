@@ -11,20 +11,28 @@ public enum PlayerOverrideType { Set, Addition, Multiplier }
 /// Holds and hand handles overrideable values 
 /// </summary>
 [System.Serializable]
-public abstract class PlayerOverridableValues
+public abstract class CharacterOverridableValues
 {
     /// <summary>
     /// Number of float based values
     /// </summary>
-    protected int floatValuesCount;
+    private int floatValuesCount;
     /// <summary>
     /// Number of int based values
     /// </summary>
-    protected int intValuesCount;
+    private int intValuesCount;
     /// <summary>
     /// Number of Vector3 based values
     /// </summary>
-    protected int vector3ValuesCount;
+    private int vector3ValuesCount;
+
+    protected virtual float[] floatValues { get { return new float[0]; } set {  }  }
+    protected virtual int[] intValues { get { return new int[0]; } set {  }  }
+    protected virtual Vector3[] vector3Values { get { return new Vector3[0]; } set {  }  }
+
+    private float[] tempFloatValues;
+    private int[] tempIntValues;
+    private Vector3[] tempVector3Values;
 
     /// <summary>
     /// Sets all values to their default based on override type
@@ -37,16 +45,16 @@ public abstract class PlayerOverridableValues
             switch (overrideType)
             {
                 case PlayerOverrideType.Addition :
-                    SetFloatValue(i, 0);
+                    tempFloatValues[i] = 0;
                     break;
                 case PlayerOverrideType.Multiplier :
-                    SetFloatValue(i, 1);
+                    tempFloatValues[i] = 1;
                     break;
                 case PlayerOverrideType.Set :
-                    SetFloatValue(i, float.PositiveInfinity);
+                    tempFloatValues[i] = float.PositiveInfinity;
                     break;
                 default :
-                    SetFloatValue(i, 0);
+                    tempFloatValues[i] = 0;
                     break;
             }
         }
@@ -56,16 +64,16 @@ public abstract class PlayerOverridableValues
             switch (overrideType)
             {
                 case PlayerOverrideType.Addition :
-                    SetIntValue(i, 0);
+                    tempIntValues[i] = 0;
                     break;
                 case PlayerOverrideType.Multiplier :
-                    SetIntValue(i, 1);
+                    tempIntValues[i] = 1;
                     break;
                 case PlayerOverrideType.Set :
-                    SetIntValue(i, int.MaxValue);
+                    tempIntValues[i] = int.MaxValue;
                     break;
                 default :
-                    SetIntValue(i, 0);
+                    tempIntValues[i] = 0;
                     break;
             }
         }
@@ -75,204 +83,186 @@ public abstract class PlayerOverridableValues
             switch (overrideType)
             {
                 case PlayerOverrideType.Addition :
-                    SetVector3Value(i, Vector3.zero);
+                    tempVector3Values[i] = Vector3.zero;
                     break;
                 case PlayerOverrideType.Multiplier :
-                    SetVector3Value(i, Vector3.one);
+                    tempVector3Values[i] = Vector3.one;
                     break;
                 case PlayerOverrideType.Set :
-                    SetVector3Value(i, Vector3.positiveInfinity);
+                    tempVector3Values[i] = Vector3.positiveInfinity;
                     break;
                 default :
-                    SetVector3Value(i, Vector3.zero);
+                    tempVector3Values[i] = Vector3.zero;
                     break;
             }
         }
+        SetValuesByTemp();
     }
 
     /// <summary>
     /// Adds to this value set by another
     /// </summary>
     /// <param name="v"> The other value set </param>
-    public void AddBy(PlayerOverridableValues v)
+    public void AddBy(CharacterOverridableValues v)
     {   
         for (int i = 0; i < floatValuesCount; i++)
         {
-            SetFloatValue(i, GetFloatValue(i) + v.GetFloatValue(i));
+            tempFloatValues[i] = floatValues[i] + v.floatValues[i];
         }
 
         for (int i = 0; i < intValuesCount; i++)
         {
-            SetIntValue(i, GetIntValue(i) + v.GetIntValue(i));
+            tempIntValues[i] = intValues[i] + v.intValues[i];
         }
         
         for (int i = 0; i < vector3ValuesCount; i++)
         {
-            SetVector3Value(i, GetVector3Value(i) + v.GetVector3Value(i));
+            tempVector3Values[i] = vector3Values[i] + v.vector3Values[i];
         }
+        SetValuesByTemp();
     }
 
     /// <summary>
     /// Subtracts this value set by another
     /// </summary>
     /// <param name="v"> The other value set </param>
-    public void SubtractBy(PlayerOverridableValues v)
+    public void SubtractBy(CharacterOverridableValues v)
     {
         for (int i = 0; i < floatValuesCount; i++)
         {
-            SetFloatValue(i, GetFloatValue(i) - v.GetFloatValue(i));
+            tempFloatValues[i] = floatValues[i] - v.floatValues[i];
         }
 
         for (int i = 0; i < intValuesCount; i++)
         {
-            SetIntValue(i, GetIntValue(i) - v.GetIntValue(i));
+            tempIntValues[i] = intValues[i] - v.intValues[i];
         }
         
         for (int i = 0; i < vector3ValuesCount; i++)
         {
-            SetVector3Value(i, GetVector3Value(i) - v.GetVector3Value(i));
+            tempVector3Values[i] = vector3Values[i] - v.vector3Values[i];
         }
+        SetValuesByTemp();
     }
 
     /// <summary>
     /// Multiplies this value set by another
     /// </summary>
     /// <param name="v"> The other value set </param>
-    public void MultiplyBy(PlayerOverridableValues v)
+    public void MultiplyBy(CharacterOverridableValues v)
     {
         for (int i = 0; i < floatValuesCount; i++)
         {
-            SetFloatValue(i, GetFloatValue(i) * v.GetFloatValue(i));
+            tempFloatValues[i] = floatValues[i] * v.floatValues[i];
         }
 
         for (int i = 0; i < intValuesCount; i++)
         {
-            SetIntValue(i, GetIntValue(i) * v.GetIntValue(i));
+            tempIntValues[i] = intValues[i] * v.intValues[i];
         }
         
         for (int i = 0; i < vector3ValuesCount; i++)
         {
-            SetVector3Value(i, Vector3.Scale(GetVector3Value(i), v.GetVector3Value(i)));
+            tempVector3Values[i] = Vector3.Scale(vector3Values[i], v.vector3Values[i]);
         }
+        SetValuesByTemp();
     }
 
     /// <summary>
     /// Divides this value set by another
     /// </summary>
     /// <param name="v"> The other value set </param>
-    public void DivideBy(PlayerOverridableValues v)
+    public void DivideBy(CharacterOverridableValues v)
     {
         for (int i = 0; i < floatValuesCount; i++)
         {
-            SetFloatValue(i, GetFloatValue(i) / v.GetFloatValue(i));
+            tempFloatValues[i] = floatValues[i] / v.floatValues[i];
         }
 
         for (int i = 0; i < intValuesCount; i++)
         {
-            SetIntValue(i, GetIntValue(i) / v.GetIntValue(i));
+            tempIntValues[i] = intValues[i] / v.intValues[i];
         }
         
         
         for (int i = 0; i < vector3ValuesCount; i++)
         {
-            SetVector3Value(i, Vector3.Scale(GetVector3Value(i), new Vector3(1/v.GetVector3Value(i).x, 1/v.GetVector3Value(i).y, 1/v.GetVector3Value(i).z)));
+            tempVector3Values[i] = Vector3.Scale(vector3Values[i], new Vector3(1/v.vector3Values[i].x, 1/vector3Values[i].y, 1/v.vector3Values[i].z));
         }
+        SetValuesByTemp();
     }
 
     /// <summary>
     /// Sets this value set by another
     /// </summary>
     /// <param name="v"> The other value set </param>
-    public void SetBy(PlayerOverridableValues v)
+    public void SetBy(CharacterOverridableValues v)
     {
         for (int i = 0; i < floatValuesCount; i++)
         {
-            SetFloatValue(i, (!float.IsInfinity(v.GetFloatValue(i))) ? v.GetFloatValue(i) : GetFloatValue(i));
+            tempFloatValues[i] = (!float.IsInfinity(v.floatValues[i])) ? v.floatValues[i] : floatValues[i];
         }
 
         for (int i = 0; i < intValuesCount; i++)
         {
-            SetIntValue(i, (v.GetIntValue(i) != int.MaxValue) ? v.GetIntValue(i) : GetIntValue(i));
+            tempIntValues[i] = (v.intValues[i] != int.MaxValue) ? v.intValues[i] : intValues[i];
         }
         
         for (int i = 0; i < vector3ValuesCount; i++)
         {
-            SetVector3Value(i, (!float.IsInfinity(v.GetVector3Value(i).x)) ? v.GetVector3Value(i) : GetVector3Value(i));
+            tempVector3Values[i] = (!float.IsInfinity(v.vector3Values[i].x)) ? v.vector3Values[i] : vector3Values[i];
         }
+        SetValuesByTemp();
     }
 
     /// <summary>
     /// Unsets this value set by another
     /// </summary>
     /// <param name="v"> The other value set </param>
-    public void UnsetBy(PlayerOverridableValues v)
+    public void UnsetBy(CharacterOverridableValues v)
     {
         for (int i = 0; i < floatValuesCount; i++)
         {
-            SetFloatValue(i, (!float.IsInfinity(v.GetFloatValue(i))) ? float.PositiveInfinity : GetFloatValue(i));
+            tempFloatValues[i] = (!float.IsInfinity(v.floatValues[i])) ? float.PositiveInfinity : floatValues[i];
         }
 
         for (int i = 0; i < intValuesCount; i++)
         {
-            SetIntValue(i, (v.GetIntValue(i) != int.MaxValue) ? int.MaxValue : GetIntValue(i));
+            tempIntValues[i] = (v.intValues[i] != int.MaxValue) ? int.MaxValue : intValues[i];
         }
         
         for (int i = 0; i < vector3ValuesCount; i++)
         {
-            SetVector3Value(i, (!float.IsInfinity(v.GetVector3Value(i).x)) ? Vector3.positiveInfinity : GetVector3Value(i));
+            tempVector3Values[i] = (!float.IsInfinity(v.vector3Values[i].x)) ? Vector3.positiveInfinity : vector3Values[i];
         }
+        SetValuesByTemp();
+    }
+
+    public void ResetTempValues()
+    {
+        tempFloatValues = floatValues;
+        tempIntValues = intValues;
+        tempVector3Values = vector3Values;
+    }
+
+    public void SetValuesByTemp()
+    {
+        floatValues = tempFloatValues;
+        intValues = tempIntValues;
+        vector3Values = tempVector3Values;
     }
 
     /// <summary>
     /// Default constructor used to set value counts by concrete class
     /// </summary>
-    public PlayerOverridableValues()
+    public CharacterOverridableValues()
     {
-        SetValueCounts();
+        floatValuesCount = floatValues.Length;
+        intValuesCount = intValues.Length;
+        vector3ValuesCount = vector3Values.Length;
+
+        ResetTempValues();
     }
-
-    /// <summary>
-    /// Used by concrete class to set the value counts
-    /// </summary>
-    protected abstract void SetValueCounts();
-
-    /// <summary>
-    /// Returns the appropriate float value 
-    /// </summary>
-    /// <param name="i"> The float value index</param>
-    /// <returns></returns>
-    protected abstract float GetFloatValue(int i);
-    /// <summary>
-    /// Sets the appropriate float value
-    /// </summary>
-    /// <param name="i"> The float value index </param>
-    /// <param name="value"> The value to be set to </param>
-    protected abstract void SetFloatValue(int i, float value);
-    /// <summary>
-    /// Returns the appropriate int value 
-    /// </summary>
-    /// <param name="i"> The int value index</param>
-    /// <returns></returns>
-    protected abstract int GetIntValue(int i);
-    /// <summary>
-    /// Sets the appropriate int value
-    /// </summary>
-    /// <param name="i"> The float value index </param>
-    /// <param name="value"> The value to be set to </param>
-    protected abstract void SetIntValue(int i, int value);
-    /// <summary>
-    /// Returns the appropriate Vector3 value 
-    /// </summary>
-    /// <param name="i"> The Vector3 value index</param>
-    /// <returns></returns>
-    protected abstract Vector3 GetVector3Value(int i);
-    /// <summary>
-    /// Sets the appropriate float value
-    /// </summary>
-    /// <param name="i"> The float value index </param>
-    /// <param name="value"> The value to be set to </param>
-    protected abstract void SetVector3Value(int i, Vector3 value);
-
 }
 
 /// <summary>
@@ -280,13 +270,14 @@ public abstract class PlayerOverridableValues
 /// </summary>
 /// <typeparam name="Values"> The value set that can be overridden</typeparam>
 [System.Serializable]
-public abstract class PlayerOverridableAttribute<Values> where Values : PlayerOverridableValues, new()
+public sealed class CharacterOverridableAttribute<Values> :ISerializationCallbackReceiver where Values : CharacterOverridableValues, new()
 {
     /// <summary>
     /// The base, unmodified values
     /// </summary>
     [SerializeField]
-    protected Values baseValues;
+    private Values _baseValues = new Values();
+    public Values baseValues { get { return _baseValues; } private set { _baseValues = value; } }
 
     /// <summary>
     /// The added values
@@ -307,16 +298,16 @@ public abstract class PlayerOverridableAttribute<Values> where Values : PlayerOv
     /// <summary>
     /// The current total applied values 
     /// </summary>
-    protected Values values;
+    public Values values { get; private set; }
 
     /// <summary>
     /// Default constructor
     /// Sets all values
     /// </summary>
-    public PlayerOverridableAttribute()
+    public CharacterOverridableAttribute()
     {
         // Instatiate values
-        baseValues = new Values();
+        //baseValues = new Values();
         addedValues = new Values();
         multipliedValues = new Values();
         setValues = new List<Values>() { new Values() };
@@ -327,17 +318,7 @@ public abstract class PlayerOverridableAttribute<Values> where Values : PlayerOv
         multipliedValues.SetDefaultValues(PlayerOverrideType.Multiplier);
         setValues[0].SetDefaultValues(PlayerOverrideType.Set);
         values.SetDefaultValues(PlayerOverrideType.Addition);
-
-        // Set base values to their concretely defined default
-        SetDefaultBaseValues();
-        // Set calculated values (currently euqivalent to base values)
-        CalculateValues();
     }
-
-    /// <summary>
-    /// Used by concrete class to define the default values of the base values
-    /// </summary>
-    protected abstract void SetDefaultBaseValues();
 
     /// <summary>
     /// Calculates the current values based on the base values and their overrides
@@ -402,18 +383,11 @@ public abstract class PlayerOverridableAttribute<Values> where Values : PlayerOv
         CalculateValues();
     }
 
-    /// <summary>
-    /// To be manually called on MonoBehavior OnValidate() message
-    /// </summary>
-    public void OnValidate()
+    public void OnBeforeSerialize() { }
+
+    public void OnAfterDeserialize()
     {
-        ValidateBaseValues();
+        // Set calculated values (currently equivalent to base values)
         CalculateValues();
     }
-
-    /// <summary>
-    /// Used to make sure the base values are set to their default values
-    /// </summary>
-    protected abstract void ValidateBaseValues();
-
 }

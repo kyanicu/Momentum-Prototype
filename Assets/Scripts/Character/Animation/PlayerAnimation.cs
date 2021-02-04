@@ -3,8 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class PlayerAnimation : IPlayerAnimationCommunication
+public class PlayerAnimation : MonoBehaviour, IPlayerAnimationCommunication
 {
     Dictionary<string, int> animatorParameterNameToID = new Dictionary<string, int>()
     {
@@ -57,9 +56,9 @@ public class PlayerAnimation : IPlayerAnimationCommunication
     [SerializeField]
     private float iFrameBlinkRate = 0.1f;
 
-    public PlayerAnimation(GameObject _root)
+    void Awake()
     {
-        root = _root;
+        root = transform.GetChild(0).gameObject;
         modelRoot = root.transform.GetChild(0).gameObject;
         rootAnimator = root.GetComponent<Animator>();
         animationEvents = root.GetComponent<PlayerAnimationEvents>();
@@ -156,12 +155,11 @@ public class PlayerAnimation : IPlayerAnimationCommunication
         }
     }
 
-    public void FrameUpdate(float deltaTime)
+    void Update()
     {
         rootAnimator.SetBool(animatorParameterNameToID["Braking"], playerActions.isBraking && playerMotor.isGroundedThisUpdate);
         rootAnimator.SetBool(animatorParameterNameToID["Falling"], !playerMotor.isGroundedThisUpdate);
 
         rootAnimator.SetFloat(animatorParameterNameToID["RunSpeed"], (playerMotor.isGroundedThisUpdate) ? playerMotor.velocity.magnitude : 0);
     }
-
 }

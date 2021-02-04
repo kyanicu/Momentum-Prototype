@@ -5,7 +5,7 @@ using KinematicCharacterController;
 using System;
 
 [System.Serializable]
-public class AlestaMovementAbilityValues : PlayerOverridableValues
+public class AlestaMovementAbilityValues : CharacterOverridableValues
 {
     [SerializeField]
     public float permeationPushAccel;
@@ -16,60 +16,27 @@ public class AlestaMovementAbilityValues : PlayerOverridableValues
     [SerializeField]
     public float permeationVelocityThreshold;
 
-    protected override void SetValueCounts()
+    protected override float[] floatValues 
     {
-        floatValuesCount = 4;
-        intValuesCount = 0;
-        vector3ValuesCount = 0;
-    }
+        get 
+        { 
+            return new float[]
+            {
+                permeationPushAccel,
+                permeationResistFactor,
+                permeationGravityFactor,
+                permeationVelocityThreshold,
+            };
+        }
 
-    protected override float GetFloatValue(int i)
-    {
-        switch (i) 
+        set
         {
-            case (0) :
-                return permeationPushAccel;
-            case (1) :
-                return permeationResistFactor;
-            case (2) :
-                return permeationGravityFactor;
-            case (3) :
-                return permeationVelocityThreshold;
-            default :
-                return 0;
+            permeationPushAccel = value[0];
+            permeationResistFactor = value[1];
+            permeationGravityFactor = value[2];
+            permeationVelocityThreshold = value[3];
         }
     }
-    protected override void SetFloatValue(int i, float value)
-    {
-        switch (i) 
-        {
-            case (0) :
-                permeationPushAccel = value;
-                break;
-            case (1) :
-                permeationResistFactor = value;
-                break;
-            case (2) :
-                permeationGravityFactor = value;
-                break;
-            case (3) :
-                permeationVelocityThreshold = value;
-                break;
-            default :
-                break;
-        }
-    }
-    protected override int GetIntValue(int i)
-    {
-        return 0;
-    }
-    protected override void SetIntValue(int i, int value) { }
-    protected override Vector3 GetVector3Value(int i)
-    {
-        return Vector3.zero;
-    }
-    protected override void SetVector3Value(int i, Vector3 value) {}
-
 }
 
 struct AlestaMovementAbilityInput : IPlayerMovementInput
@@ -93,11 +60,14 @@ struct AlestaMovementAbilityInput : IPlayerMovementInput
 }
 
 [System.Serializable]
-public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbilityValues>, IAlestaMovementAbilityCommunication
+public class AlestaMovementAbility : PlayerMovementAbility, IAlestaMovementAbilityCommunication
 {
 
     public override event Action<AbilityOverrideArgs> addingMovementOverrides;
     public override event Action<AbilityOverrideArgs> removingMovementOverrides;
+
+    [SerializeField]
+	private CharacterOverridableAttribute<AlestaMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<AlestaMovementAbilityValues>();
 
     private AlestaMovementAbilityInput input;
 
@@ -109,7 +79,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
     private float currentPermeationAngularAccel;
     private Vector3 tempCurrentAngularVelocity;
 
-    public AlestaMovementAbility()
+    void Awake()
     {
         currentPermeationOverride = new AbilityOverrideArgs();
         currentPermeationOverride.movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerOverrideType>>();
@@ -123,22 +93,12 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
         input = new AlestaMovementAbilityInput();
     }
 
-    protected override void SetDefaultBaseValues()
+    void Reset()
     {
-        baseValues.permeationPushAccel = 80;
-        baseValues.permeationResistFactor = 0.5f;
-        baseValues.permeationGravityFactor = 0.25f;
-        baseValues.permeationVelocityThreshold = 10;
-    }
-
-    protected override void ValidateBaseValues()
-    {
-        
-    }
-
-    public override void SetCommunicationInterface(PlayerInternalCommunicator communicator)
-    {
-        (communicator as AlestaInternalCommunicator).SetCommunication(this);
+        overridableAttribute.baseValues.permeationPushAccel = 80;
+        overridableAttribute.baseValues.permeationResistFactor = 0.5f;
+        overridableAttribute.baseValues.permeationGravityFactor = 0.25f;
+        overridableAttribute.baseValues.permeationVelocityThreshold = 10;
     }
 
     #region AbilityInterface
@@ -153,7 +113,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
     public override void UpdateRotation(ref Quaternion currentRotation, ref Vector3 currentAngularVelocity, KinematicCharacterMotor motor, float deltaTime)
     {
         if (isPermeating)
-            currentAngularVelocity += motor.PlanarConstraintAxis * currentPermeationAngularAccel * ((input.permeation) ? values.permeationResistFactor : 1) * deltaTime; 
+            currentAngularVelocity += motor.PlanarConstraintAxis * currentPermeationAngularAccel * ((input.permeation) ? overridableAttribute.values.permeationResistFactor : 1) * deltaTime; 
         tempCurrentAngularVelocity = currentAngularVelocity;
     }
     
@@ -168,28 +128,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
     public override void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
     {
         if (isPermeating)
-            currentVelocity += currentPermeationNormal * values.permeationPushAccel * ((input.permeation) ? values.permeationResistFactor : 1) * deltaTime; 
-    }
-
-    /// <summary>
-    /// This is called before the motor does anything
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="deltaTime"> Motor update time </param>
-    public override void BeforeCharacterUpdate(KinematicCharacterMotor motor, float deltaTime)
-    {
-
-    }
-
-    /// <summary>
-    /// This is called after the motor has finished its ground probing, but before PhysicsMover/Velocity/etc.... handling
-    /// Primarily used currently to handle the slope tracking for the ungrounding angular momentum mechanic
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="deltaTime"> Motor update time </param>
-    public override void PostGroundingUpdate(KinematicCharacterMotor motor, float deltaTime)
-    {
-
+            currentVelocity += currentPermeationNormal * overridableAttribute.values.permeationPushAccel * ((input.permeation) ? overridableAttribute.values.permeationResistFactor : 1) * deltaTime; 
     }
 
     /// <summary>
@@ -231,19 +170,6 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
     }
 
     /// <summary>
-    /// This is called when the motor's ground probing detects a ground hit
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="hitCollider">The ground collider </param>
-    /// <param name="hitNormal"> The ground normal </param>
-    /// <param name="hitPoint"> The ground point </param>
-    /// <param name="hitStabilityReport"> The ground stability </param>
-    public override void OnGroundHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
-    {
-
-    }
-
-    /// <summary>
     /// This is called when the motor's movement logic detects a hit
     /// </summary>
     /// <param name="motor"> The player's kinematic motor</param>
@@ -276,21 +202,11 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
             hitStabilityReport.IsStable = false;
     }
 
-    /// <summary>
-    /// This is called when the character detects discrete collisions (collisions that don't result from the motor's capsuleCasts when moving)
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="hitCollider"> The detected collider </param>
-    public override void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider)
-    {
-        
-    }
-
     public override void EnterMovementEffector(MovementEffector effector)
     {
         for (int i = 0; i < effector.alestaAbilityOverrides.Count; i++)
         {
-            ApplyOverride(effector.alestaAbilityOverrides[i].item1, effector.alestaAbilityOverrides[i].item2);
+            overridableAttribute.ApplyOverride(effector.alestaAbilityOverrides[i].item1, effector.alestaAbilityOverrides[i].item2);
         }
     }
 
@@ -298,7 +214,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
     {
         for (int i = 0; i < effector.alestaAbilityOverrides.Count; i++)
         {
-            RemoveOverride(effector.alestaAbilityOverrides[i].item1, effector.alestaAbilityOverrides[i].item2);
+            overridableAttribute.RemoveOverride(effector.alestaAbilityOverrides[i].item1, effector.alestaAbilityOverrides[i].item2);
         }
     }
 
@@ -324,7 +240,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
 
     private bool CanPermeate(Vector3 currentVelocity)
     {
-        return currentVelocity.sqrMagnitude >= values.permeationVelocityThreshold * values.permeationVelocityThreshold; 
+        return currentVelocity.sqrMagnitude >= overridableAttribute.values.permeationVelocityThreshold * overridableAttribute.values.permeationVelocityThreshold; 
     }
 
     private void EnterPermeation(Vector3 velocity, Vector3 angularVelocity, Vector3 hitNormal, KinematicCharacterMotor motor)
@@ -334,7 +250,7 @@ public class AlestaMovementAbility : PlayerMovementAbility<AlestaMovementAbility
         permeationEnterVelocity = velocity;
         currentPermeationNormal = Vector3.ProjectOnPlane(hitNormal, motor.PlanarConstraintAxis).normalized;
         float angularAccelSign = Mathf.Sign(Vector3.Dot(motor.PlanarConstraintAxis, angularVelocity));
-        currentPermeationAngularAccel = (angularVelocity.magnitude / (velocity.magnitude/values.permeationPushAccel)) * angularAccelSign;
+        currentPermeationAngularAccel = (angularVelocity.magnitude / (velocity.magnitude/overridableAttribute.values.permeationPushAccel)) * angularAccelSign;
         addingMovementOverrides?.Invoke(currentPermeationOverride);
     }
 

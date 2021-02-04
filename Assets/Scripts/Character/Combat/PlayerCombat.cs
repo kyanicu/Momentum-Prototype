@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public struct AttackInitInfo
 {
 
@@ -35,8 +36,7 @@ public struct AttackInitInfo
 
 }
 
-[System.Serializable]
-public class PlayerCombat : IPlayerCombatCommunication, IAttacker
+public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
 {
     private IDamageable _damageable;
     public IDamageable damageable { get { return _damageable; } private set { _damageable = value; } }
@@ -97,9 +97,11 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
 
     private bool stunned;
 
-    public PlayerCombat(GameObject _hitboxes, IDamageable status)
+    void Awake()
     {
-        damageable = status;
+        damageable = GetComponent<IDamageable>();
+
+        GameObject _hitboxes = transform.GetChild(0).GetChild(1).gameObject;
 
         hitboxes = new Hitbox[_hitboxes.transform.childCount];
         for (int i = 0; i < _hitboxes.transform.childCount; i++)
@@ -107,10 +109,9 @@ public class PlayerCombat : IPlayerCombatCommunication, IAttacker
             hitboxes[i] = _hitboxes.transform.GetChild(i).GetComponent<Hitbox>();
             hitboxes[i].SetAttacker(this);
         }
-        SetDefaultValues();
     }
 
-    private void SetDefaultValues()
+    private void Reset()
     {
         neutralAttackInitInfo = new AttackInitInfo(false);
 

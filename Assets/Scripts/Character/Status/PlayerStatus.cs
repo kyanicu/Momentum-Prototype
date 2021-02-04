@@ -3,8 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class PlayerStatus : IPlayerStatusCommunication, IDamageable
+public class PlayerStatus : MonoBehaviour, IPlayerStatusCommunication, IDamageable
 {
     [SerializeField]
     private float maxHealth;
@@ -33,9 +32,9 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
     public event Action iFramesStarted;
     public event Action iFramesEnded;
 
-    public PlayerStatus(GameObject _hurtboxes)
+    void Awake()
     {
-        hurtboxes = _hurtboxes;
+        hurtboxes = transform.GetChild(0).GetChild(2).gameObject;
 
         Hurtbox[] hbs = hurtboxes.GetComponentsInChildren<Hurtbox>();
         foreach (Hurtbox hb in hbs)
@@ -47,11 +46,6 @@ public class PlayerStatus : IPlayerStatusCommunication, IDamageable
     public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
     {
         communicator.SetCommunication(this);
-    }
-
-    public void HandleTriggerEnter(Collider col)
-    {
-
     }
 
     private void Down()

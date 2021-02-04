@@ -763,7 +763,7 @@ namespace KinematicCharacterController
 #endif
 
             // Before update
-            CharacterController.BeforeCharacterUpdate(this, deltaTime);
+            CharacterController.BeforeCharacterUpdate(deltaTime);
 
             _transientPosition = _transform.position;
             TransientRotation = _transform.rotation;
@@ -903,7 +903,7 @@ namespace KinematicCharacterController
 
             if (_solveGrounding)
             {
-                CharacterController.PostGroundingUpdate(this, deltaTime);
+                CharacterController.PostGroundingUpdate(deltaTime);
             }
 
             if (InteractiveRigidbodyHandling)
@@ -999,7 +999,7 @@ namespace KinematicCharacterController
         public void UpdatePhase2(float deltaTime)
         {
             // Handle rotation
-            CharacterController.UpdateRotation(ref _transientRotation, this, deltaTime);
+            CharacterController.UpdateRotation(ref _transientRotation, deltaTime);
             TransientRotation = _transientRotation;
 
             // Handle move rotation
@@ -1126,12 +1126,9 @@ namespace KinematicCharacterController
                     #endregion
                 }
             }
-            
-            // Self Added
-            float maxMove = float.PositiveInfinity;
 
-            // Handle velocity, Self Added maxMove parameter
-            CharacterController.UpdateVelocity(ref BaseVelocity, ref maxMove, this, deltaTime);
+            // Handle velocity
+            CharacterController.UpdateVelocity(ref BaseVelocity, deltaTime);
 
             //this.CharacterController.UpdateVelocity(ref BaseVelocity, deltaTime);
             if (BaseVelocity.magnitude < MinVelocityMagnitude)
@@ -1145,17 +1142,11 @@ namespace KinematicCharacterController
             {
                 if (_solveMovementCollisions)
                 {
-                    // Self inserted maxMove
-                    InternalCharacterMove(ref BaseVelocity, deltaTime, maxMove);
+                    InternalCharacterMove(ref BaseVelocity, deltaTime);
                 }
                 else
                 {
-                    // Self Inserted
-                    Vector3 moveBy = BaseVelocity * deltaTime;
-                    if (moveBy.magnitude > maxMove)
-                        moveBy = moveBy.normalized * maxMove;
-
-                    _transientPosition += moveBy;
+                    _transientPosition += BaseVelocity * deltaTime;;
                 }
             }
 
@@ -1178,11 +1169,11 @@ namespace KinematicCharacterController
                 int nbOverlaps = CharacterCollisionsOverlap(_transientPosition, _transientRotation, _internalProbedColliders, CollisionOffset * 2f);
                 for (int i = 0; i < nbOverlaps; i++)
                 {
-                    CharacterController.OnDiscreteCollisionDetected(this, _internalProbedColliders[i]);
+                    CharacterController.OnDiscreteCollisionDetected(_internalProbedColliders[i]);
                 }
             }
 
-            CharacterController.AfterCharacterUpdate(this, deltaTime);
+            CharacterController.AfterCharacterUpdate(deltaTime);
         }
 
         /// <summary>
@@ -1293,7 +1284,7 @@ namespace KinematicCharacterController
                             probingPosition = targetPosition;
                         }
 
-                        CharacterController.OnGroundHit(this, groundSweepHit.collider, groundSweepHit.normal, groundSweepHit.point, ref groundHitStabilityReport);
+                        CharacterController.OnGroundHit(groundSweepHit.collider, groundSweepHit.normal, groundSweepHit.point, ref groundHitStabilityReport);
                         SetEffectiveGroundNormal(ref groundHitStabilityReport); // Self Added Code
                         groundSweepingIsOver = true;
                     }
@@ -1435,7 +1426,7 @@ namespace KinematicCharacterController
         /// Self inserted maxMove
         /// </summary>
         /// <returns> Returns false if movement could not be solved until the end </returns>
-        private bool InternalCharacterMove(ref Vector3 transientVelocity, float deltaTime, float maxMove = float.PositiveInfinity)
+        private bool InternalCharacterMove(ref Vector3 transientVelocity, float deltaTime)
         {
             if (deltaTime <= 0f)
                 return false;
@@ -1444,9 +1435,6 @@ namespace KinematicCharacterController
             bool wasCompleted = true;
             Vector3 remainingMovementDirection = transientVelocity.normalized;
             float remainingMovementMagnitude = transientVelocity.magnitude * deltaTime;
-            //Self inserted
-            if (remainingMovementMagnitude > maxMove)
-                remainingMovementMagnitude = maxMove;
             Vector3 originalVelocityDirection = remainingMovementDirection;
             int sweepsMade = 0;
             bool hitSomethingThisSweepIteration = true;
@@ -1547,7 +1535,7 @@ namespace KinematicCharacterController
                         Vector3 obstructionNormal = GetObstructionNormal(closestSweepNormal, moveHitStabilityReport.IsStable);
 
                         // Movement hit callback
-                        CharacterController.OnMovementHit(this, closestSweepCollider, closestSweepNormal, closestSweepPoint, ref moveHitStabilityReport);
+                        CharacterController.OnMovementHit(closestSweepCollider, closestSweepNormal, closestSweepPoint, ref moveHitStabilityReport);
 
                         // Handle remembering rigidbody hits
                         if (InteractiveRigidbodyHandling && closestSweepCollider.attachedRigidbody)
@@ -1877,7 +1865,7 @@ namespace KinematicCharacterController
             }
 
             // Custom checks
-            bool colliderValid = CharacterController.IsColliderValidForCollisions(this, coll);
+            bool colliderValid = CharacterController.IsColliderValidForCollisions(coll);
             if (!colliderValid)
             {
                 return false;
@@ -1973,7 +1961,7 @@ namespace KinematicCharacterController
                 }
             }
 
-            CharacterController.ProcessHitStabilityReport(this, hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref stabilityReport);
+            CharacterController.ProcessHitStabilityReport(hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref stabilityReport);
         }
 
         private void DetectSteps(Vector3 characterPosition, Quaternion characterRotation, Vector3 hitPoint, Vector3 innerHitDirection, ref HitStabilityReport stabilityReport)
