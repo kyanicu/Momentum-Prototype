@@ -10,26 +10,65 @@ using UnityEngine;
 using KinematicCharacterController;
 using PathCreation;
 
+#region Action Event Handler Argument Structs
 /// <summary>
-/// A wrapper for the KinematicCharacterMotor class that allows a constant reference state to only be read
+/// Hold info on a recent player plane change
 /// </summary>
-public struct ReadOnlyKinematicMotor
+public struct PlaneChangeArgs
 {
-    private KinematicCharacterMotor motor;
+    /// <summary>
+    /// The new plane normal
+    /// </summary>
+    public Vector3 planeNormal;
+    /// <summary>
+    /// Was the plane changed via a plane breaker?
+    /// </summary>
+    public bool planeBreaker;
 
-    public Vector3 position { get { return motor.TransientPosition; } }
-    public Quaternion rotation { get { return motor.TransientRotation; } }
-    public Vector3 velocity { get { return motor.BaseVelocity; } }
-    public Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
-    public Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
-    public bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
-    public bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
-
-    public ReadOnlyKinematicMotor(KinematicCharacterMotor m)
-    {  
-        motor = m;
+    /// <summary>
+    /// Basic constructor
+    /// </summary>
+    /// <param name="normal">The normal of the new plane</param>
+    /// <param name="breaker">Was the plane changed via a plane breaker</param>
+    public PlaneChangeArgs(Vector3 normal, bool breaker)
+    {
+        planeNormal = normal;
+        planeBreaker = breaker;
     }
-}   
+}
+#endregion
+
+/// <summary>
+/// Communication interface for PlayerMovement
+/// </summary>
+public interface IPlayerMovementCommunication
+{
+    /// <summary>
+    /// Event triggered when the player changes plane
+    /// </summary>
+    event Action<PlaneChangeArgs> planeChanged;
+
+    
+    Vector3 position { get; }
+    Quaternion rotation { get; }
+    Vector3 velocity { get; }
+    Vector3 groundNormal { get; }
+    Vector3 lastGroundNormal { get; }
+    bool isGroundedThisUpdate { get; }
+    bool wasGroundedLastUpdate { get; }
+
+    void ApplyMovementOverride(FullMovementOverride overrides);
+    
+    void RemoveMovementOverride(FullMovementOverride overrides);
+
+    void ZeroVelocity(bool zeroAngularVelocity = false);
+    void SetKinematicPath(Vector3 vel, float time);
+    void Flinch();
+    void ForceUnground();
+    void AddImpulse(Vector3 Impulse);
+    void AddImpulseAtPoint(Vector3 impulse, Vector3 point);
+
+}
 
 /// <summary>
 /// Interface for input relating to PlayerMovement
@@ -192,6 +231,15 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
     /// </summary>
     public event Action<PlaneChangeArgs> planeChanged;
 #endregion
+
+
+    public Vector3 position { get { return motor.TransientPosition; } }
+    public Quaternion rotation { get { return motor.TransientRotation; } }
+    public Vector3 velocity { get { return motor.BaseVelocity; } }
+    public Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
+    public Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
+    public bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
+    public bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
 
     private struct KinematicPath
     {
@@ -460,7 +508,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
     #endregion
 
 #region References
-    private ReadOnlyKinematicMotor readOnlyMotor;
     /// <summary>
     /// Unity Component that handles collision and kinematic movement
     /// Used by PlayerMovement to handle player movement mechanics
@@ -513,8 +560,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         SetCurrentPlane( new Plane(motor.CharacterForward, motor.Transform.position));
         currentPlane = new Plane(motor.CharacterForward, motor.transform.position);
         motor.PlanarConstraintAxis = currentPlane.normal;
-        
-        readOnlyMotor = new ReadOnlyKinematicMotor(motor);
 
         // Debug
         #region debug
@@ -583,19 +628,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
     #endregion
 
 #region Communication Methods
-    /// <summary>
-    /// Initializes communication with the Player's internal communcator
-    /// </summary>
-    /// <param name="communicator"> The internal commmunicator </param>
-    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
-    {
-        // Set the communication
-        communicator.SetCommunication(this);
-
-        // Set the helper classes' communications
-        action.SetCommunicationInterface(communicator);
-        ability.SetCommunicationInterface(communicator);
-    }
 
     public void ZeroVelocity(bool _zeroAngularVelocity = false)
     {
@@ -615,7 +647,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         KinematicPath kp = new KinematicPath 
         { 
             velocity = vel,
-            velocityAfter = (zeroingVel ? Vector3.zero : readOnlyMotor.velocity + externalVelocity),
+            velocityAfter = (zeroingVel ? Vector3.zero : motor.BaseVelocity + externalVelocity),
             timer = GameManager.Instance.TimerViaGameTime(time, EndKinematicPath)
         };
         
@@ -629,7 +661,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
     {
         GameManager.Instance.StopCoroutine(kinematicPath.Value.timer);
 
-        externalVelocity = -readOnlyMotor.velocity + kinematicPath.Value.velocityAfter;
+        externalVelocity = -motor.BaseVelocity + kinematicPath.Value.velocityAfter;
 
         kinematicPath = null;
     }
@@ -669,16 +701,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
             return;
 
         externalVelocity += impulse;
-        internalAngularVelocity += Vector3.Cross(point - readOnlyMotor.position, impulse);
-    }
-
-    /// <summary>
-    /// Returns a readonly wrapper reference to action so that it's state may be communicated to other components that require it
-    /// </summary>
-    /// <returns> The read only reference to action </returns>
-    public ReadOnlyPlayerMovementAction GetReadOnlyAction()
-    {
-        return new ReadOnlyPlayerMovementAction(action);
+        internalAngularVelocity += Vector3.Cross(point - motor.TransientPosition, impulse);
     }
 #endregion
 

@@ -23,7 +23,6 @@ public abstract class PlayerMovementAbility : MonoBehaviour
     public abstract event Action<AbilityOverrideArgs> addingMovementOverrides;
     public abstract event Action<AbilityOverrideArgs> removingMovementOverrides;
 
-    public virtual void SetCommunicationInterface(PlayerInternalCommunicator communicator) { }
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
     /// </summary>

@@ -36,6 +36,16 @@ public struct AttackInitInfo
 
 }
 
+/// <summary>
+/// Communication interface for player combat
+/// </summary>
+public interface IPlayerCombatCommunication
+{
+    void AttackAnimationStateTransition(AttackAnimationState newState);
+
+    void Flinch();
+} 
+
 public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
 {
     private IDamageable _damageable;
@@ -45,24 +55,6 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
     private Hitbox[] hitboxes;
 
     AttackAnimationState attackAnimationState = AttackAnimationState.FINISHED;
-
-    public event Action neutralAttack;
-    public event Action downAttack;
-    public event Action upAttack;
-    public event Action runningAttack;
-    public event Action brakingAttack;
-    public event Action neutralAerialAttack;
-    public event Action backAerialAttack;
-    public event Action downAerialAttack;
-    public event Action upAerialAttack;
-
-    public event Action<FullMovementOverride> ApplyMovementOverride;
-    public event Action<FullMovementOverride> RemoveMovementOverride;
-
-    public event Action<Vector3,float> takeKinematicRecoil;
-    public event Action<Vector3> takeDynamicRecoil;
-    public event Action<Vector3,Vector3> takeDynamicRecoilWithTorque;
-    
 
     [SerializeField]
     private AttackInitInfo neutralAttackInitInfo; 
@@ -91,15 +83,17 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
 
     private bool attackBuffered;
 
-    private ReadOnlyKinematicMotor playerMotorReference;
-
-    private ReadOnlyPlayerMovementAction playerMovementActionState;
-
     private bool stunned;
+
+#region Communications
+    private IPlayerAnimationCommunication animationCommunication;
+    private IPlayerMovementCommunication movementCommunication;
+    private IPlayerMovementActionCommunication movementActionCommunication;
+    
+#endregion
 
     void Awake()
     {
-        damageable = GetComponent<IDamageable>();
 
         GameObject _hitboxes = transform.GetChild(0).GetChild(1).gameObject;
 
@@ -109,6 +103,15 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
             hitboxes[i] = _hitboxes.transform.GetChild(i).GetComponent<Hitbox>();
             hitboxes[i].SetAttacker(this);
         }
+    }
+
+    void Start()
+    {
+        animationCommunication = GetComponent<IPlayerAnimationCommunication>();
+        movementCommunication = GetComponent<IPlayerMovementCommunication>();
+        movementActionCommunication = GetComponent<IPlayerMovementActionCommunication>();
+
+        damageable = GetComponent<IDamageable>();
     }
 
     private void Reset()
@@ -133,17 +136,6 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
         downAerialAttackInitInfo = new AttackInitInfo(true);
 
         upAerialAttackInitInfo = new AttackInitInfo(true);
-    }
-
-    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
-    {
-        communicator.SetCommunication(this);
-    }
-
-    public void SetReadOnlyReferences(ReadOnlyKinematicMotor motor, ReadOnlyPlayerMovementAction action)
-    {
-        playerMotorReference = motor;
-        playerMovementActionState = action;
     }
 
     public void AttackAnimationStateTransition(AttackAnimationState newState)
@@ -184,65 +176,65 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
     private void NeutralAttack()
     {
         settingAttackInitInfo = neutralAttackInitInfo;
-        neutralAttack?.Invoke();
+        animationCommunication.AnimateNeutralAttack();
     }
 
     private void DownAttack()
     {
         settingAttackInitInfo = downAttackInitInfo;
-        downAttack?.Invoke();
+        animationCommunication.AnimateDownAttack();
     }
 
     private void UpAttack()
     {
         settingAttackInitInfo = upAttackInitInfo;
-        upAttack?.Invoke();
+        animationCommunication.AnimateUpAttack();
     }
 
     private void RunningAttack()
     {
         settingAttackInitInfo = runningAttackInitInfo;
-        runningAttack?.Invoke();
+        animationCommunication.AnimateRunningAttack();
     }
 
     private void BrakingAttack()
     {
         settingAttackInitInfo = brakingAttackInitInfo;
-        brakingAttack?.Invoke();
+        animationCommunication.AnimateBrakingAttack();
     }
 
     private void NeutralAerialAttack()
     {
         settingAttackInitInfo = neutralAerialAttackInitInfo;
-        neutralAerialAttack?.Invoke();
+        animationCommunication.AnimateNeutralAerialAttack();
     }
 
     private void UpAerialAttack()
     {
         settingAttackInitInfo = upAerialAttackInitInfo;
-        upAerialAttack?.Invoke();
+        animationCommunication.AnimateUpAerialAttack();
     }
 
     private void DownAerialAttack()
     {
         settingAttackInitInfo = downAerialAttackInitInfo;
-        downAerialAttack?.Invoke();
+        animationCommunication.AnimateDownAerialAttack();
     }
 
     private void BackAerialAttack()
     {
         settingAttackInitInfo = backAerialAttackInitInfo;
-        backAerialAttack?.Invoke();
+        animationCommunication.AnimateBackAerialAttack();
     }
 
     private void ApplyAttackInitInfo(AttackInitInfo info)
     {
-        ApplyMovementOverride?.Invoke(info.movementOverride);
+        movementCommunication.ApplyMovementOverride(info.movementOverride);
     }
 
     private void ResetAttackInitInfo(AttackInitInfo info)
     {
-        RemoveMovementOverride?.Invoke(info.movementOverride);
+        movementCommunication.RemoveMovementOverride(info.movementOverride);
     }
 
     public AttackerInfo GetAttackerInfo()
@@ -259,17 +251,17 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
         if (controllerActions.NeutralAttack.triggered && !attackBuffered &&
             (attackAnimationState == AttackAnimationState.FINISHED || (attackBuffered = (attackAnimationState == AttackAnimationState.BUFFER))))
         {
-            bool grounded = playerMotorReference.isGroundedThisUpdate;
-            float sqrSpeed = playerMotorReference.velocity.sqrMagnitude;
+            bool grounded = movementCommunication.isGroundedThisUpdate;
+            float sqrSpeed = movementCommunication.velocity.sqrMagnitude;
 
             float horizDir = controllerActions.Run.ReadValue<float>();
             float vertDir = controllerActions.VerticalDirection.ReadValue<float>();
 
             if (grounded)
             {
-                if (playerMovementActionState.isBraking && sqrSpeed >= brakingAttackMinSpeed * brakingAttackMinSpeed)
+                if (movementActionCommunication.isBraking && sqrSpeed >= brakingAttackMinSpeed * brakingAttackMinSpeed)
                     BrakingAttack();
-                else if (sqrSpeed >= runningAttackMinSpeed * runningAttackMinSpeed && horizDir == playerMovementActionState.facingDirection)
+                else if (sqrSpeed >= runningAttackMinSpeed * runningAttackMinSpeed && horizDir == movementActionCommunication.facingDirection)
                     RunningAttack();
                 else if (vertDir == +1)
                     UpAttack();
@@ -284,7 +276,7 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
                     UpAerialAttack();
                 else if (vertDir == -1)
                     DownAerialAttack();
-                else if (horizDir == -playerMovementActionState.facingDirection)
+                else if (horizDir == -movementActionCommunication.facingDirection)
                     BackAerialAttack();
                 else
                     NeutralAerialAttack();

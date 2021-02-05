@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerStatus : MonoBehaviour, IPlayerStatusCommunication, IDamageable
+public class PlayerStatus : MonoBehaviour, IDamageable
 {
     [SerializeField]
     private float maxHealth;
@@ -21,16 +21,12 @@ public class PlayerStatus : MonoBehaviour, IPlayerStatusCommunication, IDamageab
     [SerializeField, HideInInspector]
     private GameObject hurtboxes;
 
-    public event Action flinch;
-    public event Action halt;
-    public event Action forceUnground;
-    public event Action<float> stun;
-    public event Action<Vector3, float> takeKinematicKnockback;
-    public event Action<Vector3> takeDynamicKnockback;
-    public event Action<Vector3, Vector3> takeDynamicKnockbackWithTorque;
-
-    public event Action iFramesStarted;
-    public event Action iFramesEnded;
+    #region Communications
+    private IPlayerAnimationCommunication animationCommunication;
+    private IPlayerMovementCommunication movementCommunication;
+    private IPlayerCharacterCommunication characterCommunication;
+    private IPlayerCombatCommunication combatCommunication;
+    #endregion
 
     void Awake()
     {
@@ -43,9 +39,12 @@ public class PlayerStatus : MonoBehaviour, IPlayerStatusCommunication, IDamageab
         }
     }
 
-    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
+    void Start()
     {
-        communicator.SetCommunication(this);
+        animationCommunication = GetComponent<IPlayerAnimationCommunication>();
+        movementCommunication = GetComponent<IPlayerMovementCommunication>();
+        characterCommunication = GetComponent<IPlayerCharacterCommunication>();
+        combatCommunication = GetComponent<IPlayerCombatCommunication>();
     }
 
     private void Down()
@@ -72,57 +71,59 @@ public class PlayerStatus : MonoBehaviour, IPlayerStatusCommunication, IDamageab
         Debug.Log("iFramesActive for " + ((iFrameTimeOverride != 0) ? iFrameTimeOverride : iFrameTime) + " Seconds");
         GameManager.Instance.TimerViaGameTime((iFrameTimeOverride != 0) ? iFrameTimeOverride : iFrameTime, DeactivateIFrames);
         iFramesActive = true;
-        iFramesStarted?.Invoke();
+        animationCommunication.StartIFrames();
     }
 
     public void DeactivateIFrames()
     {
         iFramesActive = false;
-        iFramesEnded?.Invoke();
+        animationCommunication.EndIFrames();
     }
 
     public void Flinch()
     {
         Debug.Log("Flinched");
-        flinch?.Invoke();
+        movementCommunication.Flinch();
+        combatCommunication.Flinch();
+        animationCommunication.AnimateFlinch();
     }
 
     public void Halt()
     {
         Debug.Log("Halted");
-        halt?.Invoke();
+        movementCommunication.ZeroVelocity(true);
     }
 
     public void ForceUnground()
     {
         Debug.Log("Force Ungrounded");
-        forceUnground?.Invoke();
+        movementCommunication.ForceUnground();
     }
 
     public void Stun(float stunTime)
     {
         Debug.Log("Stunned");
-        stun?.Invoke(stunTime);
+        characterCommunication.LockInput(stunTime);
     }
 
     public void TakeKinematicKnockback(Vector3 knockback, float time)
     {
         Debug.Log("Took Kinematic Knockback for " + time + "Seconds");
         Debug.DrawRay(GameObject.Find("Alesta").transform.position, knockback, Color.yellow, 5);
-        takeKinematicKnockback?.Invoke(knockback, time);
+        movementCommunication.SetKinematicPath(knockback, time);
     }
 
     public void TakeDynamicKnockback(Vector3 knockback)
     {
         Debug.Log("Took Dynamic Knockback");
         Debug.DrawRay(GameObject.Find("Alesta").transform.position, knockback, Color.yellow + Color.red, 5);
-        takeDynamicKnockback?.Invoke(knockback);
+        movementCommunication.AddImpulse(knockback);
     }
 
     public void TakeDynamicKnockbackWithTorque(Vector3 knockback, Vector3 atPoint)
     {
         Debug.Log("Took Dynamic Knockback With Torque");
         Debug.DrawRay(atPoint, knockback, Color.red, 5);
-        takeDynamicKnockbackWithTorque?.Invoke(knockback, atPoint);
+        movementCommunication.AddImpulseAtPoint(knockback, atPoint);
     }
 }

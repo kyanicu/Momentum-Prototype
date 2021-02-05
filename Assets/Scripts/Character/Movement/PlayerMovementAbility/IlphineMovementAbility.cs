@@ -27,7 +27,7 @@ struct IlphineMovementAbilityInput : IPlayerMovementInput
 }
 
 [System.Serializable]
-public class IlphineMovementAbility : PlayerMovementAbility, IIlphineMovementAbilityCommunication
+public class IlphineMovementAbility : PlayerMovementAbility
 {
 
     public override event Action<AbilityOverrideArgs> addingMovementOverrides;

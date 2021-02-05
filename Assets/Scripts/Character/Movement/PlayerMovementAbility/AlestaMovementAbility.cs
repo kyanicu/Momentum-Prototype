@@ -60,7 +60,7 @@ struct AlestaMovementAbilityInput : IPlayerMovementInput
 }
 
 [System.Serializable]
-public class AlestaMovementAbility : PlayerMovementAbility, IAlestaMovementAbilityCommunication
+public class AlestaMovementAbility : PlayerMovementAbility
 {
 
     public override event Action<AbilityOverrideArgs> addingMovementOverrides;

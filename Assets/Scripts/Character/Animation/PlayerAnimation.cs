@@ -3,6 +3,34 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Communication interface for player animation
+/// </summary>
+public interface IPlayerAnimationCommunication
+{
+
+    /// <summary>
+    /// Called when player changes facing direction
+    /// </summary>
+    void ChangeFacingDirection();
+
+    void AnimateNeutralAttack();
+    void AnimateDownAttack();
+    void AnimateUpAttack();
+    void AnimateRunningAttack();
+    void AnimateBrakingAttack();
+    void AnimateNeutralAerialAttack();
+    void AnimateBackAerialAttack();
+    void AnimateDownAerialAttack();
+    void AnimateUpAerialAttack();
+
+    void AnimateFlinch();
+
+    void StartIFrames();
+    void EndIFrames();
+
+}
+
 public class PlayerAnimation : MonoBehaviour, IPlayerAnimationCommunication
 {
     Dictionary<string, int> animatorParameterNameToID = new Dictionary<string, int>()
@@ -31,10 +59,6 @@ public class PlayerAnimation : MonoBehaviour, IPlayerAnimationCommunication
     private Animator rootAnimator;
 
     private PlayerAnimationEvents animationEvents;
-    public event Action<AttackAnimationState> attackStateTransition;
-
-    private ReadOnlyPlayerMovementAction playerActions;
-    private ReadOnlyKinematicMotor playerMotor;
 
     private Vector3 positionInterpDampVel = Vector3.zero;
     [SerializeField]
@@ -56,6 +80,12 @@ public class PlayerAnimation : MonoBehaviour, IPlayerAnimationCommunication
     [SerializeField]
     private float iFrameBlinkRate = 0.1f;
 
+    #region Communications
+    IPlayerMovementCommunication movementCommunication;
+    IPlayerMovementActionCommunication movementActionCommunication;
+    IPlayerCombatCommunication combatCommunication;
+    #endregion
+
     void Awake()
     {
         root = transform.GetChild(0).gameObject;
@@ -66,20 +96,16 @@ public class PlayerAnimation : MonoBehaviour, IPlayerAnimationCommunication
         animationEvents.attackStateTransition += AttackStateTransition;
     }
 
+    void Start()
+    {
+        combatCommunication = GetComponent<IPlayerCombatCommunication>();
+        movementCommunication = GetComponent<IPlayerMovementCommunication>();
+        movementActionCommunication = GetComponent<IPlayerMovementActionCommunication>();
+    }
+
     public void AttackStateTransition(AttackAnimationState newState)
     {
-        attackStateTransition?.Invoke(newState);
-    }
-
-    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
-    {
-        communicator.SetCommunication(this);
-    }
-
-    public void SetReadOnlyReferences(ReadOnlyKinematicMotor motor, ReadOnlyPlayerMovementAction actions)
-    {
-        playerActions = actions;
-        playerMotor = motor;
+       combatCommunication.AttackAnimationStateTransition(newState);
     }
 
     public void ChangeFacingDirection()
@@ -157,9 +183,9 @@ public class PlayerAnimation : MonoBehaviour, IPlayerAnimationCommunication
 
     void Update()
     {
-        rootAnimator.SetBool(animatorParameterNameToID["Braking"], playerActions.isBraking && playerMotor.isGroundedThisUpdate);
-        rootAnimator.SetBool(animatorParameterNameToID["Falling"], !playerMotor.isGroundedThisUpdate);
+        rootAnimator.SetBool(animatorParameterNameToID["Braking"], movementActionCommunication.isBraking && movementCommunication.isGroundedThisUpdate);
+        rootAnimator.SetBool(animatorParameterNameToID["Falling"], !movementCommunication.isGroundedThisUpdate);
 
-        rootAnimator.SetFloat(animatorParameterNameToID["RunSpeed"], (playerMotor.isGroundedThisUpdate) ? playerMotor.velocity.magnitude : 0);
+        rootAnimator.SetFloat(animatorParameterNameToID["RunSpeed"], (movementCommunication.isGroundedThisUpdate) ? movementCommunication.velocity.magnitude : 0);
     }
 }

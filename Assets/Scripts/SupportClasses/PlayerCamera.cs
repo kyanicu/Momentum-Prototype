@@ -7,7 +7,7 @@ using KinematicCharacterController;
 /// Class that represents the Camera's behavior of following (Or being controlled directly by) the player
 /// Implements IPlayerCameraCommunication to allow external communication with the player
 /// </summary>
-public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
+public class PlayerCamera : MonoBehaviour
 {
 
     /// <summary>
@@ -136,10 +136,6 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
     /// </summary>
     private ReadOnlyTransform playerTransform;
     /// <summary>
-    /// The reference to the player's readonly kinematic motor info
-    /// </summary>
-    private ReadOnlyKinematicMotor playerKinematicMotor;
-    /// <summary>
     /// The player's current plane normal
     /// </summary>
     private Vector3 playerPlaneNormal;
@@ -147,6 +143,10 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
     /// The player's current gravity direction
     /// </summary>
     private Vector3 playerGravityDirection;
+#endregion
+
+#region Communications
+    private IPlayerMovementCommunication movementCommunication;
 #endregion
 
     #region Unity Monobehavior Messages
@@ -215,8 +215,8 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
         {
             // Handle auto tilting
             transform.position = playerTransform.position - cameraWorldForward * cameraDistance;
-            if (playerKinematicMotor.velocity.sqrMagnitude > tiltThreshold * tiltThreshold)
-                targetTiltPoint = Vector3.SmoothDamp(targetTiltPoint, playerTransform.position + (playerKinematicMotor.velocity - playerKinematicMotor.velocity.normalized * tiltThreshold) * tiltScale, ref tiltDampVel, tiltDampTime, tiltDampMaxSpeed);
+            if (movementCommunication.velocity.sqrMagnitude > tiltThreshold * tiltThreshold)
+                targetTiltPoint = Vector3.SmoothDamp(targetTiltPoint, playerTransform.position + (movementCommunication.velocity - movementCommunication.velocity.normalized * tiltThreshold) * tiltScale, ref tiltDampVel, tiltDampTime, tiltDampMaxSpeed);
             else
                 targetTiltPoint = Vector3.SmoothDamp(targetTiltPoint, playerTransform.position, ref tiltDampVel, tiltDampTime/2, tiltDampMaxSpeed);
             
@@ -233,8 +233,8 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
         }
 
         // Handle auto zoom
-        if (playerKinematicMotor.velocity.sqrMagnitude > zoomThreshold * zoomThreshold)
-            zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, (playerKinematicMotor.velocity.magnitude - zoomThreshold) * zoomScale, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
+        if (movementCommunication.velocity.sqrMagnitude > zoomThreshold * zoomThreshold)
+            zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, (movementCommunication.velocity.magnitude - zoomThreshold) * zoomScale, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
         else
             zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, 0, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
         transform.position -= transform.forward * zoomExtraDistance;
@@ -242,25 +242,17 @@ public class PlayerCamera : MonoBehaviour, IPlayerCameraCommunication
 #endregion
 
 #region PlayerExternalCommunication
-    /// <summary>
-    /// Handles communication setup
-    /// </summary>
-    /// <param name="communicator">The player's external communicator</param>
-    /// <param name="_playerTransform">The player's readonly transform reference</param>
-    public void SetPlayerExternalCommunication(PlayerExternalCommunicator communicator)
-    {
-        communicator.SetPlayerExternalCommunication(this);
-    }
 
     /// <summary>
     /// Handles ReadOnly reference setup
     /// </summary>
     /// <param name="_playerTransform">The player's readonly transform reference</param>
     /// <param name="_playerKinematicMotor">The player's readonly Motor reference</param>
-    public void SetReadOnlyReferences(ReadOnlyTransform _playerTransform, ReadOnlyKinematicMotor _playerKinematicMotor)
+    public void SetReadOnlyReferences(ReadOnlyTransform _playerTransform, IPlayerMovementCommunication _movementCommunication)
     {
         playerTransform = _playerTransform;
-        playerKinematicMotor = _playerKinematicMotor;
+        movementCommunication = _movementCommunication;
+        movementCommunication.planeChanged += HandlePlayerPlaneChanged;
     }
 
     /// <summary>

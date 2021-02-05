@@ -4,28 +4,13 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using KinematicCharacterController;
 
-#region Communication Structs
-/////// <summary>
-/////// A wrapper for the Transform class that allows transform state to only be read
-/////// </summary>
-////public struct ReadOnlyTransform
-////{
-////    private Transform transform;
-////
-////    public Vector3 position { get { return transform.position; } }
-////    public Quaternion rotation { get { return transform.rotation; } }
-////    public Vector3 localScale { get { return transform.localScale; } }
-////    public Vector3 lossyScale { get { return transform.lossyScale; } }
-////    public Matrix4x4 worldToLocalMatrix { get { return transform.worldToLocalMatrix; } }
-////    public Matrix4x4 localToWorldMatrix { get { return transform.localToWorldMatrix; } }
-////
-////    public ReadOnlyTransform(Transform t)
-////    {  
-////        transform = t;
-////    }
-////}   
-
-#endregion
+/// <summary>
+/// Communication interface for PlayerCharacter
+/// </summary>
+public interface IPlayerCharacterCommunication
+{
+    void LockInput(float time);
+}
 
 /// <summary>
 /// Unity Component that controls all Player Character mechanics and scripting
@@ -56,15 +41,10 @@ public class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
     /// Handles the player's combat
     /// </summary>
     private PlayerCombat combat;
+#endregion
 
-    /// <summary>
-    /// Handles communication between the components
-    /// </summary>
-    private PlayerInternalCommunicator internalCommunicator;
-    /// <summary>
-    /// Handles communication between the player and external game objects
-    /// </summary>
-    private PlayerExternalCommunicator externalCommunicator;
+#region ExternalReferences
+    new PlayerCamera camera;
 #endregion
 
 #region fields
@@ -78,11 +58,6 @@ public class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
     /// </summary>
     void Awake()
     {
-        animation = GetComponent<PlayerAnimation>();
-        status = GetComponent<PlayerStatus>();
-        combat = GetComponent<PlayerCombat>();
-        movement = GetComponent<PlayerMovement>();
-
         // TODO move up to InputManager/PlayerInputController
         playerController = new PlayerController();
         playerController.Enable();
@@ -90,7 +65,14 @@ public class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
 
     void Start()
     {
-        SetupCommunicators();
+
+        animation = GetComponent<PlayerAnimation>();
+        status = GetComponent<PlayerStatus>();
+        combat = GetComponent<PlayerCombat>();
+        movement = GetComponent<PlayerMovement>();
+
+        camera = Camera.main.transform.parent.GetComponent<PlayerCamera>();
+        camera.SetReadOnlyReferences(new ReadOnlyTransform(transform), movement);
     }
 
 
@@ -113,45 +95,7 @@ public class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
     }
 #endregion
 
-#region Class Setup
-
-    /// <summary>
-    /// Initializes communicator fields
-    /// Calls abstract function to set up communicators based on derived class
-    ///   then initializes communication between classes
-    /// </summary>
-    private void SetupCommunicators()
-    {
-        internalCommunicator = new PlayerInternalCommunicator();
-        externalCommunicator = new PlayerExternalCommunicator();
-        
-        KinematicCharacterMotor motor = GetComponent<KinematicCharacterMotor>();
-
-        // Set internal Communications
-        SetCommunicationInterface(internalCommunicator);
-        movement.SetCommunicationInterface(internalCommunicator);
-        animation.SetCommunicationInterface(internalCommunicator);
-        animation.SetReadOnlyReferences(new ReadOnlyKinematicMotor(motor), movement.GetReadOnlyAction());
-        combat.SetCommunicationInterface(internalCommunicator);
-        combat.SetReadOnlyReferences(new ReadOnlyKinematicMotor(motor), movement.GetReadOnlyAction());
-        status.SetCommunicationInterface(internalCommunicator);
-        externalCommunicator.SetCommunicationInterface(internalCommunicator);
-        
-        // Set External Communications
-        // TODO: Have a better way to reference the camera than Camera.main.transform.parent
-        PlayerCamera camera = Camera.main.transform.parent.GetComponent<PlayerCamera>();
-        camera.SetPlayerExternalCommunication(externalCommunicator);
-        camera.SetReadOnlyReferences(new ReadOnlyTransform(transform), new ReadOnlyKinematicMotor(motor));
-    }
-#endregion
-
 #region Communication Methods
-    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
-    {
-        // Set the communication
-        communicator.SetCommunication(this);
-    }
-
     public void LockInput(float time)
     {
         if(inputLockTimer != null)
@@ -182,8 +126,7 @@ public class PlayerCharacter : MonoBehaviour, IPlayerCharacterCommunication
 
         movement.HandleInput(controllerActions); 
         combat.HandleInput(controllerActions);
-
-        externalCommunicator.HandleInput(controllerActions); 
+        camera.HandleInput(controllerActions);
 
         // Debug
         // ? Should this be move into a specific class made to handle debug options?

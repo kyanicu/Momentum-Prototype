@@ -27,7 +27,7 @@ struct CartiaMovementAbilityInput : IPlayerMovementInput
 }
 
 [System.Serializable]
-public class CartiaMovementAbility : PlayerMovementAbility, ICartiaMovementAbilityCommunication
+public class CartiaMovementAbility : PlayerMovementAbility
 {
 
     public override event Action<AbilityOverrideArgs> addingMovementOverrides;

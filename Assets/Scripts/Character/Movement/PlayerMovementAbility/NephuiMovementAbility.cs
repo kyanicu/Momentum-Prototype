@@ -27,7 +27,7 @@ struct NephuiMovementAbilityInput : IPlayerMovementInput
 }
 
 [System.Serializable]
-public class NephuiMovementAbility : PlayerMovementAbility, INephuiMovementAbilityCommunication
+public class NephuiMovementAbility : PlayerMovementAbility
 {
 
     public override event Action<AbilityOverrideArgs> addingMovementOverrides;

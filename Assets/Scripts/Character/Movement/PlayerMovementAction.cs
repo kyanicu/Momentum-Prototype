@@ -9,17 +9,11 @@ using System;
 /// <summary>
 /// A wrapper for the PlayerMovementAction class that allows it's state to referenced, but only be read
 /// </summary>
-public struct ReadOnlyPlayerMovementAction
+public interface IPlayerMovementActionCommunication
 {
-    private PlayerMovementAction action;
+    float facingDirection { get; }
+    bool isBraking { get; }
 
-    public float facingDirection { get { return action.facingDirection; } }
-    public bool isBraking { get { return action.isBraking; } }
-
-    public ReadOnlyPlayerMovementAction(PlayerMovementAction a)
-    {  
-        action = a;
-    }
 }   
 #endregion
 
@@ -228,10 +222,6 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         }
     }
 
-    #region Events
-    public event Action facingDirectionChanged;
-    #endregion
-
     /// <summary>
     /// Holds and maintains input info
     /// </summary>
@@ -259,21 +249,7 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
     [SerializeField]
 	public CharacterOverridableAttribute<PlayerMovementActionValues> overridableAttribute = new CharacterOverridableAttribute<PlayerMovementActionValues>();
 
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    void Awake()
-    {
-        // Set input values
-        input = new MovementActionInput();
-        facingDirection = +1;
-    }
-
-    public void SetCommunicationInterface(PlayerInternalCommunicator communicator)
-    {
-        communicator.SetCommunication(this);
-    }
-
+    private IPlayerAnimationCommunication animationCommunication;
     private void Reset()
     {
         // Set default values
@@ -294,6 +270,21 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         overridableAttribute.baseValues.jumpCancelSpeed = 4;
         overridableAttribute.baseValues.jumpCancelThreshold = 20;
         overridableAttribute.baseValues.invertRight = 0;
+    }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    void Awake()
+    {
+        // Set input values
+        input = new MovementActionInput();
+        facingDirection = +1;
+    }
+
+    void Start()
+    {
+        animationCommunication = GetComponent<IPlayerAnimationCommunication>();
     }
 
     /// <summary>
@@ -340,7 +331,7 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
                 if (faceDir != facingDirection)
                 {
                     facingDirection = faceDir;
-                    facingDirectionChanged?.Invoke();
+                    animationCommunication.ChangeFacingDirection();
                 }                
             }
         }
