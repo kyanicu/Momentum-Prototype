@@ -63,9 +63,6 @@ struct AlestaMovementAbilityInput : IPlayerMovementInput
 public class AlestaMovementAbility : PlayerMovementAbility
 {
 
-    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
-    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
-
     [SerializeField]
 	private CharacterOverridableAttribute<AlestaMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<AlestaMovementAbilityValues>();
 
@@ -74,14 +71,18 @@ public class AlestaMovementAbility : PlayerMovementAbility
     private bool isPermeating;
     private bool inSurfaceCheck;
     private Vector3 permeationEnterVelocity;
-    private AbilityOverrideArgs currentPermeationOverride;
+    private FullMovementOverride currentPermeationOverride;
     private Vector3 currentPermeationNormal;
     private float currentPermeationAngularAccel;
     private Vector3 tempCurrentAngularVelocity;
+    
+    #region Communications
+    private ICharacterValueOverridabilityCommunication overridabilityCommunication;
+    #endregion
 
     void Awake()
     {
-        currentPermeationOverride = new AbilityOverrideArgs();
+        currentPermeationOverride = new FullMovementOverride();
         currentPermeationOverride.movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerOverrideType>>();
         PlayerMovementValues moveOverrides = new PlayerMovementValues();
         moveOverrides.SetDefaultValues(PlayerOverrideType.Addition);
@@ -91,6 +92,12 @@ public class AlestaMovementAbility : PlayerMovementAbility
         currentPermeationOverride.movementOverrides.Add(new MutableTuple<PlayerMovementValues, PlayerOverrideType>(moveOverrides, PlayerOverrideType.Addition));
         
         input = new AlestaMovementAbilityInput();
+    }
+
+    void Start()
+    {
+        overridabilityCommunication = GetComponent<ICharacterValueOverridabilityCommunication>();
+        overridabilityCommunication.RegisterOverridability(overridableAttribute);
     }
 
     void Reset()
@@ -202,22 +209,6 @@ public class AlestaMovementAbility : PlayerMovementAbility
             hitStabilityReport.IsStable = false;
     }
 
-    public override void EnterMovementEffector(MovementEffector effector)
-    {
-        for (int i = 0; i < effector.alestaAbilityOverrides.Count; i++)
-        {
-            overridableAttribute.ApplyOverride(effector.alestaAbilityOverrides[i].item1, effector.alestaAbilityOverrides[i].item2);
-        }
-    }
-
-    public override void ExitMovementEffector(MovementEffector effector)
-    {
-        for (int i = 0; i < effector.alestaAbilityOverrides.Count; i++)
-        {
-            overridableAttribute.RemoveOverride(effector.alestaAbilityOverrides[i].item1, effector.alestaAbilityOverrides[i].item2);
-        }
-    }
-
     public override void Flinch()
     {
         
@@ -251,7 +242,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
         currentPermeationNormal = Vector3.ProjectOnPlane(hitNormal, motor.PlanarConstraintAxis).normalized;
         float angularAccelSign = Mathf.Sign(Vector3.Dot(motor.PlanarConstraintAxis, angularVelocity));
         currentPermeationAngularAccel = (angularVelocity.magnitude / (velocity.magnitude/overridableAttribute.values.permeationPushAccel)) * angularAccelSign;
-        addingMovementOverrides?.Invoke(currentPermeationOverride);
+        overridabilityCommunication.ApplyFullMovementOverride(currentPermeationOverride);
     }
 
     private void ExitPermeation()
@@ -260,7 +251,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
         inSurfaceCheck = false;
         currentPermeationAngularAccel = 0;
         currentPermeationNormal = Vector3.zero;
-        removingMovementOverrides(currentPermeationOverride);
+        overridabilityCommunication.RemoveFullMovementOverride(currentPermeationOverride);
     }
 
 }

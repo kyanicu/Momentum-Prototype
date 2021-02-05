@@ -29,42 +29,27 @@ struct NephuiMovementAbilityInput : IPlayerMovementInput
 [System.Serializable]
 public class NephuiMovementAbility : PlayerMovementAbility
 {
-
-    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
-    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
-
     private NephuiMovementAbilityInput input;
 
     [SerializeField]
     CharacterOverridableAttribute<NephuiMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<NephuiMovementAbilityValues>();
-
-    void Awake()
-    {
-        input = new NephuiMovementAbilityInput();
-    }
 
     void Reset()
     {
         overridableAttribute.baseValues.test = 7;
     }
 
+    void Awake()
+    {
+        input = new NephuiMovementAbilityInput();
+    }
+
+    void Start()
+    {
+        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
+    }
+
     #region Ability Implementation
-
-    public override void EnterMovementEffector(MovementEffector effector)
-    {
-        for (int i = 0; i < effector.nephuiAbilityOverrides.Count; i++)
-        {
-            overridableAttribute.ApplyOverride(effector.nephuiAbilityOverrides[i].item1, effector.nephuiAbilityOverrides[i].item2);
-        }
-    }
-
-    public override void ExitMovementEffector(MovementEffector effector)
-    {
-        for (int i = 0; i < effector.nephuiAbilityOverrides.Count; i++)
-        {
-            overridableAttribute.RemoveOverride(effector.nephuiAbilityOverrides[i].item1, effector.nephuiAbilityOverrides[i].item2);
-        }
-    }
 
     public override void Flinch()
     {

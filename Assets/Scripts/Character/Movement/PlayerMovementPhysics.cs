@@ -212,7 +212,6 @@ public class PlayerMovementPhysics : MonoBehaviour
     /// </summary>
     public Vector3 gravityDirection { get { return overridableAttribute.values.gravityDirection; } }
 
-
     /// <summary>
     /// The currently overriden physics values for the current motor update
     /// </summary>
@@ -224,13 +223,6 @@ public class PlayerMovementPhysics : MonoBehaviour
     [SerializeField]
     public CharacterOverridableAttribute<PlayerMovementPhysicsValues> overridableAttribute = new CharacterOverridableAttribute<PlayerMovementPhysicsValues>();
 
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    void Awake()
-    {
-        negations = new PhysicsNegations();
-    }
 
     private void Reset()
     {
@@ -261,6 +253,19 @@ public class PlayerMovementPhysics : MonoBehaviour
     private void OnValidate()
     {
         overridableAttribute.baseValues.gravityDirection = overridableAttribute.baseValues.gravityDirection.normalized;
+    }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    void Awake()
+    {
+        negations = new PhysicsNegations();
+    }
+
+    void Start()
+    {
+        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
     }
 
     /// <summary>

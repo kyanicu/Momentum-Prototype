@@ -57,10 +57,6 @@ public interface IPlayerMovementCommunication
     bool isGroundedThisUpdate { get; }
     bool wasGroundedLastUpdate { get; }
 
-    void ApplyMovementOverride(FullMovementOverride overrides);
-    
-    void RemoveMovementOverride(FullMovementOverride overrides);
-
     void ZeroVelocity(bool zeroAngularVelocity = false);
     void SetKinematicPath(Vector3 vel, float time);
     void Flinch();
@@ -115,7 +111,6 @@ public struct WallHits
 [System.Serializable]
 public class PlayerMovementValues : CharacterOverridableValues
 {
-
     /// <summary>
     /// The absolute max speed the player can ever achieve
     /// </summary>
@@ -533,26 +528,20 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         overridableAttribute.baseValues.negatePhysics = 0;
     }
 
-    void Awake()
-    {
-
-        motor = GetComponent<KinematicCharacterMotor>();
-        // Instantiate helper components
-        physics = GetComponent<PlayerMovementPhysics>();
-        action = GetComponent<PlayerMovementAction>();
-        ability = GetComponent<PlayerMovementAbility>();
-        
-        // Set Ability event handlers
-        ability.addingMovementOverrides += AddAbilityOverride;
-        ability.removingMovementOverrides += RemoveAbilityOverride;
-    }
-
     /// <summary>
     /// Setup the class to be ready for gameplay
     /// Also initializes state info for debugging
     /// </summary>
     void Start()
     {
+        motor = GetComponent<KinematicCharacterMotor>();
+        // Instantiate helper components
+        physics = GetComponent<PlayerMovementPhysics>();
+        action = GetComponent<PlayerMovementAction>();
+        ability = GetComponent<PlayerMovementAbility>();
+
+        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
+
         motor.CharacterController = this;
 
         slopeList = new SlopeList(5);
@@ -596,9 +585,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
             case ("Plane Breaker") :
                 EnterPlaneBreaker(col.GetComponent<PlaneBreaker>());
                 break;
-            case ("Movement Effector") :
-                EnterMovementEffector(col.GetComponent<MovementEffector>());
-                break;
             case ("Checkpoint") :
                 startState = motor.GetState();
                 startPlane = new Plane(currentPlane.normal, motor.Transform.position);
@@ -619,9 +605,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
                 break;
             case ("Plane Breaker") :
                 ExitPlaneBreaker(col);
-                break;
-            case ("Movement Effector") :
-                ExitMovementEffector(col.GetComponent<MovementEffector>());
                 break;
         }
     } 
@@ -1286,173 +1269,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         {
             // Stop tracking it
             currentPlaneBreakers[1] = null;
-        }
-    }
-#endregion
-
-#region Movement Effector Handling
-
-    /// <summary>
-    /// Apply any overrides from an entered MovementEffector
-    /// </summary>
-    /// <param name="effector"> The MovementEffector entered </param>
-    private void EnterMovementEffector(MovementEffector effector)
-    {
-        // Apply base Movement value overrides
-        for (int i = 0; i < effector.movementOverrides.Count; i++)
-        {
-            overridableAttribute.ApplyOverride(effector.movementOverrides[i].item1, effector.movementOverrides[i].item2);
-        }
-
-        // Apply Physics value overrides
-        for (int i = 0; i < effector.physicsOverrides.Count; i++)
-        {
-            physics.overridableAttribute.ApplyOverride(effector.physicsOverrides[i].item1, effector.physicsOverrides[i].item2);
-        }
-
-        // Apply Action value overrides
-        for (int i = 0; i < effector.actionOverrides.Count; i++)
-        {
-            action.overridableAttribute.ApplyOverride(effector.actionOverrides[i].item1, effector.actionOverrides[i].item2);
-        }
-
-        // Apply appropriate Ability value overrides 
-        ability.EnterMovementEffector(effector);
-    }
-
-    /// <summary>
-    /// Remove any overrides from an exited MovementEffector
-    /// </summary>
-    /// <param name="effector"> The MovementEffector exited </param>
-    private void ExitMovementEffector(MovementEffector effector)
-    {
-        // Remove base Movement value overrides
-        for (int i = 0; i < effector.movementOverrides.Count; i++)
-        {
-            overridableAttribute.RemoveOverride(effector.movementOverrides[i].item1, effector.movementOverrides[i].item2);
-        }
-
-        // Remove Physics value overrides
-        for (int i = 0; i < effector.physicsOverrides.Count; i++)
-        {
-            physics.overridableAttribute.RemoveOverride(effector.physicsOverrides[i].item1, effector.physicsOverrides[i].item2);
-        }
-
-        // Remove Action value overrides
-        for (int i = 0; i < effector.actionOverrides.Count; i++)
-        {
-            action.overridableAttribute.RemoveOverride(effector.actionOverrides[i].item1, effector.actionOverrides[i].item2);
-        }
-
-        // Remove appropriate Ability value overrides 
-        ability.ExitMovementEffector(effector);
-    }
-#endregion
-
-#region External Movement Override Handling
-    /// <summary>
-    /// Handle the event triggered by Ability wishing to apply an override
-    /// ? Possibly find a way to combine this nicely with movement effector so there's less copy and paste?
-    /// </summary> 
-    /// <param name="overrides"> The Abilty Overrides given </param>
-    public void ApplyMovementOverride(FullMovementOverride overrides)
-    {
-        // Apply base Movement value overrides
-        for (int i = 0; i < overrides.movementOverrides.Count; i++)
-        {
-            overridableAttribute.ApplyOverride(overrides.movementOverrides[i].item1, overrides.movementOverrides[i].item2);
-        }
-
-        // Apply Physics value overrides
-        for (int i = 0; i < overrides.physicsOverrides.Count; i++)
-        {
-            physics.overridableAttribute.ApplyOverride(overrides.physicsOverrides[i].item1, overrides.physicsOverrides[i].item2);
-        }
-
-        // Apply Action value overrides
-        for (int i = 0; i < overrides.actionOverrides.Count; i++)
-        {
-            action.overridableAttribute.ApplyOverride(overrides.actionOverrides[i].item1, overrides.actionOverrides[i].item2);
-        }
-    }
-
-    /// <summary>
-    /// Handle the event triggered by Ability wishing to remove an override
-    /// ? Possibly find a way to combine this nicely with movement effector so there's less copy and paste?
-    /// </summary>
-    /// <param name="overrides"> The Abilty Overrides given </param>
-    public void RemoveMovementOverride(FullMovementOverride overrides)
-    {
-        // Remove base Movement value overrides
-        for (int i = 0; i < overrides.movementOverrides.Count; i++)
-        {
-            overridableAttribute.RemoveOverride(overrides.movementOverrides[i].item1, overrides.movementOverrides[i].item2);
-        }
-
-        // Remove Physics value overrides
-        for (int i = 0; i < overrides.physicsOverrides.Count; i++)
-        {
-            physics.overridableAttribute.RemoveOverride(overrides.physicsOverrides[i].item1, overrides.physicsOverrides[i].item2);
-        }
-
-        // Remove Action value overrides
-        for (int i = 0; i < overrides.actionOverrides.Count; i++)
-        {
-            action.overridableAttribute.RemoveOverride(overrides.actionOverrides[i].item1, overrides.actionOverrides[i].item2);
-        }
-    }
-#endregion
-
-#region Ability Movement Override Handling
-    /// <summary>
-    /// Handle the event triggered by Ability wishing to apply an override
-    /// ? Possibly find a way to combine this nicely with movement effector so there's less copy and paste?
-    /// </summary>
-    /// <param name="args"> The Abilty Overrides given </param>
-    private void AddAbilityOverride(AbilityOverrideArgs args)
-    {
-        // Apply base Movement value overrides
-        for (int i = 0; i < args.movementOverrides.Count; i++)
-        {
-            overridableAttribute.ApplyOverride(args.movementOverrides[i].item1, args.movementOverrides[i].item2);
-        }
-
-        // Apply Physics value overrides
-        for (int i = 0; i < args.physicsOverrides.Count; i++)
-        {
-            physics.overridableAttribute.ApplyOverride(args.physicsOverrides[i].item1, args.physicsOverrides[i].item2);
-        }
-
-        // Apply Action value overrides
-        for (int i = 0; i < args.actionOverrides.Count; i++)
-        {
-            action.overridableAttribute.ApplyOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
-        }
-    }
-
-    /// <summary>
-    /// Handle the event triggered by Ability wishing to remove an override
-    /// ? Possibly find a way to combine this nicely with movement effector so there's less copy and paste?
-    /// </summary>
-    /// <param name="args"> The Abilty Overrides given </param>
-    private void RemoveAbilityOverride(AbilityOverrideArgs args)
-    {
-         // Remove base Movement value overrides
-        for (int i = 0; i < args.movementOverrides.Count; i++)
-        {
-            overridableAttribute.RemoveOverride(args.movementOverrides[i].item1, args.movementOverrides[i].item2);
-        }
-
-        // Remove Physics value overrides
-        for (int i = 0; i < args.physicsOverrides.Count; i++)
-        {
-            physics.overridableAttribute.RemoveOverride(args.physicsOverrides[i].item1, args.physicsOverrides[i].item2);
-        }
-
-        // Remove Action value overrides
-        for (int i = 0; i < args.actionOverrides.Count; i++)
-        {
-            action.overridableAttribute.RemoveOverride(args.actionOverrides[i].item1, args.actionOverrides[i].item2);
         }
     }
 #endregion

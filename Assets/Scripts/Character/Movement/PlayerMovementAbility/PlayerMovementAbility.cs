@@ -4,24 +4,8 @@ using UnityEngine;
 using KinematicCharacterController;
 using System;
 
-[System.Serializable]
-public struct AbilityOverrideArgs
-{
-    [SerializeField]
-    public List<MutableTuple<PlayerMovementValues, PlayerOverrideType>> movementOverrides;
-
-    [SerializeField]
-    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>> physicsOverrides;
-
-    [SerializeField]
-    public List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>> actionOverrides;
-
-}
-
 public abstract class PlayerMovementAbility : MonoBehaviour
 {
-    public abstract event Action<AbilityOverrideArgs> addingMovementOverrides;
-    public abstract event Action<AbilityOverrideArgs> removingMovementOverrides;
 
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
@@ -121,10 +105,6 @@ public abstract class PlayerMovementAbility : MonoBehaviour
     /// <summary>
     /// Resets the input state
     /// </summary>
-    public  abstract void ResetInput();
-
-    public abstract void EnterMovementEffector(MovementEffector effector);
-
-    public abstract void ExitMovementEffector(MovementEffector effector);
+    public abstract void ResetInput();
 
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -390,4 +391,161 @@ public sealed class CharacterOverridableAttribute<Values> :ISerializationCallbac
         // Set calculated values (currently equivalent to base values)
         CalculateValues();
     }
+
+}
+
+public interface ICharacterValueOverridabilityCommunication
+{
+    void RegisterOverridability<Values>(CharacterOverridableAttribute<Values> attribute) where Values : CharacterOverridableValues, new();
+
+    void DeregisterOverridability<Values>(CharacterOverridableAttribute<Values> attribute) where Values : CharacterOverridableValues, new();
+
+    void ApplyOverride<Values>(Values values, PlayerOverrideType type) where Values : CharacterOverridableValues, new();
+
+    void RemoveOverride<Values>(Values values, PlayerOverrideType type) where Values : CharacterOverridableValues, new();
+
+    void ApplyFullMovementOverride(FullMovementOverride overrides);
+
+    void RemoveFullMovementOverride(FullMovementOverride overrides);
+}
+
+[System.Serializable]
+public struct MutableTuple<i,j>
+{
+    public i item1;
+    public j item2;
+
+    public MutableTuple(i i1,j i2)
+    {
+        item1 = i1;
+        item2 = i2;
+    }
+}
+
+[System.Serializable]
+public struct FullMovementOverride
+{
+    [SerializeField]
+    public List<MutableTuple<PlayerMovementValues, PlayerOverrideType>> movementOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>> physicsOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>> actionOverrides;
+
+
+    [SerializeField]
+    public List<MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType>> alestaAbilityOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType>> nephuiAbilityOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType>> cartiaAbilityOverrides;
+
+    [SerializeField]
+    public List<MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType>> ilphineAbilityOverrides;
+}
+
+public class CharacterValueOverridability : MonoBehaviour, ICharacterValueOverridabilityCommunication
+{
+    private Dictionary<Type, object> attributeByType = new Dictionary<Type, object>();
+
+    public void RegisterOverridability<Values>(CharacterOverridableAttribute<Values> attribute) where Values : CharacterOverridableValues, new()
+    {
+        attributeByType.Add(attribute.GetType(), attribute);
+    }
+
+    public void DeregisterOverridability<Values>(CharacterOverridableAttribute<Values> attribute) where Values : CharacterOverridableValues, new()
+    {
+        attributeByType.Remove(attribute.GetType());
+    }
+
+    public void ApplyOverride<Values>(Values values, PlayerOverrideType type) where Values : CharacterOverridableValues, new() 
+    {
+        (attributeByType[typeof(CharacterOverridableAttribute<Values>)] as CharacterOverridableAttribute<Values>)?.ApplyOverride(values, type);
+    }
+
+    public void RemoveOverride<Values>(Values values, PlayerOverrideType type) where Values : CharacterOverridableValues, new() 
+    {
+        (attributeByType[typeof(CharacterOverridableAttribute<Values>)] as CharacterOverridableAttribute<Values>)?.ApplyOverride(values, type);
+    }
+
+    public void ApplyFullMovementOverride(FullMovementOverride overrides)
+    {
+        foreach (MutableTuple<PlayerMovementValues, PlayerOverrideType> o in overrides.movementOverrides)
+        {
+            ApplyOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType> o in overrides.physicsOverrides)
+        {
+            ApplyOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<PlayerMovementActionValues, PlayerOverrideType> o in overrides.actionOverrides)
+        {
+            ApplyOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType> o in overrides.alestaAbilityOverrides)
+        {
+            ApplyOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType> o in overrides.nephuiAbilityOverrides)
+        {
+            ApplyOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType> o in overrides.cartiaAbilityOverrides)
+        {
+            ApplyOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType> o in overrides.ilphineAbilityOverrides)
+        {
+            ApplyOverride(o.item1, o.item2);
+        }
+    }
+
+    public void RemoveFullMovementOverride(FullMovementOverride overrides)
+    {
+        foreach (MutableTuple<PlayerMovementValues, PlayerOverrideType> o in overrides.movementOverrides)
+        {
+            RemoveOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType> o in overrides.physicsOverrides)
+        {
+            RemoveOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<PlayerMovementActionValues, PlayerOverrideType> o in overrides.actionOverrides)
+        {
+            RemoveOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType> o in overrides.alestaAbilityOverrides)
+        {
+            RemoveOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType> o in overrides.nephuiAbilityOverrides)
+        {
+            RemoveOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType> o in overrides.cartiaAbilityOverrides)
+        {
+            RemoveOverride(o.item1, o.item2);
+        }
+        
+        foreach (MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType> o in overrides.ilphineAbilityOverrides)
+        {
+            RemoveOverride(o.item1, o.item2);
+        }
+    }
+
 }

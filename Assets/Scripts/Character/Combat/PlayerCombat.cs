@@ -89,6 +89,7 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
     private IPlayerAnimationCommunication animationCommunication;
     private IPlayerMovementCommunication movementCommunication;
     private IPlayerMovementActionCommunication movementActionCommunication;
+    private ICharacterValueOverridabilityCommunication overridabilityCommunication;
     
 #endregion
 
@@ -110,6 +111,7 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
         animationCommunication = GetComponent<IPlayerAnimationCommunication>();
         movementCommunication = GetComponent<IPlayerMovementCommunication>();
         movementActionCommunication = GetComponent<IPlayerMovementActionCommunication>();
+        overridabilityCommunication = GetComponent<ICharacterValueOverridabilityCommunication>();
 
         damageable = GetComponent<IDamageable>();
     }
@@ -229,12 +231,12 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
 
     private void ApplyAttackInitInfo(AttackInitInfo info)
     {
-        movementCommunication.ApplyMovementOverride(info.movementOverride);
+        overridabilityCommunication.ApplyFullMovementOverride(info.movementOverride);
     }
 
     private void ResetAttackInitInfo(AttackInitInfo info)
     {
-        movementCommunication.RemoveMovementOverride(info.movementOverride);
+        overridabilityCommunication.RemoveFullMovementOverride(info.movementOverride);
     }
 
     public AttackerInfo GetAttackerInfo()

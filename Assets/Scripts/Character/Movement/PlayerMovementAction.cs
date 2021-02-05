@@ -285,6 +285,8 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
     void Start()
     {
         animationCommunication = GetComponent<IPlayerAnimationCommunication>();
+
+        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
     }
 
     /// <summary>

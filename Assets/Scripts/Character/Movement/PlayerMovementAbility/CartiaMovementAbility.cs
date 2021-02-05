@@ -29,42 +29,27 @@ struct CartiaMovementAbilityInput : IPlayerMovementInput
 [System.Serializable]
 public class CartiaMovementAbility : PlayerMovementAbility
 {
-
-    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
-    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
-
     private CartiaMovementAbilityInput input;
 
     [SerializeField]
     CharacterOverridableAttribute<CartiaMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<CartiaMovementAbilityValues>();
-
-    void Awake()
-    {
-        input = new CartiaMovementAbilityInput();
-    }
 
     void Reset()
     {
         overridableAttribute.baseValues.test = 7;
     }
 
+    void Awake()
+    {
+        input = new CartiaMovementAbilityInput();
+    }
+
+    void Start()
+    {
+        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
+    }
+
     #region Ability Implementation
-
-    public override void EnterMovementEffector(MovementEffector effector)
-    {
-        for (int i = 0; i < effector.cartiaAbilityOverrides.Count; i++)
-        {
-            overridableAttribute.ApplyOverride(effector.cartiaAbilityOverrides[i].item1, effector.cartiaAbilityOverrides[i].item2);
-        }
-    }
-
-    public override void ExitMovementEffector(MovementEffector effector)
-    {
-        for (int i = 0; i < effector.cartiaAbilityOverrides.Count; i++)
-        {
-            overridableAttribute.RemoveOverride(effector.cartiaAbilityOverrides[i].item1, effector.cartiaAbilityOverrides[i].item2);
-        }
-    }
 
     public override void Flinch()
     {

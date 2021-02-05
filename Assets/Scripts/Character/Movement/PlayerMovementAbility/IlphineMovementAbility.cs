@@ -29,42 +29,27 @@ struct IlphineMovementAbilityInput : IPlayerMovementInput
 [System.Serializable]
 public class IlphineMovementAbility : PlayerMovementAbility
 {
-
-    public override event Action<AbilityOverrideArgs> addingMovementOverrides;
-    public override event Action<AbilityOverrideArgs> removingMovementOverrides;
-
     private IlphineMovementAbilityInput input;
 
     [SerializeField]
     CharacterOverridableAttribute<IlphineMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<IlphineMovementAbilityValues>();
+
+    void Reset()
+    {
+        overridableAttribute.baseValues.test = 7;
+    }
 
     void Awake()
     {
         input = new IlphineMovementAbilityInput();
     }
 
-    void Reset()
+    void Start()
     {
-        overridableAttribute.baseValues.test = 7;
+        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
     }
     
     #region Ability Implementation
-
-    public override void EnterMovementEffector(MovementEffector effector)
-    {
-        for (int i = 0; i < effector.ilphineAbilityOverrides.Count; i++)
-        {
-            overridableAttribute.ApplyOverride(effector.ilphineAbilityOverrides[i].item1, effector.ilphineAbilityOverrides[i].item2);
-        }
-    }
-
-    public override void ExitMovementEffector(MovementEffector effector)
-    {
-        for (int i = 0; i < effector.ilphineAbilityOverrides.Count; i++)
-        {
-            overridableAttribute.RemoveOverride(effector.ilphineAbilityOverrides[i].item1, effector.ilphineAbilityOverrides[i].item2);
-        }
-    }
 
     public override void Flinch()
     {
