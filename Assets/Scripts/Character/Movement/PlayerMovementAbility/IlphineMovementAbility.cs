@@ -13,12 +13,8 @@ public class IlphineMovementAbilityValues : CharacterOverridableValues
     protected override float[] floatValues { get { return new float[] { test }; } set { test = value[0]; } }
 }
 
-struct IlphineMovementAbilityInput : IPlayerMovementInput
+public struct IlphineMovementAbilityControl : IAbilityControl
 {
-    public void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-
-    }
 
     public void Reset()
     {
@@ -26,10 +22,10 @@ struct IlphineMovementAbilityInput : IPlayerMovementInput
     }
 }
 
-[System.Serializable]
 public class IlphineMovementAbility : PlayerMovementAbility
 {
-    private IlphineMovementAbilityInput input;
+
+    public IlphineMovementAbilityControl control;
 
     [SerializeField]
     CharacterOverridableAttribute<IlphineMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<IlphineMovementAbilityValues>();
@@ -41,7 +37,8 @@ public class IlphineMovementAbility : PlayerMovementAbility
 
     void Awake()
     {
-        input = new IlphineMovementAbilityInput();
+        control = new IlphineMovementAbilityControl();
+        controlInterface = control;
     }
 
     void Start()
@@ -49,24 +46,12 @@ public class IlphineMovementAbility : PlayerMovementAbility
         GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
     }
     
-    #region Ability Implementation
+#region Ability Implementation
 
     public override void Flinch()
     {
-        
+        controlInterface.Reset();
     }
 
-    public override void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-        input.RegisterInput(controllerActions);
-    }
-
-    /// <summary>
-    /// Resets the input state
-    /// </summary>
-    public override void ResetInput()
-    {
-        input.Reset();
-    }
 #endregion
 }

@@ -5,7 +5,7 @@ using KinematicCharacterController;
 
 /// <summary>
 /// Class that represents the Camera's behavior of following (Or being controlled directly by) the player
-/// Implements IPlayerCameraCommunication to allow external communication with the player
+/// Implements IPlayerCamera to allow external  with the player
 /// </summary>
 public class PlayerCamera : MonoBehaviour
 {
@@ -145,8 +145,8 @@ public class PlayerCamera : MonoBehaviour
     private Vector3 playerGravityDirection;
 #endregion
 
-#region Communications
-    private IPlayerMovementCommunication movementCommunication;
+#region External References
+    private PlayerMovement movement;
 #endregion
 
     #region Unity Monobehavior Messages
@@ -215,8 +215,8 @@ public class PlayerCamera : MonoBehaviour
         {
             // Handle auto tilting
             transform.position = playerTransform.position - cameraWorldForward * cameraDistance;
-            if (movementCommunication.velocity.sqrMagnitude > tiltThreshold * tiltThreshold)
-                targetTiltPoint = Vector3.SmoothDamp(targetTiltPoint, playerTransform.position + (movementCommunication.velocity - movementCommunication.velocity.normalized * tiltThreshold) * tiltScale, ref tiltDampVel, tiltDampTime, tiltDampMaxSpeed);
+            if (movement.velocity.sqrMagnitude > tiltThreshold * tiltThreshold)
+                targetTiltPoint = Vector3.SmoothDamp(targetTiltPoint, playerTransform.position + (movement.velocity - movement.velocity.normalized * tiltThreshold) * tiltScale, ref tiltDampVel, tiltDampTime, tiltDampMaxSpeed);
             else
                 targetTiltPoint = Vector3.SmoothDamp(targetTiltPoint, playerTransform.position, ref tiltDampVel, tiltDampTime/2, tiltDampMaxSpeed);
             
@@ -233,26 +233,26 @@ public class PlayerCamera : MonoBehaviour
         }
 
         // Handle auto zoom
-        if (movementCommunication.velocity.sqrMagnitude > zoomThreshold * zoomThreshold)
-            zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, (movementCommunication.velocity.magnitude - zoomThreshold) * zoomScale, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
+        if (movement.velocity.sqrMagnitude > zoomThreshold * zoomThreshold)
+            zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, (movement.velocity.magnitude - zoomThreshold) * zoomScale, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
         else
             zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, 0, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
         transform.position -= transform.forward * zoomExtraDistance;
     }
 #endregion
 
-#region PlayerExternalCommunication
+#region PlayerExternal
 
     /// <summary>
     /// Handles ReadOnly reference setup
     /// </summary>
     /// <param name="_playerTransform">The player's readonly transform reference</param>
     /// <param name="_playerKinematicMotor">The player's readonly Motor reference</param>
-    public void SetReadOnlyReferences(ReadOnlyTransform _playerTransform, IPlayerMovementCommunication _movementCommunication)
+    public void SetReadOnlyReferences(ReadOnlyTransform _playerTransform, PlayerMovement _movement)
     {
         playerTransform = _playerTransform;
-        movementCommunication = _movementCommunication;
-        movementCommunication.planeChanged += HandlePlayerPlaneChanged;
+        movement = _movement;
+        movement.planeChanged += HandlePlayerPlaneChanged;
     }
 
     /// <summary>

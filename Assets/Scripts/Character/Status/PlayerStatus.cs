@@ -3,15 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerStatus : MonoBehaviour, IDamageable
+public class PlayerStatus : CharacterStatus, IDamageable
 {
     [SerializeField]
-    private float maxHealth;
-    [SerializeField]
     private float maxVitality;
-
-    private float _health;
-    private float health { get { return _health; } set { _health = (value > maxHealth) ? maxHealth : (value < 0) ? 0 : value; if( health == 0) Down(); } }
 
     [SerializeField]
     private float iFrameTime = 1f;
@@ -21,11 +16,11 @@ public class PlayerStatus : MonoBehaviour, IDamageable
     [SerializeField, HideInInspector]
     private GameObject hurtboxes;
 
-    #region Communications
-    private IPlayerAnimationCommunication animationCommunication;
-    private IPlayerMovementCommunication movementCommunication;
-    private IPlayerCharacterCommunication characterCommunication;
-    private IPlayerCombatCommunication combatCommunication;
+    #region Sibling References
+    new private PlayerAnimation animation;
+    private PlayerMovement movement;
+    private PlayerCharacterDirector character;
+    private PlayerCombat combat;
     #endregion
 
     void Awake()
@@ -41,15 +36,10 @@ public class PlayerStatus : MonoBehaviour, IDamageable
 
     void Start()
     {
-        animationCommunication = GetComponent<IPlayerAnimationCommunication>();
-        movementCommunication = GetComponent<IPlayerMovementCommunication>();
-        characterCommunication = GetComponent<IPlayerCharacterCommunication>();
-        combatCommunication = GetComponent<IPlayerCombatCommunication>();
-    }
-
-    private void Down()
-    {
-
+        animation = GetComponent<PlayerAnimation>();
+        movement = GetComponent<PlayerMovement>();
+        character = GetComponent<PlayerCharacterDirector>();
+        combat = GetComponent<PlayerCombat>();
     }
 
     public HitValidity ValidHit(Hitbox hitbox, Hurtbox hurtbox)
@@ -71,59 +61,59 @@ public class PlayerStatus : MonoBehaviour, IDamageable
         Debug.Log("iFramesActive for " + ((iFrameTimeOverride != 0) ? iFrameTimeOverride : iFrameTime) + " Seconds");
         GameManager.Instance.TimerViaGameTime((iFrameTimeOverride != 0) ? iFrameTimeOverride : iFrameTime, DeactivateIFrames);
         iFramesActive = true;
-        animationCommunication.StartIFrames();
+        animation.StartIFrames();
     }
 
     public void DeactivateIFrames()
     {
         iFramesActive = false;
-        animationCommunication.EndIFrames();
+        animation.EndIFrames();
     }
 
     public void Flinch()
     {
         Debug.Log("Flinched");
-        movementCommunication.Flinch();
-        combatCommunication.Flinch();
-        animationCommunication.AnimateFlinch();
+        movement.Flinch();
+        combat.Flinch();
+        animation.AnimateFlinch();
     }
 
     public void Halt()
     {
         Debug.Log("Halted");
-        movementCommunication.ZeroVelocity(true);
+        movement.ZeroVelocity(true);
     }
 
     public void ForceUnground()
     {
         Debug.Log("Force Ungrounded");
-        movementCommunication.ForceUnground();
+        movement.ForceUnground();
     }
 
     public void Stun(float stunTime)
     {
         Debug.Log("Stunned");
-        characterCommunication.LockInput(stunTime);
+        character.TempLockControl(stunTime);
     }
 
     public void TakeKinematicKnockback(Vector3 knockback, float time)
     {
         Debug.Log("Took Kinematic Knockback for " + time + "Seconds");
         Debug.DrawRay(GameObject.Find("Alesta").transform.position, knockback, Color.yellow, 5);
-        movementCommunication.SetKinematicPath(knockback, time);
+        movement.SetKinematicPath(knockback, time);
     }
 
     public void TakeDynamicKnockback(Vector3 knockback)
     {
         Debug.Log("Took Dynamic Knockback");
         Debug.DrawRay(GameObject.Find("Alesta").transform.position, knockback, Color.yellow + Color.red, 5);
-        movementCommunication.AddImpulse(knockback);
+        movement.AddImpulse(knockback);
     }
 
     public void TakeDynamicKnockbackWithTorque(Vector3 knockback, Vector3 atPoint)
     {
         Debug.Log("Took Dynamic Knockback With Torque");
         Debug.DrawRay(atPoint, knockback, Color.red, 5);
-        movementCommunication.AddImpulseAtPoint(knockback, atPoint);
+        movement.AddImpulseAtPoint(knockback, atPoint);
     }
 }

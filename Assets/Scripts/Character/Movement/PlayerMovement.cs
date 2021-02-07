@@ -39,51 +39,6 @@ public struct PlaneChangeArgs
 #endregion
 
 /// <summary>
-/// Communication interface for PlayerMovement
-/// </summary>
-public interface IPlayerMovementCommunication
-{
-    /// <summary>
-    /// Event triggered when the player changes plane
-    /// </summary>
-    event Action<PlaneChangeArgs> planeChanged;
-
-    
-    Vector3 position { get; }
-    Quaternion rotation { get; }
-    Vector3 velocity { get; }
-    Vector3 groundNormal { get; }
-    Vector3 lastGroundNormal { get; }
-    bool isGroundedThisUpdate { get; }
-    bool wasGroundedLastUpdate { get; }
-
-    void ZeroVelocity(bool zeroAngularVelocity = false);
-    void SetKinematicPath(Vector3 vel, float time);
-    void Flinch();
-    void ForceUnground();
-    void AddImpulse(Vector3 Impulse);
-    void AddImpulseAtPoint(Vector3 impulse, Vector3 point);
-
-}
-
-/// <summary>
-/// Interface for input relating to PlayerMovement
-/// TODO: Should be deprecated or restructured once input is handled by actions/events
- /// </summary>
-public interface IPlayerMovementInput
-{
-    /// <summary>
-    /// Register input for use
-    /// </summary>
-    /// <param name="controllerActions">The controller actions</param>
-    void RegisterInput(PlayerController.PlayerActions controllerActions);
-    /// <summary>
-    /// Reset input registration
-    /// </summary>
-    void Reset();
-}
-
-/// <summary>
 /// Holds wall hit info
 /// </summary>
 public struct WallHits
@@ -147,18 +102,6 @@ public class PlayerMovementValues : CharacterOverridableValues
     [SerializeField]
     public float ungroundRotationMaxSpeed;
 
-    /// <summary>
-    /// Is the action component negated?
-    /// Uses int as a count of true bools as bool is not supported in overridable values
-    /// Use negateAction > 0 == true
-    /// </summary>
-    public int negateAction;
-    /// <summary>
-    /// Is the physics component negated?
-    /// Uses int as a count of true bools as bool is not supported in overridable values
-    /// Use negatePhysics > 0 == true
-    public int negatePhysics;
-
     protected override float[] floatValues 
     {
         get 
@@ -185,24 +128,6 @@ public class PlayerMovementValues : CharacterOverridableValues
         }
     }
 
-    protected override int[] intValues 
-    {
-        get 
-        { 
-            return new int[]
-            {
-                negateAction,
-                negatePhysics,
-            };
-        }
-
-        set
-        {
-            negateAction = value[0];
-            negatePhysics = value[1];
-        }
-    }
-
 }
 
 /// <summary>
@@ -217,7 +142,7 @@ public class PlayerMovementValues : CharacterOverridableValues
 /// Implements ICharacterController to allow control over the players KinematicCharacterMotor Unity Component
 /// Implements IPlayerMovementCmmunication to allow communication between other Player components
 /// </summary>
-public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMovementCommunication
+public class PlayerMovement : MonoBehaviour, ICharacterController
 {
 
 #region MovementEvents
@@ -524,8 +449,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         overridableAttribute.baseValues.ungroundRotationFactor = 1.25f;
         overridableAttribute.baseValues.ungroundRotationMinSpeed = 15;
         overridableAttribute.baseValues.ungroundRotationMaxSpeed = 1000;
-        overridableAttribute.baseValues.negateAction = 0;
-        overridableAttribute.baseValues.negatePhysics = 0;
     }
 
     /// <summary>
@@ -557,18 +480,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         #endregion
     }
     #endregion
-
-    /// <summary>
-    /// Handles Input when valid
-    /// TODO: Remove when refactored to be handled by events 
-    /// </summary>
-    public void HandleInput(PlayerController.PlayerActions controllerActions)
-    {
-        // Make sure Action can take input
-        if(overridableAttribute.values.negateAction == 0)
-            action.RegisterInput(controllerActions);
-        ability.RegisterInput(controllerActions);
-    }
 
 #region PlayerCharacter's MonoBehavior Messages Handling
     /// <summary>
@@ -647,16 +558,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         externalVelocity = -motor.BaseVelocity + kinematicPath.Value.velocityAfter;
 
         kinematicPath = null;
-    }
-    
-    public void StartStun()
-    {
-        action.StartStun();
-    }
-
-    public void EndStun()
-    {
-        action.EndStun();
     }
 
     public void Flinch()
@@ -749,15 +650,13 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         }
 
         // Handle Action related rotation updates, if active
-        if(overridableAttribute.values.negateAction == 0)
-            action.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
+        action.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
         
         // Handle Ability related rotation updates
         ability.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
         
         // Handle Physics related rotation updates, if active
-        if(overridableAttribute.values.negatePhysics == 0)
-            physics.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
+        physics.UpdateRotation(ref currentRotation, ref internalAngularVelocity, motor, deltaTime);
 
         // Handle angular momentum 
         if(internalAngularVelocity != Vector3.zero)
@@ -832,12 +731,9 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
 
         if(kinematicPath == null)
         {
-            // Update velocity from components
-            if(overridableAttribute.values.negateAction == 0)
-                action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, wallHits, ref physics.negations, groundingActionBuffer, bufferedUngroundedNormal, deltaTime);
+            action.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, wallHits, ref physics.negations, groundingActionBuffer, bufferedUngroundedNormal, deltaTime);
             ability.UpdateVelocity(ref currentVelocity, motor, physics.gravityDirection, ref physics.negations, deltaTime);
-            if(overridableAttribute.values.negatePhysics == 0)
-                physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
+            physics.UpdateVelocity (ref currentVelocity, motor, deltaTime);
         }
 
         // Ensure velocity is locked to current 2.5D plane
@@ -981,8 +877,8 @@ public class PlayerMovement : MonoBehaviour, ICharacterController, IPlayerMoveme
         ability.AfterCharacterUpdate(motor, deltaTime);
 
         // Reset Ability and Action Input
-        ability.ResetInput();
-        action.ResetInput();
+        ability.controlInterface.Reset();
+        action.control.Reset();
     }
 
     /// <summary>

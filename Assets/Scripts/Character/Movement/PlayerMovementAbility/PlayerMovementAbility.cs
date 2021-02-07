@@ -4,8 +4,15 @@ using UnityEngine;
 using KinematicCharacterController;
 using System;
 
+public interface IAbilityControl
+{
+    void Reset();
+}
+
 public abstract class PlayerMovementAbility : MonoBehaviour
 {
+
+    public IAbilityControl controlInterface;
 
     /// <summary>
     /// This is called when the motor wants to know what its rotation should be right now
@@ -99,12 +106,5 @@ public abstract class PlayerMovementAbility : MonoBehaviour
     public virtual void OnDiscreteCollisionDetected(KinematicCharacterMotor motor, Collider hitCollider) { }
 
     public abstract void Flinch();
-
-    public abstract void RegisterInput(PlayerController.PlayerActions controllerActions);
-
-    /// <summary>
-    /// Resets the input state
-    /// </summary>
-    public abstract void ResetInput();
 
 }

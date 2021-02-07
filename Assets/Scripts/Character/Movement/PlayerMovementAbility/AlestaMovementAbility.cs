@@ -39,7 +39,7 @@ public class AlestaMovementAbilityValues : CharacterOverridableValues
     }
 }
 
-struct AlestaMovementAbilityInput : IPlayerMovementInput
+public struct AlestaMovementAbilityControl : IAbilityControl
 {
 
     /// <summary>
@@ -47,11 +47,6 @@ struct AlestaMovementAbilityInput : IPlayerMovementInput
     /// </summary>
     private bool _permeation;
     public bool permeation { get { return _permeation; } set {  if (!_permeation) _permeation = value; } }
-
-    public void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-        permeation = controllerActions.Permeation.ReadValue<float>() > 0;
-    }
 
     public void Reset()
     {
@@ -66,7 +61,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
     [SerializeField]
 	private CharacterOverridableAttribute<AlestaMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<AlestaMovementAbilityValues>();
 
-    private AlestaMovementAbilityInput input;
+    public AlestaMovementAbilityControl control;
 
     private bool isPermeating;
     private bool inSurfaceCheck;
@@ -75,29 +70,28 @@ public class AlestaMovementAbility : PlayerMovementAbility
     private Vector3 currentPermeationNormal;
     private float currentPermeationAngularAccel;
     private Vector3 tempCurrentAngularVelocity;
-    
-    #region Communications
-    private ICharacterValueOverridabilityCommunication overridabilityCommunication;
-    #endregion
 
+    private CharacterValueOverridability overridability;
+    
     void Awake()
     {
         currentPermeationOverride = new FullMovementOverride();
         currentPermeationOverride.movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerOverrideType>>();
         PlayerMovementValues moveOverrides = new PlayerMovementValues();
         moveOverrides.SetDefaultValues(PlayerOverrideType.Addition);
-        moveOverrides.negateAction = 1;
-        moveOverrides.negatePhysics = 1;
+        //moveOverrides.negateAction = 1;
+        //moveOverrides.negatePhysics = 1;
         Debug.Assert(currentPermeationOverride.movementOverrides != null);
         currentPermeationOverride.movementOverrides.Add(new MutableTuple<PlayerMovementValues, PlayerOverrideType>(moveOverrides, PlayerOverrideType.Addition));
         
-        input = new AlestaMovementAbilityInput();
+        control = new AlestaMovementAbilityControl();
+        controlInterface = control;
     }
 
     void Start()
     {
-        overridabilityCommunication = GetComponent<ICharacterValueOverridabilityCommunication>();
-        overridabilityCommunication.RegisterOverridability(overridableAttribute);
+        overridability = GetComponent<CharacterValueOverridability>();
+        overridability.RegisterOverridability(overridableAttribute);
     }
 
     void Reset()
@@ -120,7 +114,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
     public override void UpdateRotation(ref Quaternion currentRotation, ref Vector3 currentAngularVelocity, KinematicCharacterMotor motor, float deltaTime)
     {
         if (isPermeating)
-            currentAngularVelocity += motor.PlanarConstraintAxis * currentPermeationAngularAccel * ((input.permeation) ? overridableAttribute.values.permeationResistFactor : 1) * deltaTime; 
+            currentAngularVelocity += motor.PlanarConstraintAxis * currentPermeationAngularAccel * ((control.permeation) ? overridableAttribute.values.permeationResistFactor : 1) * deltaTime; 
         tempCurrentAngularVelocity = currentAngularVelocity;
     }
     
@@ -135,7 +129,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
     public override void UpdateVelocity(ref Vector3 currentVelocity, KinematicCharacterMotor motor, Vector3 gravityDirection, ref PlayerMovementPhysics.PhysicsNegations physicsNegations, float deltaTime)
     {
         if (isPermeating)
-            currentVelocity += currentPermeationNormal * overridableAttribute.values.permeationPushAccel * ((input.permeation) ? overridableAttribute.values.permeationResistFactor : 1) * deltaTime; 
+            currentVelocity += currentPermeationNormal * overridableAttribute.values.permeationPushAccel * ((control.permeation) ? overridableAttribute.values.permeationResistFactor : 1) * deltaTime; 
     }
 
     /// <summary>
@@ -186,7 +180,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
     /// <param name="hitStabilityReport"> The hit stability </param>
     public override void OnMovementHit(KinematicCharacterMotor motor, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {   
-        if (input.permeation && CanPermeate(motor.BaseVelocity))
+        if (control.permeation && CanPermeate(motor.BaseVelocity))
         {
             EnterPermeation(motor.BaseVelocity, tempCurrentAngularVelocity, hitNormal, motor);
         }
@@ -211,20 +205,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
 
     public override void Flinch()
     {
-        
-    }
-
-    public override void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-        input.RegisterInput(controllerActions);
-    }
-
-    /// <summary>
-    /// Resets the input state
-    /// </summary>
-    public override void ResetInput()
-    {
-        input.Reset();
+        controlInterface.Reset();
     }
 
     #endregion
@@ -242,7 +223,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
         currentPermeationNormal = Vector3.ProjectOnPlane(hitNormal, motor.PlanarConstraintAxis).normalized;
         float angularAccelSign = Mathf.Sign(Vector3.Dot(motor.PlanarConstraintAxis, angularVelocity));
         currentPermeationAngularAccel = (angularVelocity.magnitude / (velocity.magnitude/overridableAttribute.values.permeationPushAccel)) * angularAccelSign;
-        overridabilityCommunication.ApplyFullMovementOverride(currentPermeationOverride);
+        overridability.ApplyFullMovementOverride(currentPermeationOverride);
     }
 
     private void ExitPermeation()
@@ -251,7 +232,7 @@ public class AlestaMovementAbility : PlayerMovementAbility
         inSurfaceCheck = false;
         currentPermeationAngularAccel = 0;
         currentPermeationNormal = Vector3.zero;
-        overridabilityCommunication.RemoveFullMovementOverride(currentPermeationOverride);
+        overridability.RemoveFullMovementOverride(currentPermeationOverride);
     }
 
 }

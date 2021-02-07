@@ -13,12 +13,8 @@ public class NephuiMovementAbilityValues : CharacterOverridableValues
     protected override float[] floatValues { get { return new float[] { test }; } set { test = value[0]; } }
 }
 
-struct NephuiMovementAbilityInput : IPlayerMovementInput
+public struct NephuiMovementAbilityControl : IAbilityControl
 {
-    public void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-
-    }
 
     public void Reset()
     {
@@ -26,10 +22,10 @@ struct NephuiMovementAbilityInput : IPlayerMovementInput
     }
 }
 
-[System.Serializable]
 public class NephuiMovementAbility : PlayerMovementAbility
 {
-    private NephuiMovementAbilityInput input;
+
+    public NephuiMovementAbilityControl control;
 
     [SerializeField]
     CharacterOverridableAttribute<NephuiMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<NephuiMovementAbilityValues>();
@@ -41,32 +37,21 @@ public class NephuiMovementAbility : PlayerMovementAbility
 
     void Awake()
     {
-        input = new NephuiMovementAbilityInput();
+        control = new NephuiMovementAbilityControl();
+        controlInterface = control;
     }
 
     void Start()
     {
         GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
     }
-
-    #region Ability Implementation
+    
+#region Ability Implementation
 
     public override void Flinch()
     {
-        
+        controlInterface.Reset();
     }
 
-    public override void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-        input.RegisterInput(controllerActions);
-    }
-
-    /// <summary>
-    /// Resets the input state
-    /// </summary>
-    public override void ResetInput()
-    {
-        input.Reset();
-    }
 #endregion
 }

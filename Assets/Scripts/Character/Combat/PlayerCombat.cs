@@ -3,6 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct PlayerCombatControl {
+    public bool attack;
+
+    public Vector2 direction;
+
+    public void Reset()
+    {
+        attack = false;
+        direction = Vector2.zero;
+    }
+}
+
+
 [System.Serializable]
 public struct AttackInitInfo
 {
@@ -12,8 +25,8 @@ public struct AttackInitInfo
         movementOverride.movementOverrides = new List<MutableTuple<PlayerMovementValues, PlayerOverrideType>>();
         movementOverride.movementOverrides.Add(new MutableTuple<PlayerMovementValues, PlayerOverrideType> (new PlayerMovementValues() , PlayerOverrideType.Set));
         movementOverride.movementOverrides[0].item1.SetDefaultValues(movementOverride.movementOverrides[0].item2);
-        if(!aerial)
-            movementOverride.movementOverrides[0].item1.negateAction = 1;
+        //if(!aerial)
+        //    movementOverride.movementOverrides[0].item1.negateAction = 1;
 
         movementOverride.physicsOverrides = new List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>>();
         movementOverride.physicsOverrides.Add(new MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType> (new PlayerMovementPhysicsValues() , PlayerOverrideType.Set));
@@ -36,18 +49,11 @@ public struct AttackInitInfo
 
 }
 
-/// <summary>
-/// Communication interface for player combat
-/// </summary>
-public interface IPlayerCombatCommunication
+public class PlayerCombat : MonoBehaviour, IAttacker
 {
-    void AttackAnimationStateTransition(AttackAnimationState newState);
 
-    void Flinch();
-} 
+    public PlayerCombatControl control = new PlayerCombatControl();
 
-public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
-{
     private IDamageable _damageable;
     public IDamageable damageable { get { return _damageable; } private set { _damageable = value; } }
 
@@ -83,19 +89,15 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
 
     private bool attackBuffered;
 
-    private bool stunned;
-
-#region Communications
-    private IPlayerAnimationCommunication animationCommunication;
-    private IPlayerMovementCommunication movementCommunication;
-    private IPlayerMovementActionCommunication movementActionCommunication;
-    private ICharacterValueOverridabilityCommunication overridabilityCommunication;
-    
+#region Sibling 
+    new private PlayerAnimation animation;
+    private PlayerMovement movement;
+    private PlayerMovementAction movementAction;
+    private CharacterValueOverridability overridability;
 #endregion
 
     void Awake()
     {
-
         GameObject _hitboxes = transform.GetChild(0).GetChild(1).gameObject;
 
         hitboxes = new Hitbox[_hitboxes.transform.childCount];
@@ -108,10 +110,10 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
 
     void Start()
     {
-        animationCommunication = GetComponent<IPlayerAnimationCommunication>();
-        movementCommunication = GetComponent<IPlayerMovementCommunication>();
-        movementActionCommunication = GetComponent<IPlayerMovementActionCommunication>();
-        overridabilityCommunication = GetComponent<ICharacterValueOverridabilityCommunication>();
+        animation = GetComponent<PlayerAnimation>();
+        movement = GetComponent<PlayerMovement>();
+        movementAction = GetComponent<PlayerMovementAction>();
+        overridability = GetComponent<CharacterValueOverridability>();
 
         damageable = GetComponent<IDamageable>();
     }
@@ -156,16 +158,6 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
         }
     }
 
-    public void StartStun()
-    {
-        stunned = true;
-    }
-
-    public void EndStun()
-    {
-        stunned = false;
-    }
-
     public void Flinch()
     {
         if (attackAnimationState != AttackAnimationState.FINISHED)
@@ -178,65 +170,65 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
     private void NeutralAttack()
     {
         settingAttackInitInfo = neutralAttackInitInfo;
-        animationCommunication.AnimateNeutralAttack();
+        animation.AnimateNeutralAttack();
     }
 
     private void DownAttack()
     {
         settingAttackInitInfo = downAttackInitInfo;
-        animationCommunication.AnimateDownAttack();
+        animation.AnimateDownAttack();
     }
 
     private void UpAttack()
     {
         settingAttackInitInfo = upAttackInitInfo;
-        animationCommunication.AnimateUpAttack();
+        animation.AnimateUpAttack();
     }
 
     private void RunningAttack()
     {
         settingAttackInitInfo = runningAttackInitInfo;
-        animationCommunication.AnimateRunningAttack();
+        animation.AnimateRunningAttack();
     }
 
     private void BrakingAttack()
     {
         settingAttackInitInfo = brakingAttackInitInfo;
-        animationCommunication.AnimateBrakingAttack();
+        animation.AnimateBrakingAttack();
     }
 
     private void NeutralAerialAttack()
     {
         settingAttackInitInfo = neutralAerialAttackInitInfo;
-        animationCommunication.AnimateNeutralAerialAttack();
+        animation.AnimateNeutralAerialAttack();
     }
 
     private void UpAerialAttack()
     {
         settingAttackInitInfo = upAerialAttackInitInfo;
-        animationCommunication.AnimateUpAerialAttack();
+        animation.AnimateUpAerialAttack();
     }
 
     private void DownAerialAttack()
     {
         settingAttackInitInfo = downAerialAttackInitInfo;
-        animationCommunication.AnimateDownAerialAttack();
+        animation.AnimateDownAerialAttack();
     }
 
     private void BackAerialAttack()
     {
         settingAttackInitInfo = backAerialAttackInitInfo;
-        animationCommunication.AnimateBackAerialAttack();
+        animation.AnimateBackAerialAttack();
     }
 
     private void ApplyAttackInitInfo(AttackInitInfo info)
     {
-        overridabilityCommunication.ApplyFullMovementOverride(info.movementOverride);
+        overridability.ApplyFullMovementOverride(info.movementOverride);
     }
 
     private void ResetAttackInitInfo(AttackInitInfo info)
     {
-        overridabilityCommunication.RemoveFullMovementOverride(info.movementOverride);
+        overridability.RemoveFullMovementOverride(info.movementOverride);
     }
 
     public AttackerInfo GetAttackerInfo()
@@ -246,43 +238,42 @@ public class PlayerCombat : MonoBehaviour, IPlayerCombatCommunication, IAttacker
         return info;
     }
 
-    public void HandleInput(PlayerController.PlayerActions controllerActions)
+    void Update()
     {
-        if(stunned)
-            return;
-        if (controllerActions.NeutralAttack.triggered && !attackBuffered &&
+        if (control.attack && !attackBuffered &&
             (attackAnimationState == AttackAnimationState.FINISHED || (attackBuffered = (attackAnimationState == AttackAnimationState.BUFFER))))
         {
-            bool grounded = movementCommunication.isGroundedThisUpdate;
-            float sqrSpeed = movementCommunication.velocity.sqrMagnitude;
+            bool grounded = movement.isGroundedThisUpdate;
+            float sqrSpeed = movement.velocity.sqrMagnitude;
 
-            float horizDir = controllerActions.Run.ReadValue<float>();
-            float vertDir = controllerActions.VerticalDirection.ReadValue<float>();
+            ////float horizDir = controllerActions.Run.ReadValue<float>();
+            ////float vertDir = controllerActions.VerticalDirection.ReadValue<float>();
 
             if (grounded)
             {
-                if (movementActionCommunication.isBraking && sqrSpeed >= brakingAttackMinSpeed * brakingAttackMinSpeed)
+                if (movementAction.isBraking && sqrSpeed >= brakingAttackMinSpeed * brakingAttackMinSpeed)
                     BrakingAttack();
-                else if (sqrSpeed >= runningAttackMinSpeed * runningAttackMinSpeed && horizDir == movementActionCommunication.facingDirection)
+                else if (sqrSpeed >= runningAttackMinSpeed * runningAttackMinSpeed && control.direction.x == movementAction.facingDirection)
                     RunningAttack();
-                else if (vertDir == +1)
+                else if (control.direction.x == +1)
                     UpAttack();
-                else if (vertDir == -1)
+                else if (control.direction.y == -1)
                     DownAttack();
                 else
                     NeutralAttack();
             }
             else
             {
-                if (vertDir == +1)
+                if (control.direction.y == +1)
                     UpAerialAttack();
-                else if (vertDir == -1)
+                else if (control.direction.y == -1)
                     DownAerialAttack();
-                else if (horizDir == -movementActionCommunication.facingDirection)
+                else if (control.direction.x == -movementAction.facingDirection)
                     BackAerialAttack();
                 else
                     NeutralAerialAttack();
             } 
+            Reset();
         }
     }
 }

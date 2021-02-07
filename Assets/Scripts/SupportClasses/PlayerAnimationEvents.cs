@@ -7,32 +7,35 @@ public enum AttackAnimationState { FINISHED, STARTUP, CONTACT, RECOVERY, BUFFER 
 
 public class PlayerAnimationEvents : MonoBehaviour
 {
+    new private PlayerAnimation animation;
 
-    public event Action<AttackAnimationState> attackStateTransition;
-    
+    void Start()
+    {
+        animation = transform.parent.GetComponent<PlayerAnimation>();
+    }
 
     public void AttackStartup()
     {
-        attackStateTransition?.Invoke(AttackAnimationState.STARTUP);
+        animation.AttackStateTransition(AttackAnimationState.STARTUP);
     }
 
     public void AttackContact()
     {
-        attackStateTransition?.Invoke(AttackAnimationState.CONTACT);
+        animation.AttackStateTransition(AttackAnimationState.CONTACT);
     }
 
     public void AttackRecovery()
     {
-        attackStateTransition?.Invoke(AttackAnimationState.RECOVERY);
+        animation.AttackStateTransition(AttackAnimationState.RECOVERY);
     }
 
     public void AttackBufferable()
     {
-        attackStateTransition?.Invoke(AttackAnimationState.BUFFER);
+        animation.AttackStateTransition(AttackAnimationState.BUFFER);
     }
 
     public void AttackFinished()
     {
-        attackStateTransition?.Invoke(AttackAnimationState.FINISHED);
+        animation.AttackStateTransition(AttackAnimationState.FINISHED);
     }
 }

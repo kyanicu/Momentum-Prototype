@@ -13,12 +13,8 @@ public class CartiaMovementAbilityValues : CharacterOverridableValues
     protected override float[] floatValues { get { return new float[] { test }; } set { test = value[0]; } }
 }
 
-struct CartiaMovementAbilityInput : IPlayerMovementInput
+public struct CartiaMovementAbilityControl : IAbilityControl
 {
-    public void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-
-    }
 
     public void Reset()
     {
@@ -26,10 +22,10 @@ struct CartiaMovementAbilityInput : IPlayerMovementInput
     }
 }
 
-[System.Serializable]
 public class CartiaMovementAbility : PlayerMovementAbility
 {
-    private CartiaMovementAbilityInput input;
+
+    public CartiaMovementAbilityControl control;
 
     [SerializeField]
     CharacterOverridableAttribute<CartiaMovementAbilityValues> overridableAttribute = new CharacterOverridableAttribute<CartiaMovementAbilityValues>();
@@ -41,32 +37,21 @@ public class CartiaMovementAbility : PlayerMovementAbility
 
     void Awake()
     {
-        input = new CartiaMovementAbilityInput();
+        control = new CartiaMovementAbilityControl();
+        controlInterface = control;
     }
 
     void Start()
     {
         GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
     }
-
-    #region Ability Implementation
+    
+#region Ability Implementation
 
     public override void Flinch()
     {
-        
+        controlInterface.Reset();
     }
 
-    public override void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-        input.RegisterInput(controllerActions);
-    }
-
-    /// <summary>
-    /// Resets the input state
-    /// </summary>
-    public override void ResetInput()
-    {
-        input.Reset();
-    }
 #endregion
 }

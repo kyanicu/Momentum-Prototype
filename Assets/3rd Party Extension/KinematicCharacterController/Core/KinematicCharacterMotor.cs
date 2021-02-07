@@ -312,7 +312,6 @@ namespace KinematicCharacterController
         /// <summary>
         /// Was the character grounded last update?
         /// </summary>
-        /// <value></value>
         public bool WasGroundedLastUpdate { get { return LastGroundingStatus.IsStableOnGround; } }
 
         /// <summary>
@@ -438,7 +437,18 @@ namespace KinematicCharacterController
         private Rigidbody[] _rigidbodiesPushedThisMove = new Rigidbody[MaxCollisionBudget];
         private RigidbodyProjectionHit[] _internalRigidbodyProjectionHits = new RigidbodyProjectionHit[MaxMovementSweepIterations];
         private Rigidbody _lastAttachedRigidbody;
+        [Header("Mechanic Settings")]
+        /// <summary>
+        /// Sets whether or not the motor will solve collisions when moving (or moved onto)
+        /// </summary>    
+        [Tooltip("Sets whether or not the motor will solve collisions when moving (or moved onto)")]
+        [SerializeField]
         private bool _solveMovementCollisions = true;
+        /// <summary>
+        /// Sets whether or not grounding will be evaluated for all hits
+        /// </summary>    
+        [Tooltip("Sets whether or not grounding will be evaluated for all hits")]
+        [SerializeField]
         private bool _solveGrounding = true;
         private bool _movePositionDirty = false;
         private Vector3 _movePositionTarget = Vector3.zero;
@@ -694,7 +704,7 @@ namespace KinematicCharacterController
         }
 
         /// <summary>
-        /// Resizes capsule. ALso caches importand capsule size data
+        /// Resizes capsule. Also caches importand capsule size data
         /// </summary>
         public void SetCapsuleDimensions(float radius, float height, float yOffset)
         {
@@ -903,6 +913,7 @@ namespace KinematicCharacterController
 
             if (_solveGrounding)
             {
+                SetEffectiveGroundNormal(); // Self Added Code
                 CharacterController.PostGroundingUpdate(deltaTime);
             }
 
@@ -1285,7 +1296,6 @@ namespace KinematicCharacterController
                         }
 
                         CharacterController.OnGroundHit(groundSweepHit.collider, groundSweepHit.normal, groundSweepHit.point, ref groundHitStabilityReport);
-                        SetEffectiveGroundNormal(ref groundHitStabilityReport); // Self Added Code
                         groundSweepingIsOver = true;
                     }
                     else
@@ -1333,7 +1343,8 @@ namespace KinematicCharacterController
                 }
             }
             */
-            return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/GroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
+            //return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/GroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
+            return EffectiveGroundNormal;
         }
 
         public bool GetIsGroundedThisUpdate() {
@@ -1363,12 +1374,13 @@ namespace KinematicCharacterController
                 }
             }
             */
-            return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/LastGroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
+            //return Vector3.ProjectOnPlane(/*effectiveGroundNormal*/LastGroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
+            return LastEffectiveGroundNormal;
 
             //return Vector3.ProjectOnPlane(LastGroundingStatus.GroundNormal, PlanarConstraintAxis).normalized;
         }
 
-        private void SetEffectiveGroundNormal(ref HitStabilityReport stabilityReport)
+        private void SetEffectiveGroundNormal()
         {
             /*
             LastEffectiveGroundNormal = EffectiveGroundNormal;
@@ -1392,6 +1404,8 @@ namespace KinematicCharacterController
                 }
             }
             */
+            LastEffectiveGroundNormal = EffectiveGroundNormal;
+            EffectiveGroundNormal = (GroundingStatus.GroundNormal != Vector3.zero) ? Vector3.ProjectOnPlane(GroundingStatus.GroundNormal, PlanarConstraintAxis).normalized : Vector3.zero;
         }
 
         #endregion

@@ -17,6 +17,7 @@ TagManager:
   - PlayerHurtbox
   - EnemyHurtbox
   - EnemyImmuneHurtbox
+  - Interactable
   layers:
   - Default
   - TransparentFX
@@ -35,7 +36,7 @@ TagManager:
   - Teleporter
   - Hitbox
   - Hurtbox
-  - 
+  - InteractivityArea
   - 
   - 
   - 

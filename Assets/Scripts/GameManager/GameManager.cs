@@ -5,7 +5,35 @@ using UnityEngine;
 
 public class GameManager : Singleton<GameManager>
 {
+
+    private HashSet<CharacterDirector> controlledCharacters;
+
     protected GameManager() {}
+    
+    void Awake()
+    {
+        controlledCharacters = new HashSet<CharacterDirector>();
+    }
+
+    void Update()
+    {
+        foreach(CharacterDirector c in controlledCharacters)
+        {
+            c.HandleControl();
+        }
+    }
+
+    public void RegisterCharacterControl(CharacterDirector c)
+    {
+        if(!controlledCharacters.Contains(c))
+            controlledCharacters.Add(c);
+    }
+
+    public void DeregisterCharacterControl(CharacterDirector c)
+    {
+        if(controlledCharacters.Contains(c))
+            controlledCharacters.Add(c);
+    }
 
     private IEnumerator TimerViaRealTimeCoroutine(float t, Action functionToCall)
     {
@@ -41,11 +69,9 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-
     public Coroutine TimedConditionalCheckViaRealTime(float t, Func<bool> conditional, Action functionToCall)
     {
         return StartCoroutine(TimedConditionalCheckViaRealTimeCoroutine(t, conditional, functionToCall));
     }
-    
 
 }

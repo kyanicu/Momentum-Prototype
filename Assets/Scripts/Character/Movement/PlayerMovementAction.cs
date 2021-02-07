@@ -4,19 +4,6 @@ using UnityEngine;
 using KinematicCharacterController;
 using System;
 
-
-#region Communication Structs
-/// <summary>
-/// A wrapper for the PlayerMovementAction class that allows it's state to referenced, but only be read
-/// </summary>
-public interface IPlayerMovementActionCommunication
-{
-    float facingDirection { get; }
-    bool isBraking { get; }
-
-}   
-#endregion
-
 [System.Serializable]
 public class PlayerMovementActionValues : CharacterOverridableValues
 {
@@ -156,15 +143,10 @@ public class PlayerMovementActionValues : CharacterOverridableValues
 }
 
 /// <summary>
-/// Handles application of internally intended actions focused on moving the player
-/// </summary>
-public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunication
-{
-    /// <summary>
     /// Struct that holds information on player input
     /// Ensures any value found on Monobehavior.Update() will be handled when appropriate for the motor without being overwritten by a zeroed value
     /// </summary>
-    private struct MovementActionInput : IPlayerMovementInput
+    public struct MovementActionControl
     {
         // Properties encapsulate their respective variable to prevent overwriting by a zeroed value
 
@@ -173,7 +155,7 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         /// -1 for "left", +1 for "right" (with respect to current orientation of motor.CharacterRight)
         /// </summary>
         private float _run;
-        public float run { get { return _run; } set { if (resetRun || _run == 0) _run = value; } }
+        public float run { get { return _run; } set { if (resetRun || _run == 0) _run = value; resetRun = false;} }
 
         /// <summary>
         /// Ensures that run input uses previous input if physics tick runs more than once in a single frame
@@ -198,18 +180,6 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         private bool _doubleTapRun;
         public bool doubleTapRun { get { return _doubleTapRun; } set {  if (!_doubleTapRun) _doubleTapRun = value; } }
 
-        public void RegisterInput(PlayerController.PlayerActions controllerActions)
-    	{
-        jump = controllerActions.Jump.triggered;
-
-        jumpCancel = controllerActions.JumpCancel.triggered;
-        
-        run = controllerActions.Run.ReadValue<float>();
-        resetRun = false;
-
-        doubleTapRun = controllerActions.RunKickOff.triggered;
-    	}
-
         /// <summary>
         /// Reset to default values
         /// </summary>
@@ -222,10 +192,16 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         }
     }
 
+/// <summary>
+/// Handles application of internally intended actions focused on moving the player
+/// </summary>
+public class PlayerMovementAction : MonoBehaviour
+{
+
     /// <summary>
     /// Holds and maintains input info
     /// </summary>
-    private MovementActionInput input;
+    public MovementActionControl control;
 
     /// <summary>
     /// Is the player currently moving "up" due to an initiated jump?
@@ -244,12 +220,10 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
 
     public bool isBraking { get; private set; }
 
-    private bool stunned;
-
     [SerializeField]
 	public CharacterOverridableAttribute<PlayerMovementActionValues> overridableAttribute = new CharacterOverridableAttribute<PlayerMovementActionValues>();
 
-    private IPlayerAnimationCommunication animationCommunication;
+    new private PlayerAnimation animation;
     private void Reset()
     {
         // Set default values
@@ -278,15 +252,15 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
     void Awake()
     {
         // Set input values
-        input = new MovementActionInput();
+        control = new MovementActionControl();
         facingDirection = +1;
     }
 
     void Start()
     {
-        animationCommunication = GetComponent<IPlayerAnimationCommunication>();
+        animation = GetComponent<PlayerAnimation>();
 
-        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
+        GetComponent<CharacterValueOverridability>()?.RegisterOverridability(overridableAttribute);
     }
 
     /// <summary>
@@ -305,11 +279,11 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         // Calculate current square speed
         float sqrSpeed = currentVelocity.sqrMagnitude;
         // Direction attempting to run in
-        Vector3 runDirection = input.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
+        Vector3 runDirection = control.run * Vector3.ProjectOnPlane(motor.CharacterRight, motor.GetEffectiveGroundNormal()).normalized * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
         
         float autoRunKickOffBuffer = 0.25f;
         // If manual run kick off was activated successfully
-        if (input.doubleTapRun && sqrSpeed < (overridableAttribute.values.runKickOffSpeed-autoRunKickOffBuffer) * (overridableAttribute.values.runKickOffSpeed-autoRunKickOffBuffer))
+        if (control.doubleTapRun && sqrSpeed < (overridableAttribute.values.runKickOffSpeed-autoRunKickOffBuffer) * (overridableAttribute.values.runKickOffSpeed-autoRunKickOffBuffer))
             RunKickOff(ref currentVelocity, runDirection, physicsNegations, false);
         // If automatic run kick off was triggered
         else if (sqrSpeed == 0 && Vector3.Dot(runDirection, gravityDirection) < 0 && Vector3.Angle(motor.GetEffectiveGroundNormal(), -gravityDirection) >= overridableAttribute.values.autoRunKickOffSlopeThreshold)
@@ -329,11 +303,11 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
                 if (sqrSpeed < overridableAttribute.values.runMaxSpeed * overridableAttribute.values.runMaxSpeed)
                     currentVelocity += runDirection * overridableAttribute.values.runAccel * deltaTime;
 
-                float faceDir = Mathf.Sign(input.run) * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
+                float faceDir = Mathf.Sign(control.run) * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
                 if (faceDir != facingDirection)
                 {
                     facingDirection = faceDir;
-                    animationCommunication.ChangeFacingDirection();
+                    animation.ChangeFacingDirection();
                 }                
             }
         }
@@ -373,7 +347,7 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         // The squared speed perpendicular to gravity 
         float flattenedSqrSpeed = flattenedVelocity.sqrMagnitude;
         // Direction attempting to move in
-        Vector3 airMoveDirection = Vector3.Cross(-gravityDirection, motor.PlanarConstraintAxis) * input.run * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
+        Vector3 airMoveDirection = Vector3.Cross(-gravityDirection, motor.PlanarConstraintAxis) * control.run * (overridableAttribute.values.invertRight > 0 ? -1 : +1);
 
         // Ensure drag does not activate
         physicsNegations.airDragNegated = true;
@@ -503,7 +477,7 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         if(isJumping && CheckIsStillJumping(ref currentVelocity, motor, gravityDirection))
         {
             // If the player is trying to jump cancel
-            if(input.jumpCancel || waitingToJumpCancel)
+            if(control.jumpCancel || waitingToJumpCancel)
                 JumpCancel(ref currentVelocity, motor, gravityDirection);
         }
         else 
@@ -525,11 +499,8 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
             /*}*/
         }
 
-        if(stunned)
-            return;
-
         // if the player is trying to and able to jump
-        if(input.jump)
+        if(control.jump)
         {
             if (motor.IsGroundedThisUpdate)
                 Jump(ref currentVelocity, motor, motor.GetEffectiveGroundNormal());
@@ -545,7 +516,7 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         }
         isBraking = false;
         // if the player is trying to run
-        if(input.run != 0)
+        if(control.run != 0)
         {
             if (motor.IsGroundedThisUpdate)
                 Run(ref currentVelocity, motor, gravityDirection, ref physicsNegations, deltaTime);
@@ -554,48 +525,15 @@ public class PlayerMovementAction : MonoBehaviour, IPlayerMovementActionCommunic
         }
     }
 
-    public void StartStun()
-    {
-        stunned = true;
-        Flinch();
-        isBraking = false;
-    }
-
-    public void EndStun()
-    {
-        stunned = false;
-    }
-
     public void Flinch()
     {
         if (isJumping)
         {
-            input.Reset();
-            input.jumpCancel = true;
+            control.Reset();
+            control.jumpCancel = true;
         }
         else
-            input.Reset();
-    }
-    /*
-    private void SetInputJumpTrue()
-    {
-        input.jump = true;
-        input.jumpCancel = bufferingJumpCancel;
-    }
-    */
-
-    /// <summary>
-    /// Gather input this Monobehavior.Update()
-    /// </summary>
-    public void RegisterInput(PlayerController.PlayerActions controllerActions)
-    {
-        if (!stunned)
-            input.RegisterInput(controllerActions);
-    }
-
-    public void ResetInput()
-    {
-        input.Reset();
+            control.Reset();
     }
 
 }
