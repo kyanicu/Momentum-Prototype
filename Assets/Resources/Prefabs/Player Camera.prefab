@@ -152,7 +152,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 5
+  near clip plane: 0.1
   far clip plane: 300
   field of view: 60
   orthographic: 0
@@ -280,7 +280,7 @@ MonoBehaviour:
   m_Lens:
     FieldOfView: 60
     OrthographicSize: 6
-    NearClipPlane: 5
+    NearClipPlane: 0.1
     FarClipPlane: 300
     Dutch: 0
     LensShift: {x: 0, y: 0}
@@ -304,7 +304,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 772c5501a6842429086b9d7fc4163036, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraDistance: 15
+  cameraDistance: 8
   orientDampTime: 0.1
   orientDampMaxSpeed: 150
   maxPlayerSpeedToResetFollow: 0

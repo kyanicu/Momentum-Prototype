@@ -33,18 +33,18 @@ public class PlayerCharacterDirector : CharacterDirector
     new private PlayerAnimation animation;
 
     private AlestaMovementAbility alestaAbility;
-    private CartiaMovementAbility cartiaAbility;
-    private NephuiMovementAbility nephuiAbility;
-    private IlphineMovementAbility ilphineAbility;
+    ////private CartiaMovementAbility cartiaAbility;
+    ////private NephuiMovementAbility nephuiAbility;
+    ////private IlphineMovementAbility ilphineAbility;
 #endregion
 
-    PlayableCharacter currentCharacter;
-    private GameObject currentCharacterModelRoot;
+    ////PlayableCharacter currentCharacter;
+    ////private GameObject currentCharacterModelRoot;
 
-    private GameObject alestaModelRoot;
-    private GameObject cartiaModelRoot;
-    private GameObject nephuiModelRoot;
-    private GameObject ilphineModelRoot; 
+    ////private GameObject alestaModelRoot;
+    ////private GameObject cartiaModelRoot;
+    ////private GameObject nephuiModelRoot;
+    ////private GameObject ilphineModelRoot; 
 
 #region Unity MonoBehaviour Messages
     /// <summary>
@@ -55,41 +55,41 @@ public class PlayerCharacterDirector : CharacterDirector
         playerController = new PlayerController();
         playerController.Enable();
 
-        alestaModelRoot = transform.GetChild(0).gameObject;
-        cartiaModelRoot = transform.GetChild(1).gameObject;
-        nephuiModelRoot = transform.GetChild(2).gameObject;
-        ilphineModelRoot = transform.GetChild(3).gameObject;
+        ////alestaModelRoot = transform.GetChild(0).gameObject;
+        ////cartiaModelRoot = transform.GetChild(1).gameObject;
+        ////nephuiModelRoot = transform.GetChild(2).gameObject;
+        ////ilphineModelRoot = transform.GetChild(3).gameObject;
 
         combat = GetComponent<PlayerCombat>();
         movementAction = GetComponent<PlayerMovementAction>();
         animation = GetComponent<PlayerAnimation>();
 
-        alestaAbility = GetComponent<AlestaMovementAbility>();
-        cartiaAbility = GetComponent<CartiaMovementAbility>();
-        nephuiAbility = GetComponent<NephuiMovementAbility>();
-        ilphineAbility = GetComponent<IlphineMovementAbility>();
-
-        if (cartiaModelRoot.activeSelf)
-        {
-            currentCharacter = PlayableCharacter.Cartia;
-            currentCharacterModelRoot = cartiaModelRoot;
-        }
-        else if (nephuiModelRoot.activeSelf)
-        {
-            currentCharacter = PlayableCharacter.Nephui;
-            currentCharacterModelRoot = nephuiModelRoot;
-        }
-        else if (ilphineModelRoot.activeSelf)
-        {
-            currentCharacter = PlayableCharacter.Ilphine;
-            currentCharacterModelRoot = ilphineModelRoot;
-        }
-        else 
-        {
-            alestaModelRoot.SetActive(true);
-            currentCharacter = PlayableCharacter.Alesta;
-            currentCharacterModelRoot = alestaModelRoot;
-        }
+        ////alestaAbility = GetComponent<AlestaMovementAbility>();
+        ////cartiaAbility = GetComponent<CartiaMovementAbility>();
+        ////nephuiAbility = GetComponent<NephuiMovementAbility>();
+        ////ilphineAbility = GetComponent<IlphineMovementAbility>();
+////
+        ////if (cartiaModelRoot.activeSelf)
+        ////{
+        ////    currentCharacter = PlayableCharacter.Cartia;
+        ////    currentCharacterModelRoot = cartiaModelRoot;
+        ////}
+        ////else if (nephuiModelRoot.activeSelf)
+        ////{
+        ////    currentCharacter = PlayableCharacter.Nephui;
+        ////    currentCharacterModelRoot = nephuiModelRoot;
+        ////}
+        ////else if (ilphineModelRoot.activeSelf)
+        ////{
+        ////    currentCharacter = PlayableCharacter.Ilphine;
+        ////    currentCharacterModelRoot = ilphineModelRoot;
+        ////}
+        ////else 
+        ////{
+        ////    alestaModelRoot.SetActive(true);
+        ////    currentCharacter = PlayableCharacter.Alesta;
+        ////    currentCharacterModelRoot = alestaModelRoot;
+        ////}
     }
 
     void Start()
@@ -99,35 +99,35 @@ public class PlayerCharacterDirector : CharacterDirector
         camera = Camera.main.transform.parent.GetComponent<PlayerCamera>();
         camera.SetReadOnlyReferences(new ReadOnlyTransform(transform), GetComponent<PlayerMovement>());
 
-        animation.ChangeCharacter(currentCharacterModelRoot);
+        ///animation.ChangeCharacter(currentCharacterModelRoot);
     }
 
-    private void ChangeCharacter(PlayableCharacter changeTo)
-    {
-        switch(changeTo)
-        {
-            case (PlayableCharacter.Alesta) :
-                currentCharacter = PlayableCharacter.Alesta;
-                currentCharacterModelRoot = alestaModelRoot;
-                break;
+    ////private void ChangeCharacter(PlayableCharacter changeTo)
+    ////{
+    ////    switch(changeTo)
+    ////    {
+    ////        case (PlayableCharacter.Alesta) :
+    ////            currentCharacter = PlayableCharacter.Alesta;
+    ////            currentCharacterModelRoot = alestaModelRoot;
+    ////            break;
 
-            case (PlayableCharacter.Cartia) :
-                currentCharacter = PlayableCharacter.Cartia;
-                currentCharacterModelRoot = cartiaModelRoot;
-                break;
+    ////        case (PlayableCharacter.Cartia) :
+    ////            currentCharacter = PlayableCharacter.Cartia;
+    ////            currentCharacterModelRoot = cartiaModelRoot;
+    ////            break;
 
-            case (PlayableCharacter.Nephui) :
-                currentCharacter = PlayableCharacter.Nephui;
-                currentCharacterModelRoot = nephuiModelRoot;
-                break;
+    ////        case (PlayableCharacter.Nephui) :
+    ////            currentCharacter = PlayableCharacter.Nephui;
+    ////            currentCharacterModelRoot = nephuiModelRoot;
+    ////            break;
 
-            case (PlayableCharacter.Ilphine) :
-                currentCharacter = PlayableCharacter.Ilphine;
-                currentCharacterModelRoot = ilphineModelRoot;
-                break;
-        }
-        animation.ChangeCharacter(currentCharacterModelRoot);
-    }
+    ////        case (PlayableCharacter.Ilphine) :
+    ////            currentCharacter = PlayableCharacter.Ilphine;
+    ////            currentCharacterModelRoot = ilphineModelRoot;
+    ////            break;
+    ////    }
+    ////    animation.ChangeCharacter(currentCharacterModelRoot);
+    ////}
    
     /// <summary>
     /// Handles GameObject destruction
@@ -178,24 +178,25 @@ public class PlayerCharacterDirector : CharacterDirector
 
     private void SetAbilityControl()
     {
-        switch(currentCharacter)
-        {
-            case (PlayableCharacter.Alesta) :
-                SetAlestaAbilityControl();
-                break;
+        SetAlestaAbilityControl();
+        ////switch(currentCharacter)
+        ////{
+        ////    case (PlayableCharacter.Alesta) :
+        ////        SetAlestaAbilityControl();
+        ////        break;
 
-            case (PlayableCharacter.Cartia) :
-                SetCartiaAbilityControl();
-                break;
+        ////    case (PlayableCharacter.Cartia) :
+        ////        SetCartiaAbilityControl();
+        ////        break;
 
-            case (PlayableCharacter.Nephui) :
-                SetNephuiAbilityControl();
-                break;
+        ////    case (PlayableCharacter.Nephui) :
+        ////        SetNephuiAbilityControl();
+        ////        break;
 
-            case (PlayableCharacter.Ilphine) :
-                SetIlphineAbilityControl();
-                break;
-        }
+        ////    case (PlayableCharacter.Ilphine) :
+        ////        SetIlphineAbilityControl();
+        ////        break;
+        ////}
     }
 
     private void SetAlestaAbilityControl()
@@ -203,18 +204,18 @@ public class PlayerCharacterDirector : CharacterDirector
         alestaAbility.control.permeation = playerController.Player.Permeation.ReadValue<float>() > 0;
     }
 
-    private void SetCartiaAbilityControl()
-    {
+    ////private void SetCartiaAbilityControl()
+    ////{
 
-    }
+    ////}
 
-    private void SetNephuiAbilityControl()
-    {
+    ////private void SetNephuiAbilityControl()
+    ////{
 
-    }
+    ////}
 
-    private void SetIlphineAbilityControl()
-    {
+    ////private void SetIlphineAbilityControl()
+    ////{
 
-    }
+    ////}
 }

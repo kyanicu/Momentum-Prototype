@@ -15,6 +15,11 @@ public class PlayerAnimation : CharacterAnimation
     PlayerMovementAction movementAction;
     #endregion
 
+    protected override void Awake()
+    {
+        base.Awake();
+    }
+
     void Start()
     {
         combat = GetComponent<PlayerCombat>();
@@ -22,17 +27,17 @@ public class PlayerAnimation : CharacterAnimation
         movementAction = GetComponent<PlayerMovementAction>();
     }
 
-    public void ChangeCharacter(GameObject newRoot)
-    {
-        newRoot.transform.rotation = root.transform.rotation;
-        
-        root.SetActive(false);
-        newRoot.SetActive(true);
+    ////public void ChangeCharacter(GameObject newRoot)
+    ////{
+    ////    newRoot.transform.rotation = root.transform.rotation;
+    ////    
+    ////    root.SetActive(false);
+    ////    newRoot.SetActive(true);
 
-        root = newRoot;
-        modelRoot = root.transform.GetChild(0).gameObject;
-        animator = root.GetComponent<Animator>();
-    }
+    ////    root = newRoot;
+    ////    modelRoot = root.transform.GetChild(0).gameObject;
+    ////    animator = root.GetComponent<Animator>();
+    ////}
 
     public void AttackStateTransition(AttackAnimationState newState)
     {
