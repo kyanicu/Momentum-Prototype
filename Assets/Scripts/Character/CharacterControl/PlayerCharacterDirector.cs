@@ -64,7 +64,7 @@ public class PlayerCharacterDirector : CharacterDirector
         movementAction = GetComponent<PlayerMovementAction>();
         animation = GetComponent<PlayerAnimation>();
 
-        ////alestaAbility = GetComponent<AlestaMovementAbility>();
+        alestaAbility = GetComponent<AlestaMovementAbility>();
         ////cartiaAbility = GetComponent<CartiaMovementAbility>();
         ////nephuiAbility = GetComponent<NephuiMovementAbility>();
         ////ilphineAbility = GetComponent<IlphineMovementAbility>();
@@ -97,7 +97,7 @@ public class PlayerCharacterDirector : CharacterDirector
         EnableControl();
 
         camera = Camera.main.transform.parent.GetComponent<PlayerCamera>();
-        camera.SetReadOnlyReferences(new ReadOnlyTransform(transform), GetComponent<PlayerMovement>());
+        camera.SetReadOnlyReferences(new ReadOnlyTransform(transform), GetComponent<MomentumMovement>());
 
         ///animation.ChangeCharacter(currentCharacterModelRoot);
     }
@@ -157,7 +157,7 @@ public class PlayerCharacterDirector : CharacterDirector
         // Resets the the motor state (used as a makeshift "level restart")
         if (playerController.Player.Pause.triggered)
         {
-            GetComponent<PlayerMovement>().ResetState();
+            GetComponent<MomentumMovement>().ResetState();
         }
         #endregion
     }

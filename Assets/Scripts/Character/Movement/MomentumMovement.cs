@@ -142,7 +142,7 @@ public class PlayerMovementValues : CharacterOverridableValues
 /// Implements ICharacterController to allow control over the players KinematicCharacterMotor Unity Component
 /// Implements IPlayerMovementCmmunication to allow communication between other Player components
 /// </summary>
-public class PlayerMovement : MonoBehaviour, ICharacterController
+public class MomentumMovement : CharacterMovement, ICharacterController
 {
 
 #region MovementEvents
@@ -153,23 +153,13 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 #endregion
 
 
-    public Vector3 position { get { return motor.TransientPosition; } }
-    public Quaternion rotation { get { return motor.TransientRotation; } }
-    public Vector3 velocity { get { return motor.BaseVelocity; } }
-    public Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
-    public Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
-    public bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
-    public bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
-
-    private struct KinematicPath
-    {
-        public Vector3 velocity;
-        
-        public Vector3 velocityAfter;
-
-        public Coroutine timer;
-                
-    }
+    public override Vector3 position { get { return motor.TransientPosition; } set { motor.SetTransientPosition(value); } }
+    public override Quaternion rotation { get { return motor.TransientRotation; } set { motor.SetRotation(value); } }
+    public override Vector3 velocity { get { return motor.BaseVelocity; } set { externalVelocity += -motor.BaseVelocity + value; } }
+    public override Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
+    public override Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
+    public override bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
+    public override bool wasGroundedLastUpdate { get { return motor.WasGroundedLastUpdate; } }
 
     /// <summary>
     /// Hold information on recently changed slopes
@@ -333,16 +323,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 
 #region Helper/Extension Components
     /// <summary>
-    /// The component for handling player physics that occur as a result of environment
-    /// Adds acceleration to velocity each physics tick
-    /// </summary>
-    private PlayerMovementPhysics physics;
-    /// <summary>
-    /// The component for handling player actions directly related to movement as a result of player input
-    /// Adds acceleration to velocity each physics tick
-    /// </summary>
-    private PlayerMovementAction action;
-    /// <summary>
     /// The component for handling special player actions that can have a more direct effect on the player's Movement itself, allowing for more than just adding acceleration each physics tick
     /// </summary>
     private PlayerMovementAbility ability;
@@ -372,7 +352,6 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// </summary>
     /// <value></value>
     public Vector3 externalVelocity { private get; set; }
-    private KinematicPath? kinematicPath = null;
 #region flags
 ////    private int velocityLocked = 0;
 ////    private Vector3 preLockedVel;
@@ -434,12 +413,13 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     /// </summary>
     protected KinematicCharacterMotor motor;
 #endregion
-#region ClassSetup
+
+#region MonoBehavior Messages Handling
     
     /// <summary>
     /// Sets the default base overridable values
     /// </summary>
-    protected void Reset()
+    void Reset()
     {
         // Set default field values
         overridableAttribute.baseValues.maxSpeed = 125;
@@ -451,16 +431,19 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         overridableAttribute.baseValues.ungroundRotationMaxSpeed = 1000;
     }
 
+    protected override void Awake()
+    {
+        base.Awake();
+    }
+
     /// <summary>
     /// Setup the class to be ready for gameplay
     /// Also initializes state info for debugging
     /// </summary>
-    void Start()
+    protected void Start()
     {
         motor = GetComponent<KinematicCharacterMotor>();
         // Instantiate helper components
-        physics = GetComponent<PlayerMovementPhysics>();
-        action = GetComponent<PlayerMovementAction>();
         ability = GetComponent<PlayerMovementAbility>();
 
         GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
@@ -469,7 +452,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 
         slopeList = new SlopeList(5);
 
-        SetCurrentPlane( new Plane(motor.CharacterForward, motor.Transform.position));
+        SetCurrentPlane(new Plane(motor.CharacterForward, motor.Transform.position));
         currentPlane = new Plane(motor.CharacterForward, motor.transform.position);
         motor.PlanarConstraintAxis = currentPlane.normal;
 
@@ -479,9 +462,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         startPlane = currentPlane;
         #endregion
     }
-    #endregion
-
-#region PlayerCharacter's MonoBehavior Messages Handling
+    
     /// <summary>
     /// Appropriately handle entering a trigger
     /// </summary>
@@ -490,32 +471,9 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
     {
         switch (col.tag)
         {
-            case ("Plane") :
-                EnterDynamicPlane(col.GetComponent<DynamicPlane>());
-                break;
-            case ("Plane Breaker") :
-                EnterPlaneBreaker(col.GetComponent<PlaneBreaker>());
-                break;
             case ("Checkpoint") :
                 startState = motor.GetState();
                 startPlane = new Plane(currentPlane.normal, motor.Transform.position);
-                break;
-        }
-    } 
-
-    /// <summary>
-    /// Appropriately handle exiting a trigger
-    /// </summary>
-    /// <param name="col"> The trigger collider</param>
-    void OnTriggerExit(Collider col)
-    {
-        switch (col.tag)
-        {
-            case ("Plane") :
-                ExitDynamicPlane(col);
-                break;
-            case ("Plane Breaker") :
-                ExitPlaneBreaker(col);
                 break;
         }
     } 
@@ -523,7 +481,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
 
 #region Communication Methods
 
-    public void ZeroVelocity(bool _zeroAngularVelocity = false)
+    public override void ZeroVelocity()
     {
         if (kinematicPath != null)
             return;
@@ -533,7 +491,7 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         internalAngularVelocity = Vector3.zero;
     }
 
-    public void SetKinematicPath(Vector3 vel, float time)
+    public override void SetKinematicPath(Vector3 vel, float time)
     {   
         if (kinematicPath != null)
             EndKinematicPath();
@@ -548,43 +506,43 @@ public class PlayerMovement : MonoBehaviour, ICharacterController
         kinematicPath = kp;
 
         externalVelocity += vel;
-        
     }
 
-    public void EndKinematicPath()
+    ////public override void EndKinematicPath()
+    ////{
+    ////    GameManager.Instance.StopCoroutine(kinematicPath.Value.timer);
+
+    ////    externalVelocity = -motor.BaseVelocity + kinematicPath.Value.velocityAfter;
+
+    ////    kinematicPath = null;
+    ////}
+
+    public override void Flinch()
     {
-        GameManager.Instance.StopCoroutine(kinematicPath.Value.timer);
+        base.Flinch();
 
-        externalVelocity = -motor.BaseVelocity + kinematicPath.Value.velocityAfter;
-
-        kinematicPath = null;
-    }
-
-    public void Flinch()
-    {
-        action.Flinch();
         ability.Flinch();
     }
 
-    public void ForceUnground()
+    public override void ForceUnground()
     {
         forceUngrounding = true;
     }
 
-    public void AddImpulse(Vector3 impulse)
+    ////public override void AddImpulse(Vector3 impulse)
+    ////{
+    ////    if (kinematicPath != null)
+    ////        return;
+
+    ////    externalVelocity += impulse;
+    ////}
+
+    public override void AddImpulseAtPoint(Vector3 impulse, Vector3 point)
     {
         if (kinematicPath != null)
             return;
 
-        externalVelocity += impulse;
-    }
-
-    public void AddImpulseAtPoint(Vector3 impulse, Vector3 point)
-    {
-        if (kinematicPath != null)
-            return;
-
-        externalVelocity += impulse;
+        AddImpulse(impulse);
         internalAngularVelocity += Vector3.Cross(point - motor.TransientPosition, impulse);
     }
 #endregion

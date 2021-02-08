@@ -91,7 +91,7 @@ public class PlayerCombat : MonoBehaviour, IAttacker
 
 #region Sibling 
     new private PlayerAnimation animation;
-    private PlayerMovement movement;
+    private MomentumMovement movement;
     private PlayerMovementAction movementAction;
     private CharacterValueOverridability overridability;
 #endregion
@@ -111,7 +111,7 @@ public class PlayerCombat : MonoBehaviour, IAttacker
     void Start()
     {
         animation = GetComponent<PlayerAnimation>();
-        movement = GetComponent<PlayerMovement>();
+        movement = GetComponent<MomentumMovement>();
         movementAction = GetComponent<PlayerMovementAction>();
         overridability = GetComponent<CharacterValueOverridability>();
 
@@ -149,11 +149,11 @@ public class PlayerCombat : MonoBehaviour, IAttacker
         if (newState == AttackAnimationState.STARTUP)
         {
             attackBuffered = false;
-            ApplyAttackInitInfo(settingAttackInitInfo);
+            //ApplyAttackInitInfo(settingAttackInitInfo);
         }
         else if (newState == AttackAnimationState.FINISHED)
         {
-            ResetAttackInitInfo(settingAttackInitInfo);
+            //ResetAttackInitInfo(settingAttackInitInfo);
             settingAttackInitInfo = new AttackInitInfo();
         }
     }
@@ -255,7 +255,7 @@ public class PlayerCombat : MonoBehaviour, IAttacker
                     BrakingAttack();
                 else if (sqrSpeed >= runningAttackMinSpeed * runningAttackMinSpeed && control.direction.x == movementAction.facingDirection)
                     RunningAttack();
-                else if (control.direction.x == +1)
+                else if (control.direction.y == +1)
                     UpAttack();
                 else if (control.direction.y == -1)
                     DownAttack();

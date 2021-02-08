@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Resources/Scenes/Prototype Demo Level.unity
+    path: Assets/Resources/Scenes/Prototypes/Movement Prototype.unity
     guid: 294de746a41ee44b1bcd4d7752e913b8
   m_configObjects: {}

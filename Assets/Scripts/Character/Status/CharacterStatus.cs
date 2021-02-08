@@ -18,7 +18,7 @@ public class CharacterStatus : MonoBehaviour, IDamageable
 
     #region Sibling References
     new private PlayerAnimation animation;
-    private PlayerMovement movement;
+    private MomentumMovement movement;
     private PlayerCharacterDirector character;
     private PlayerCombat combat;
     #endregion
@@ -26,7 +26,7 @@ public class CharacterStatus : MonoBehaviour, IDamageable
     protected virtual void Start()
     {
         animation = GetComponent<PlayerAnimation>();
-        movement = GetComponent<PlayerMovement>();
+        movement = GetComponent<MomentumMovement>();
         character = GetComponent<PlayerCharacterDirector>();
         combat = GetComponent<PlayerCombat>();
     }
@@ -74,7 +74,7 @@ public class CharacterStatus : MonoBehaviour, IDamageable
 
     public virtual void Halt()
     {
-        movement.ZeroVelocity(true);
+        movement.ZeroVelocity();
     }
 
     public virtual void ForceUnground()

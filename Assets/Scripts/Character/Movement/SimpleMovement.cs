@@ -1,0 +1,15 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class SimpleMovement : Movement
+{
+    private Vector3 _velocity;
+    public override Vector3 velocity { get { return _velocity; } set { if (kinematicPath == null) _velocity = value; } }
+
+    // Update is called once per frame
+    void Update()
+    {
+        position += velocity * Time.deltaTime;
+    }
+}

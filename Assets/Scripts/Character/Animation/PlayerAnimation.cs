@@ -10,7 +10,7 @@ public class PlayerAnimation : CharacterAnimation
     private float iFrameBlinkRate = 0.1f;
     
     #region Sibling References
-    PlayerMovement movement;
+    MomentumMovement movement;
     PlayerCombat combat;
     PlayerMovementAction movementAction;
     #endregion
@@ -23,7 +23,7 @@ public class PlayerAnimation : CharacterAnimation
     void Start()
     {
         combat = GetComponent<PlayerCombat>();
-        movement = GetComponent<PlayerMovement>();
+        movement = GetComponent<MomentumMovement>();
         movementAction = GetComponent<PlayerMovementAction>();
     }
 
