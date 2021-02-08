@@ -252,7 +252,9 @@ public class PlayerCamera : MonoBehaviour
     {
         playerTransform = _playerTransform;
         movement = _movement;
-        movement.planeChanged += HandlePlayerPlaneChanged;
+        DynamicPlaneConstraint dpc = movement.GetComponent<DynamicPlaneConstraint>();
+        if(dpc != null)
+            dpc.planeChanged += HandlePlayerPlaneChanged;
     }
 
     /// <summary>

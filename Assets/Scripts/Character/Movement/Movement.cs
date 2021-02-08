@@ -18,6 +18,11 @@ public abstract class Movement : MonoBehaviour, IDynamicPlaneConstrainable
     public virtual Quaternion rotation { get { return transform.rotation; } set { transform.rotation = value; } }
     public abstract Vector3 velocity { get; set; }
 
+    public abstract bool usePlaneBreakers { get; }
+
+    public abstract void HandlePlaneSettingExtra(Plane plane);
+    public abstract bool PlaneBreakValid();
+
     protected KinematicPath? kinematicPath = null;
 
     public virtual void ZeroVelocity()
@@ -73,5 +78,4 @@ public abstract class Movement : MonoBehaviour, IDynamicPlaneConstrainable
 
         velocity += impulse;
     }
-
 }

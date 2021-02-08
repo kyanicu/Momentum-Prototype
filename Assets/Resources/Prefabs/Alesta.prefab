@@ -638,6 +638,7 @@ GameObject:
   - component: {fileID: 7772330207423287715}
   - component: {fileID: 4511577182660178396}
   - component: {fileID: 804926533050630676}
+  - component: {fileID: 3414350781481906837}
   m_Layer: 10
   m_Name: Alesta
   m_TagString: Player
@@ -859,8 +860,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 0
-  maxVitality: 0
   iFrameTime: 1
+  maxVitality: 0
   hurtboxes: {fileID: 0}
 --- !u!114 &7772330207423287715
 MonoBehaviour:
@@ -986,6 +987,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f3c2ba4b17dc4120aaaf5d5a6d5beac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3414350781481906837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7332030372497221729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 726df63aeb06f459a85b663635784b08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &7356230516054090793

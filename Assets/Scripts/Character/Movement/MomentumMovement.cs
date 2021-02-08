@@ -10,34 +10,6 @@ using UnityEngine;
 using KinematicCharacterController;
 using PathCreation;
 
-#region Action Event Handler Argument Structs
-/// <summary>
-/// Hold info on a recent player plane change
-/// </summary>
-public struct PlaneChangeArgs
-{
-    /// <summary>
-    /// The new plane normal
-    /// </summary>
-    public Vector3 planeNormal;
-    /// <summary>
-    /// Was the plane changed via a plane breaker?
-    /// </summary>
-    public bool planeBreaker;
-
-    /// <summary>
-    /// Basic constructor
-    /// </summary>
-    /// <param name="normal">The normal of the new plane</param>
-    /// <param name="breaker">Was the plane changed via a plane breaker</param>
-    public PlaneChangeArgs(Vector3 normal, bool breaker)
-    {
-        planeNormal = normal;
-        planeBreaker = breaker;
-    }
-}
-#endregion
-
 /// <summary>
 /// Holds wall hit info
 /// </summary>
@@ -145,15 +117,7 @@ public class PlayerMovementValues : CharacterOverridableValues
 public class MomentumMovement : CharacterMovement, ICharacterController
 {
 
-#region MovementEvents
-    /// <summary>
-    /// Triggered on Plane Change
-    /// </summary>
-    public event Action<PlaneChangeArgs> planeChanged;
-#endregion
-
-
-    public override Vector3 position { get { return motor.TransientPosition; } set { motor.SetTransientPosition(value); } }
+    public override Vector3 position { get { return motor.TransientPosition; } set { motor.SetPosition(value); } }
     public override Quaternion rotation { get { return motor.TransientRotation; } set { motor.SetRotation(value); } }
     public override Vector3 velocity { get { return motor.BaseVelocity; } set { externalVelocity += -motor.BaseVelocity + value; } }
     public override Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
@@ -359,39 +323,12 @@ public class MomentumMovement : CharacterMovement, ICharacterController
     private bool zeroingVel;
     ////private int angularVelocityLocked = 0;
     private bool forceUngrounding = false;
-
-#endregion
-
-#region Dynamic Plane Info
-    /// <summary>
-    /// The current plane that the player is on
-    /// In regards to the 2.5D Dynamic Plane Shifting mechanic
-    /// </summary>
-    private Plane currentPlane;
-    /// <summary>
-    /// The plane a player broke off of when on a plane breaker
-    /// Tracked so that if the player leaves a plane breaker without being in a dynamic plane, it can reorient itself back to this as it's last stable plane
-    /// </summary>
-    private Plane brokenPlane;
-    /// <summary>
-    /// The current dynamic plane the player is on
-    /// Holds up to 2 incase of overlap
-    /// </summary>
-    private DynamicPlane[] currentDynamicPlanes = new DynamicPlane[2];
-    /// <summary>
-    /// The current Plane breaker the player is on
-    /// Holds up to 2 incase of overlap 
-    /// </summary>
-    private PlaneBreaker[] currentPlaneBreakers = new PlaneBreaker[2];
-    /// <summary>
-    /// Current stored plane waiting to be set at the appropriate time in the update cycle
-    /// </summary>
-    public Plane settingPlane = new Plane(Vector3.zero, Vector3.zero);
     /// <summary>
     /// Set to true on new plane so that UpdateRotation can properly align the player with the new plane
     /// </summary>
     private bool setOrientationAlongPlane = false;
-    #endregion
+
+#endregion
 
     // Debug
 #region debug
@@ -414,6 +351,8 @@ public class MomentumMovement : CharacterMovement, ICharacterController
     protected KinematicCharacterMotor motor;
 #endregion
 
+    public override bool usePlaneBreakers { get { return true;} }
+
 #region MonoBehavior Messages Handling
     
     /// <summary>
@@ -434,6 +373,12 @@ public class MomentumMovement : CharacterMovement, ICharacterController
     protected override void Awake()
     {
         base.Awake();
+
+                motor = GetComponent<KinematicCharacterMotor>();
+        // Instantiate helper components
+        ability = GetComponent<PlayerMovementAbility>();
+
+        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
     }
 
     /// <summary>
@@ -442,18 +387,13 @@ public class MomentumMovement : CharacterMovement, ICharacterController
     /// </summary>
     protected void Start()
     {
-        motor = GetComponent<KinematicCharacterMotor>();
-        // Instantiate helper components
-        ability = GetComponent<PlayerMovementAbility>();
-
-        GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);
-
         motor.CharacterController = this;
 
         slopeList = new SlopeList(5);
 
-        SetCurrentPlane(new Plane(motor.CharacterForward, motor.Transform.position));
-        currentPlane = new Plane(motor.CharacterForward, motor.transform.position);
+        
+        GetComponent<DynamicPlaneConstraint>()?.SetCurrentPlane(new Plane(motor.CharacterForward, motor.Transform.position));
+        Plane currentPlane = new Plane(motor.CharacterForward, motor.transform.position);
         motor.PlanarConstraintAxis = currentPlane.normal;
 
         // Debug
@@ -473,7 +413,7 @@ public class MomentumMovement : CharacterMovement, ICharacterController
         {
             case ("Checkpoint") :
                 startState = motor.GetState();
-                startPlane = new Plane(currentPlane.normal, motor.Transform.position);
+                startPlane = new Plane(motor.PlanarConstraintAxis, motor.Transform.position);
                 break;
         }
     } 
@@ -565,7 +505,7 @@ public class MomentumMovement : CharacterMovement, ICharacterController
         // Handles reorienting the player onto the proper plane if not already
         if (setOrientationAlongPlane)
             // Set forward to match the current plane
-            currentRotation = Quaternion.FromToRotation(motor.CharacterForward, currentPlane.normal) * currentRotation;
+            currentRotation = Quaternion.FromToRotation(motor.CharacterForward, motor.PlanarConstraintAxis) * currentRotation;
 
         // See if the player should reorient itself back to the gravity-based ground
         bool reorient = false;
@@ -621,7 +561,7 @@ public class MomentumMovement : CharacterMovement, ICharacterController
         {
             // Reorient angluar momentum along plane
             if (setOrientationAlongPlane) 
-                internalAngularVelocity = Quaternion.FromToRotation(internalAngularVelocity, currentPlane.normal) * internalAngularVelocity;
+                internalAngularVelocity = Quaternion.FromToRotation(internalAngularVelocity, motor.PlanarConstraintAxis) * internalAngularVelocity;
 
             // Add angular velocity to the rotation
             currentRotation = Quaternion.Euler(internalAngularVelocity * deltaTime) * currentRotation;
@@ -695,7 +635,7 @@ public class MomentumMovement : CharacterMovement, ICharacterController
         }
 
         // Ensure velocity is locked to current 2.5D plane
-        currentVelocity = Vector3.ProjectOnPlane(currentVelocity, currentPlane.normal);
+        currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
         
         // Cap the velocity if over max speed
         if (currentVelocity.sqrMagnitude > overridableAttribute.values.maxSpeed * overridableAttribute.values.maxSpeed)
@@ -734,33 +674,6 @@ public class MomentumMovement : CharacterMovement, ICharacterController
             motor.ForceUnground();
             forceUngrounding = false;
         }
-        // Handle setting the current plane 
-        // Set so that the update uses the proper plane that the player is currently on
-
-        // If active on PlaneBreaker
-        if (currentPlaneBreakers[0] != null && motor.IsGroundedThisUpdate && motor.BaseVelocity.sqrMagnitude >= overridableAttribute.values.attachThreshold * overridableAttribute.values.attachThreshold)
-        {
-            Vector3 planeRight = Vector3.Cross(currentPlaneBreakers[0].transform.up, currentPlane.normal);
-            bool movingRight = Vector3.Dot(motor.BaseVelocity, planeRight) > 0;            
-            
-            // Update current plane to match the player's position on the PlaneBreaker
-            SetCurrentPlane( currentPlaneBreakers[0].GetClosestPathPlane(motor.Transform.position, movingRight), true);
-        }
-        // If on Dynamic Plane
-        else if(currentDynamicPlanes[0] != null)
-        {
-            Vector3 planeRight = Vector3.Cross(currentDynamicPlanes[0].transform.up, currentPlane.normal);
-            bool movingRight = Vector3.Dot(motor.BaseVelocity, planeRight) > 0;
-
-            // Update current plane to match the player's position on the DynamicPlane
-            SetCurrentPlane(currentDynamicPlanes[0].GetClosestPathPlane(motor.Transform.position, movingRight), false);
-        }
-        // Set stored plane, if waiting to be set
-        else if (settingPlane.normal != Vector3.zero)
-            SetCurrentPlane(settingPlane);
-
-        // Reset stored plane
-        settingPlane = new Plane(Vector3.zero, Vector3.zero);
 
         // Handle extra Ability update setup
         ability.BeforeCharacterUpdate(motor, deltaTime);
@@ -817,7 +730,7 @@ public class MomentumMovement : CharacterMovement, ICharacterController
         if(setAngularVelocity)
         {
             // Set angular velocity (if any) using slope tracking info and reset the tracker
-            internalAngularVelocity = slopeList.GetAngularVelocity(motor.BaseVelocity, currentPlane.normal, overridableAttribute.values.ungroundRotationFactor, overridableAttribute.values.ungroundRotationMinSpeed, overridableAttribute.values.ungroundRotationMaxSpeed);
+            internalAngularVelocity = slopeList.GetAngularVelocity(motor.BaseVelocity, motor.PlanarConstraintAxis, overridableAttribute.values.ungroundRotationFactor, overridableAttribute.values.ungroundRotationMinSpeed, overridableAttribute.values.ungroundRotationMaxSpeed);
             slopeList.Reset();
         }
 
@@ -944,7 +857,7 @@ public class MomentumMovement : CharacterMovement, ICharacterController
             }
         }
 
-        // Handles extra Ability mechanics thaqt can modify or use hit stability info
+        // Handles extra Ability mechanics that can modify or use hit stability info
         ability.ProcessHitStabilityReport(motor, hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref hitStabilityReport);
     }
 
@@ -981,149 +894,20 @@ public class MomentumMovement : CharacterMovement, ICharacterController
     {
         bufferedUngroundedNormal = Vector3.zero;
     }
-#endregion
+    #endregion
 
-#region Dynamic Plane Shifting
-    /// <summary>
-    /// Sets the current plane and fixes the player and their movement on that plane
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="plane"> The new plane to be set</param>
-    /// <param name="breaker"> Is the plane change a result of a PlaneBreaker </param>
-    private void SetCurrentPlane(Plane plane, bool breaker = false)
+#region IDynamicPlaneConstrainable Implementation
+    public override void HandlePlaneSettingExtra(Plane plane)
     {
-        //If the plane is invalid or identical to the current plane
-        if (plane.normal == Vector3.zero || (plane.normal == currentPlane.normal && plane.distance == currentPlane.distance))
-            return; 
-
-        // Set the currentPlane
-        currentPlane = plane;
-        // Rotate Velocity along new plane without losing momentum
-        motor.BaseVelocity = Quaternion.FromToRotation(currentPlane.normal, plane.normal) * motor.BaseVelocity;
         // Lock player movement on plane
         motor.PlanarConstraintAxis = plane.normal;
-        // Move player to plane
-        motor.SetPosition(plane.ClosestPointOnPlane(motor.Transform.position));
         // Reorient player rotation
         setOrientationAlongPlane = true;
-
-        // Trigger communication event on plane change
-        planeChanged?.Invoke(new PlaneChangeArgs(plane.normal, breaker));
     }
 
-    /// <summary>
-    /// Begin tracking newly entered DynamicPlane
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="dynamicPlane"> The DynamicPlane entered</param>
-    private void EnterDynamicPlane(DynamicPlane dynamicPlane)
+    public override bool PlaneBreakValid()
     {
-        // If DynamicPlane overlaps with another the player is already in
-        if (currentDynamicPlanes[0] != null)
-        {
-            // If the previous DynamicPlane is prioritized, keep new DynamicPlane tracked secondarily
-            if (currentDynamicPlanes[0].prioritize)
-                currentDynamicPlanes[1] = dynamicPlane;
-            else
-            {
-                // Track previous DynamicPlane secondarily, and new one primarily, forgetting any other tracked DynamicPlane
-                currentDynamicPlanes[1] = currentDynamicPlanes[0];
-                currentDynamicPlanes[0] = dynamicPlane;
-            }
-        }
-        else
-            // Track new DynamicPlane primarily
-            currentDynamicPlanes[0] = dynamicPlane;
-    }
-
-    /// <summary>
-    /// End tracking previously entered DynamicPlane 
-    /// </summary>
-    /// <param name="col"> The collider of the DynamicPlane trigger exited</param>
-    private void ExitDynamicPlane(Collider col)
-    {
-        // If exited DynamicPlane was tracked primarily
-        if (currentDynamicPlanes[0].gameObject == col.gameObject)
-        {
-            // Shift over potential secondarily tracked DynamicPlane so that it is now tracked primarily
-            // If there was no DynamicPlane, then there is no longer any tracked DynamicPlane
-            currentDynamicPlanes[0] = currentDynamicPlanes[1];
-            // Stop tracking secondary DynamicPlane
-            currentDynamicPlanes[1] = null;
-        }
-        // If exited DynamicPlane was only tracked secondarily  
-        else if (currentDynamicPlanes[1].gameObject == col.gameObject)
-        {
-            // Stop tracking it
-            currentDynamicPlanes[1] = null;
-        }
-    }
-
-    /// <summary>
-    /// Begin tracking newly entered PlaneBreaker
-    /// </summary>
-    /// <param name="motor"> The player's kinematic motor</param>
-    /// <param name="planeBreaker">The PlaneBreaker entered</param>
-    private void EnterPlaneBreaker(PlaneBreaker planeBreaker)
-    {
-        // If PlaneBreaker overlaps with another the player is already in
-        if (currentPlaneBreakers[0] != null)
-        {
-            // If the previous PlaneBreaker is prioritized, keep new PlaneBreaker tracked secondarily
-            if (currentPlaneBreakers[0].prioritize)
-                currentPlaneBreakers[1] = planeBreaker;
-            else
-            {
-                // Track previous PlaneBreaker secondarily, and new one primarily, forgetting any other tracked PlaneBreaker
-                currentPlaneBreakers[1] = currentPlaneBreakers[0];
-                currentPlaneBreakers[0] = planeBreaker;
-
-                // Remember the plane that was broken
-                brokenPlane = currentPlane;
-            }
-        }
-        else
-        {
-            // Track new PlaneBreaker primarily
-            currentPlaneBreakers[0] = planeBreaker;
-
-            // Remember the plane that was broken
-            brokenPlane = currentPlane;
-        }
-    }
-
-    /// <summary>
-    /// End tracking previously entered PlaneBreaker 
-    /// </summary>
-    /// <param name="col"> The collider of the PlaneBreaker trigger exited</param>
-    private void ExitPlaneBreaker(Collider col)
-    {
-        // If exited PlaneBreaker was tracked primarily
-        if (currentPlaneBreakers[0].gameObject == col.gameObject)
-        {
-            // Shift over potential secondarily tracked PlaneBreaker so that it is now tracked primarily
-            // If there was no PlaneBreaker, then there is no longer any tracked PlaneBreaker
-            currentPlaneBreakers[0] = currentPlaneBreakers[1];
-            // Stop tracking secondary PlaneBreaker
-            currentPlaneBreakers[1] = null;
-
-            // if There was no secondarily tracked PlaneBreaker
-            if (currentPlaneBreakers[0] == null)
-            {
-                // Restore broken plane in the case that there is no current Dynamic Plane
-                if (currentDynamicPlanes[0] == null)
-                    settingPlane = brokenPlane; ////currentPlane = brokenPlane;
-                
-                // Stop Tracking the broken plane
-                brokenPlane = new Plane(Vector3.zero, Vector3.zero);
-            }
-        }
-        // If exited PlaneBreaker was only tracked secondarily  
-        else if (currentPlaneBreakers[1].gameObject == col.gameObject)
-        {
-            // Stop tracking it
-            currentPlaneBreakers[1] = null;
-        }
+        return motor.IsGroundedThisUpdate && motor.BaseVelocity.sqrMagnitude >= overridableAttribute.values.attachThreshold * overridableAttribute.values.attachThreshold;
     }
 #endregion
 
@@ -1134,7 +918,7 @@ public class MomentumMovement : CharacterMovement, ICharacterController
     public void ResetState()
     {
         // Resets the the motor state (used as a makeshift "level restart")
-        settingPlane = startPlane;
+        GetComponent<DynamicPlaneConstraint>()?.SetCurrentPlane(startPlane);
         motor.ApplyState(startState);
         motor.BaseVelocity = Vector3.zero;
     }
