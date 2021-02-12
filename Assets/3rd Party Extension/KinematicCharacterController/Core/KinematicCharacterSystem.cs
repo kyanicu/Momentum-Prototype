@@ -186,6 +186,7 @@ namespace KinematicCharacterController
             // Update PhysicsMover velocities
             for (int i = 0; i < physicsMoversCount; i++)
             {
+                movers[i].PreVelocityUpdate(deltaTime);
                 movers[i].VelocityUpdate(deltaTime);
             }
 
@@ -199,10 +200,13 @@ namespace KinematicCharacterController
             for (int i = 0; i < physicsMoversCount; i++)
             {
                 PhysicsMover mover = movers[i];
+                mover.PreSetPositionAndRotation();
 
                 mover.Transform.SetPositionAndRotation(mover.TransientPosition, mover.TransientRotation);
                 mover.Rigidbody.position = mover.TransientPosition;
                 mover.Rigidbody.rotation = mover.TransientRotation;
+                
+                mover.PostSetPositionAndRotation();
             }
 
             // Character controller update phase 2 and move

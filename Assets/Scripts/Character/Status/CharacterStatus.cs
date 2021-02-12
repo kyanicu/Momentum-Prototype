@@ -19,7 +19,7 @@ public class CharacterStatus : MonoBehaviour, IDamageable
     #region Sibling References
     new private PlayerAnimation animation;
     private MomentumMovement movement;
-    private PlayerCharacterDirector character;
+    private PlayerCharacterDirector director;
     private PlayerCombat combat;
     #endregion
 
@@ -27,7 +27,7 @@ public class CharacterStatus : MonoBehaviour, IDamageable
     {
         animation = GetComponent<PlayerAnimation>();
         movement = GetComponent<MomentumMovement>();
-        character = GetComponent<PlayerCharacterDirector>();
+        director = GetComponent<PlayerCharacterDirector>();
         combat = GetComponent<PlayerCombat>();
     }
 
@@ -84,7 +84,7 @@ public class CharacterStatus : MonoBehaviour, IDamageable
 
     public virtual void Stun(float stunTime)
     {
-        character.TempLockControl(stunTime);
+        director.TempLockControl(stunTime);
     }
 
     public virtual void TakeKinematicKnockback(Vector3 knockback, float time)

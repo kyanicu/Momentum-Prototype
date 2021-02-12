@@ -2,8 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public abstract class CharacterMovement : Movement
 {
+
+    protected struct KinematicPath
+    {
+        public Vector3 velocity;
+        
+        public Vector3 velocityAfter;
+
+        public Coroutine timer;
+                
+    }
+
     public abstract Vector3 groundNormal { get; }
     public abstract Vector3 lastGroundNormal { get; }
     public abstract bool isGroundedThisUpdate { get; }
@@ -20,10 +32,43 @@ public abstract class CharacterMovement : Movement
     /// </summary>
     protected PlayerMovementAction action;
 
-    protected virtual void Awake()
+    protected KinematicPath? kinematicPath = null;
+
+    protected override void Awake()
     {
+        base.Awake();
         physics = GetComponent<PlayerMovementPhysics>();
         action = GetComponent<PlayerMovementAction>();
+    }
+
+    public virtual void SetKinematicPath(Vector3 vel, float time)
+    {
+        if (kinematicPath != null)
+            EndKinematicPath();
+
+        KinematicPath kp = new KinematicPath 
+        { 
+            velocity = vel,
+            velocityAfter = velocity,
+            timer = StartCoroutine(KinematicPathCoroutine(time)),
+        };
+        
+        kinematicPath = kp;
+
+        velocity = vel;
+    }
+
+    public virtual IEnumerator KinematicPathCoroutine(float time)
+    {
+        yield return new WaitForSeconds(time);
+        EndKinematicPath();
+    }
+
+    public virtual void EndKinematicPath()
+    {
+        StopCoroutine(kinematicPath.Value.timer);
+        velocity = kinematicPath.Value.velocityAfter;
+        kinematicPath = null;
     }
 
     public virtual void Flinch()

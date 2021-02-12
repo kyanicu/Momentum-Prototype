@@ -6,6 +6,8 @@ using UnityEngine;
 public class GameManager : Singleton<GameManager>
 {
 
+    private int[] layerMasks = new int[32];
+
     private HashSet<CharacterDirector> controlledCharacters;
 
     protected GameManager() {}
@@ -13,6 +15,8 @@ public class GameManager : Singleton<GameManager>
     void Awake()
     {
         controlledCharacters = new HashSet<CharacterDirector>();
+
+        SetLayerMasks();
     }
 
     void Update()
@@ -23,6 +27,25 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
+    private void SetLayerMasks()
+    {
+        for (int i = 0; i < 32; i++)
+        {
+            layerMasks[i] = 0;
+            for (int j = 0; j < 32; j++)
+            {
+                if (!Physics.GetIgnoreLayerCollision(i, j))
+                {
+                    layerMasks[i] = layerMasks[i] | 1 << i;
+                }
+            }
+        }
+    }
+
+    public int GetLayerMask(int layer)
+    {
+        return layerMasks[layer];
+    }
     public void RegisterCharacterControl(CharacterDirector c)
     {
         if(!controlledCharacters.Contains(c))

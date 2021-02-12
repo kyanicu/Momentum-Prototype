@@ -78,15 +78,15 @@ namespace KinematicCharacterController
         /// <summary>
         /// The mover's Transform
         /// </summary>
-        public Transform Transform { get; private set; }
+        public Transform Transform { get; protected set; }
         /// <summary>
         /// The character's position before the movement calculations began
         /// </summary>
-        public Vector3 InitialSimulationPosition { get; private set; }
+        public Vector3 InitialSimulationPosition { get; protected set; }
         /// <summary>
         /// The character's rotation before the movement calculations began
         /// </summary>
-        public Quaternion InitialSimulationRotation { get; private set; }
+        public Quaternion InitialSimulationRotation { get; protected set; }
 
         private Vector3 _internalTransientPosition;
 
@@ -99,7 +99,7 @@ namespace KinematicCharacterController
             {
                 return _internalTransientPosition;
             }
-            private set
+            protected set
             {
                 _internalTransientPosition = value;
             }
@@ -115,19 +115,19 @@ namespace KinematicCharacterController
             {
                 return _internalTransientRotation;
             }
-            private set
+            protected set
             {
                 _internalTransientRotation = value;
             }
         }
 
 
-        private void Reset()
+        protected virtual void Reset()
         {
             ValidateData();
         }
 
-        private void OnValidate()
+        protected virtual void OnValidate()
         {
             ValidateData();
         }
@@ -146,18 +146,18 @@ namespace KinematicCharacterController
             Rigidbody.interpolation = RigidbodyInterpolation.None;
         }
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
             KinematicCharacterSystem.EnsureCreation();
             KinematicCharacterSystem.RegisterPhysicsMover(this);
         }
 
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
             KinematicCharacterSystem.UnregisterPhysicsMover(this);
         }
 
-        private void Awake()
+        protected virtual void Awake()
         {
             Transform = this.transform;
             ValidateData();
@@ -231,10 +231,13 @@ namespace KinematicCharacterController
             Rigidbody.angularVelocity = state.AngularVelocity;
         }
 
+        // Self Added
+        public virtual void PreVelocityUpdate(float deltaTime) { }
+
         /// <summary>
         /// Caches velocity values based on deltatime and target position/rotations
         /// </summary>
-        public void VelocityUpdate(float deltaTime)
+        public virtual void VelocityUpdate(float deltaTime)
         {
             InitialSimulationPosition = TransientPosition;
             InitialSimulationRotation = TransientRotation;
@@ -249,5 +252,12 @@ namespace KinematicCharacterController
                 Rigidbody.angularVelocity = (Mathf.Deg2Rad * rotationFromCurrentToGoal.eulerAngles) / deltaTime;
             }
         }
+
+        // Self Added
+        public virtual void PreSetPositionAndRotation() { }
+
+        // Self Added
+        public virtual void PostSetPositionAndRotation() { }
+
     }
 }

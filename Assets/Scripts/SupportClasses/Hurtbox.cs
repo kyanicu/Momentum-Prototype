@@ -34,6 +34,7 @@ public interface IDamageable
 
 public class Hurtbox : MonoBehaviour
 {
+    [SerializeField]
     private IDamageable _damageable;
 
     public IDamageable damageable { get { return _damageable; } private set { _damageable = value; } }

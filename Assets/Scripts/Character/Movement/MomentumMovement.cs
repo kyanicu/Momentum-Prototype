@@ -114,12 +114,14 @@ public class PlayerMovementValues : CharacterOverridableValues
 /// Implements ICharacterController to allow control over the players KinematicCharacterMotor Unity Component
 /// Implements IPlayerMovementCmmunication to allow communication between other Player components
 /// </summary>
+[RequireComponent(typeof(KinematicCharacterMotor))]
 public class MomentumMovement : CharacterMovement, ICharacterController
 {
 
     public override Vector3 position { get { return motor.TransientPosition; } set { motor.SetPosition(value); } }
     public override Quaternion rotation { get { return motor.TransientRotation; } set { motor.SetRotation(value); } }
     public override Vector3 velocity { get { return motor.BaseVelocity; } set { externalVelocity += -motor.BaseVelocity + value; } }
+    public override Vector3 angularVelocity { get { return internalAngularVelocity; } set { if (!motor.IsGroundedThisUpdate) internalAngularVelocity = value; } }
     public override Vector3 groundNormal { get { return motor.GetEffectiveGroundNormal(); } }
     public override Vector3 lastGroundNormal { get { return motor.GetLastEffectiveGroundNormal(); } }
     public override bool isGroundedThisUpdate { get { return motor.IsGroundedThisUpdate; } }
@@ -351,7 +353,8 @@ public class MomentumMovement : CharacterMovement, ICharacterController
     protected KinematicCharacterMotor motor;
 #endregion
 
-    public override bool usePlaneBreakers { get { return true;} }
+    public override bool usePlaneBreakers { get { return true; } }
+    public override bool reaffirmCurrentPlane { get { return false; } }
 
 #region MonoBehavior Messages Handling
     
@@ -374,7 +377,7 @@ public class MomentumMovement : CharacterMovement, ICharacterController
     {
         base.Awake();
 
-                motor = GetComponent<KinematicCharacterMotor>();
+        motor = GetComponent<KinematicCharacterMotor>();
         // Instantiate helper components
         ability = GetComponent<PlayerMovementAbility>();
 
