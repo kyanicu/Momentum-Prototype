@@ -146,10 +146,10 @@ public class PlayerCamera : MonoBehaviour
 #endregion
 
 #region External References
-    private MomentumMovement movement;
+    private CharacterMovement movement;
 #endregion
 
-    #region Unity Monobehavior Messages
+#region Unity Monobehavior Messages
     /// <summary>
     /// Sets default values on component reset/initialization in inspector
     /// </summary>
@@ -248,7 +248,7 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     /// <param name="_playerTransform">The player's readonly transform reference</param>
     /// <param name="_playerKinematicMotor">The player's readonly Motor reference</param>
-    public void SetReadOnlyReferences(ReadOnlyTransform _playerTransform, MomentumMovement _movement)
+    public void SetReadOnlyReferences(ReadOnlyTransform _playerTransform, CharacterMovement _movement)
     {
         playerTransform = _playerTransform;
         movement = _movement;

@@ -32,14 +32,14 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""id"": ""c531ac21-490d-41a0-bd58-b211fb876ab9"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": ""Press""
+                    ""interactions"": ""Press(behavior=1)""
                 },
                 {
                     ""name"": ""Run"",
-                    ""type"": ""Button"",
+                    ""type"": ""Value"",
                     ""id"": ""a77c817f-6280-42de-a9d5-18bc7148a5d2"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": ""Clamp(min=-1,max=1),AxisDeadzone"",
                     ""interactions"": """"
                 },
                 {
@@ -64,7 +64,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""id"": ""1db7a0d3-b1c5-4f2b-ab5d-898f7894a44a"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": ""MultiTap""
+                    ""interactions"": ""Press""
                 },
                 {
                     ""name"": ""NeutralAttack"",
@@ -96,7 +96,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""id"": ""1cd3cd6c-d1ec-4e65-afbc-71c47ffd9431"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": """"
+                    ""interactions"": ""Press""
                 },
                 {
                     ""name"": ""CameraResetManualTilt"",
@@ -104,7 +104,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""id"": ""1580beff-3ea7-4942-b54e-6a6d3c522f47"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": """"
+                    ""interactions"": ""Press""
                 }
             ],
             ""bindings"": [
@@ -114,7 +114,18 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/space"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5d846bba-5bdc-421a-8918-4eab3c9bf5dd"",
+                    ""path"": ""<XInputController>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""Jump"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -136,7 +147,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/a"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Standard;Keyboard"",
                     ""action"": ""Run"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -147,7 +158,73 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/d"",
                     ""interactions"": """",
                     ""processors"": """",
+                    ""groups"": ""Standard;Keyboard"",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""ead1e308-3bb5-42c8-b773-4fca9b27c803"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
                     ""groups"": """",
+                    ""action"": ""Run"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""f68c94d8-59cc-4801-b715-7a17d94c2ffc"",
+                    ""path"": ""<Gamepad>/leftStick/left"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""9819fd85-4c9f-456c-8297-077f25fa285d"",
+                    ""path"": ""<Gamepad>/leftStick/right"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""25cec05e-f304-4c3b-b890-7374ebf630a6"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Run"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""7b8ebf34-3a31-4120-a087-f662333c9b58"",
+                    ""path"": ""<Gamepad>/dpad/left"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""95399b08-25d1-4001-b878-492f93932121"",
+                    ""path"": ""<Gamepad>/dpad/right"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""Run"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -156,9 +233,20 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""name"": """",
                     ""id"": ""836f345a-c5a9-4e2b-a925-00da4cc860ea"",
                     ""path"": ""<Keyboard>/space"",
-                    ""interactions"": ""Press(behavior=1)"",
+                    ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
+                    ""action"": ""JumpCancel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bcacf0f1-6e9c-45ca-80a3-0d47301e2cd3"",
+                    ""path"": ""<XInputController>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""JumpCancel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -167,9 +255,31 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""name"": """",
                     ""id"": ""3093db90-358f-4c8e-9b05-36ba80c134f2"",
                     ""path"": ""<Keyboard>/enter"",
-                    ""interactions"": ""Press"",
+                    ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d2137ffb-aa44-409b-a30d-dc208b20099d"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard"",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""265f65bf-f20b-4df2-b73b-741887fb1a10"",
+                    ""path"": ""<XInputController>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""Pause"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -191,7 +301,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/upArrow"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
                     ""action"": ""CameraManualTilt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -202,7 +312,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/downArrow"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
                     ""action"": ""CameraManualTilt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -213,7 +323,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/leftArrow"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
                     ""action"": ""CameraManualTilt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -224,18 +334,40 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/rightArrow"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
                     ""action"": ""CameraManualTilt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 },
                 {
                     ""name"": """",
+                    ""id"": ""23c2a2dd-ef08-402d-8a28-87f663405e43"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": ""StickDeadzone"",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""CameraManualTilt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""bfeb04c3-790f-4697-938c-a03d9763fee5"",
                     ""path"": ""<Keyboard>/rightAlt"",
-                    ""interactions"": ""Press"",
+                    ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
+                    ""action"": ""CameraChangeSetting"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d01489eb-a94b-426a-b8e7-235430eab6fa"",
+                    ""path"": ""<XInputController>/rightStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""CameraChangeSetting"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -246,7 +378,18 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/rightAlt"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
+                    ""action"": ""CameraResetManualTilt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3b488d57-89e1-4971-ab6d-b418221604f2"",
+                    ""path"": ""<XInputController>/rightStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""CameraResetManualTilt"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -257,7 +400,18 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/j"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Standard"",
+                    ""groups"": ""Standard;Keyboard"",
+                    ""action"": ""NeutralAttack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c007d2c5-5953-4c99-93b9-9855fbfcfe91"",
+                    ""path"": ""<XInputController>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""NeutralAttack"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -279,7 +433,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/s"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Standard;Keyboard"",
                     ""action"": ""VerticalDirection"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -290,7 +444,73 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""path"": ""<Keyboard>/w"",
                     ""interactions"": """",
                     ""processors"": """",
+                    ""groups"": ""Standard;Keyboard"",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""15d8742a-497a-4805-8d42-b5934ecf6c49"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
                     ""groups"": """",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""3f78da28-7ca6-4585-a58a-75612a109b86"",
+                    ""path"": ""<Gamepad>/leftStick/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""d2d10c32-f1c9-4054-bac3-b1ecbaccf694"",
+                    ""path"": ""<Gamepad>/leftStick/up"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""8a3e99fe-33bc-4787-99c8-d0ceaf0af121"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""1aaba43c-bb5d-4c04-a5a1-c777f85d725f"",
+                    ""path"": ""<Gamepad>/dpad/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""VerticalDirection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""11f052ec-77bb-4492-9f62-991b7127b86f"",
+                    ""path"": ""<Gamepad>/dpad/up"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""VerticalDirection"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
@@ -302,6 +522,28 @@ public class @PlayerController : IInputActionCollection, IDisposable
         {
             ""name"": ""Standard"",
             ""bindingGroup"": ""Standard"",
+            ""devices"": [
+                {
+                    ""devicePath"": ""<Keyboard>"",
+                    ""isOptional"": false,
+                    ""isOR"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""Gamepad"",
+            ""bindingGroup"": ""Gamepad"",
+            ""devices"": [
+                {
+                    ""devicePath"": ""<Gamepad>"",
+                    ""isOptional"": false,
+                    ""isOR"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""Keyboard"",
+            ""bindingGroup"": ""Keyboard"",
             ""devices"": [
                 {
                     ""devicePath"": ""<Keyboard>"",
@@ -490,6 +732,24 @@ public class @PlayerController : IInputActionCollection, IDisposable
         {
             if (m_StandardSchemeIndex == -1) m_StandardSchemeIndex = asset.FindControlSchemeIndex("Standard");
             return asset.controlSchemes[m_StandardSchemeIndex];
+        }
+    }
+    private int m_GamepadSchemeIndex = -1;
+    public InputControlScheme GamepadScheme
+    {
+        get
+        {
+            if (m_GamepadSchemeIndex == -1) m_GamepadSchemeIndex = asset.FindControlSchemeIndex("Gamepad");
+            return asset.controlSchemes[m_GamepadSchemeIndex];
+        }
+    }
+    private int m_KeyboardSchemeIndex = -1;
+    public InputControlScheme KeyboardScheme
+    {
+        get
+        {
+            if (m_KeyboardSchemeIndex == -1) m_KeyboardSchemeIndex = asset.FindControlSchemeIndex("Keyboard");
+            return asset.controlSchemes[m_KeyboardSchemeIndex];
         }
     }
     public interface IPlayerActions

@@ -393,7 +393,7 @@ namespace KinematicCharacterController
         /// The overlaps detected so far during character update
         /// </summary>
         public OverlapResult[] Overlaps { get { return _overlaps; } }
-        private OverlapResult[] _overlaps = new OverlapResult[MaxRigidbodyOverlapsCount];
+        private OverlapResult[] _overlaps;
 
         /// <summary>
         /// The motor's assigned controller
@@ -432,10 +432,10 @@ namespace KinematicCharacterController
         public Vector3 BaseVelocity;
 
         // Private
-        private RaycastHit[] _internalCharacterHits = new RaycastHit[MaxHitsBudget];
-        private Collider[] _internalProbedColliders = new Collider[MaxCollisionBudget];
-        private Rigidbody[] _rigidbodiesPushedThisMove = new Rigidbody[MaxCollisionBudget];
-        private RigidbodyProjectionHit[] _internalRigidbodyProjectionHits = new RigidbodyProjectionHit[MaxMovementSweepIterations];
+        private RaycastHit[] _internalCharacterHits;
+        private Collider[] _internalProbedColliders;
+        private Rigidbody[] _rigidbodiesPushedThisMove;
+        private RigidbodyProjectionHit[] _internalRigidbodyProjectionHits;
         private Rigidbody _lastAttachedRigidbody;
         [Header("Mechanic Settings")]
         /// <summary>
@@ -497,13 +497,14 @@ namespace KinematicCharacterController
         }
 
         // Warning: Don't touch these constants unless you know exactly what you're doing!
-        public const int MaxHitsBudget = 16;
-        public const int MaxCollisionBudget = 16;
-        public const int MaxGroundingSweepIterations = 2;
-        public const int MaxMovementSweepIterations = 8;
-        public const int MaxSteppingSweepIterations = 3;
-        public const int MaxRigidbodyOverlapsCount = 16;
-        public const int MaxDiscreteCollisionIterations = 3;
+        // self removed consts to allow for performance options
+        public int MaxHitsBudget = 16;
+        public int MaxCollisionBudget = 16;
+        public int MaxGroundingSweepIterations = 2;
+        public int MaxMovementSweepIterations = 8;
+        public int MaxSteppingSweepIterations = 3;
+        public int MaxRigidbodyOverlapsCount = 16;
+        public int MaxDiscreteCollisionIterations = 3;
         public const float CollisionOffset = 0.001f;
         public const float GroundProbeReboundDistance = 0.02f;
         public const float MinimumGroundProbingDistance = 0.005f;
@@ -517,6 +518,45 @@ namespace KinematicCharacterController
         public const float CorrelationForVerticalObstruction = 0.01f;
         public const float ExtraSteppingForwardDistance = 0.01f;
         public const float ExtraStepHeightPadding = 0.01f;
+        
+        //Self Insterted
+        public enum CharacterControllerAccuracy { Minimal, Moderate, Full }
+        
+        public void SetAccuracy(CharacterControllerAccuracy Accuracy)
+        {
+            switch (Accuracy)
+            {
+                case (CharacterControllerAccuracy.Full):
+                    MaxHitsBudget = 16;
+                    MaxCollisionBudget = 16;
+                    MaxGroundingSweepIterations = 2;
+                    MaxMovementSweepIterations = 8;
+                    MaxSteppingSweepIterations = 3;
+                    MaxRigidbodyOverlapsCount = 16;
+                    MaxDiscreteCollisionIterations = 3;
+                    break;
+                case (CharacterControllerAccuracy.Moderate):
+                    MaxHitsBudget = 8;
+                    MaxCollisionBudget = 8;
+                    MaxGroundingSweepIterations = 2;
+                    MaxMovementSweepIterations = 4;
+                    MaxSteppingSweepIterations = 2;
+                    MaxRigidbodyOverlapsCount = 8;
+                    MaxDiscreteCollisionIterations = 2;
+                    break;
+                case (CharacterControllerAccuracy.Minimal):
+                    MaxHitsBudget = 4;
+                    MaxCollisionBudget = 4;
+                    MaxGroundingSweepIterations = 1;
+                    MaxMovementSweepIterations = 2;
+                    MaxSteppingSweepIterations = 1;
+                    MaxRigidbodyOverlapsCount = 4;
+                    MaxDiscreteCollisionIterations = 1;
+                    break;
+            }
+            ValidateData();
+    }
+
 #pragma warning restore 0414 
 
         private void OnEnable()
@@ -553,6 +593,13 @@ namespace KinematicCharacterController
         /// </summary>
         public void ValidateData()
         {
+            // Self Inserted
+            _overlaps = new OverlapResult[MaxRigidbodyOverlapsCount];
+            _internalCharacterHits = new RaycastHit[MaxHitsBudget];
+            _internalProbedColliders = new Collider[MaxCollisionBudget];
+            _rigidbodiesPushedThisMove = new Rigidbody[MaxCollisionBudget];
+            _internalRigidbodyProjectionHits = new RigidbodyProjectionHit[MaxMovementSweepIterations];
+
             Capsule = GetComponent<CapsuleCollider>();
             CapsuleRadius = Mathf.Clamp(CapsuleRadius, 0f, CapsuleHeight * 0.5f);
             Capsule.direction = 1;
@@ -723,6 +770,14 @@ namespace KinematicCharacterController
             _characterTransformToCapsuleTopHemi = Capsule.center + (_cachedWorldUp * (Capsule.height * 0.5f)) + (-_cachedWorldUp * Capsule.radius);
         }
 
+        // Self Implemented
+        public void SetCapsulePhysicsMaterial(PhysicMaterial material)
+        {
+            CapsulePhysicsMaterial = material;
+            Capsule.sharedMaterial = material;
+        }
+
+
         private void Awake()
         {
             _transform = this.transform;
@@ -755,6 +810,7 @@ namespace KinematicCharacterController
         /// </summary>
         public void UpdatePhase1(float deltaTime)
         {
+
             // NaN propagation safety stop
             if (float.IsNaN(BaseVelocity.x) || float.IsNaN(BaseVelocity.y) || float.IsNaN(BaseVelocity.z))
             {
@@ -1437,7 +1493,6 @@ namespace KinematicCharacterController
         /// <summary>
         /// Moves the character's position by given movement while taking into account all physics simulation, step-handling and 
         /// velocity projection rules that affect the character motor
-        /// Self inserted maxMove
         /// </summary>
         /// <returns> Returns false if movement could not be solved until the end </returns>
         private bool InternalCharacterMove(ref Vector3 transientVelocity, float deltaTime)

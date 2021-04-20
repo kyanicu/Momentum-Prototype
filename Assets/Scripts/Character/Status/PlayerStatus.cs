@@ -2,28 +2,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerStatus : CharacterStatus
 {
     [SerializeField]
     private float maxVitality;
 
-    [SerializeField, HideInInspector]
-    private GameObject hurtboxes;
-
-    void Awake()
+    protected override void Awake()
     {
-        hurtboxes = transform.GetChild(0).GetChild(2).gameObject;
-
-        Hurtbox[] hbs = hurtboxes.GetComponentsInChildren<Hurtbox>();
-        foreach (Hurtbox hb in hbs)
-        {
-            hb.SetDamageable(this);
-        }
+        base.Awake();
     }
 
     protected override void Start()
     {
         base.Start();
+    }
+
+    protected override void Down()
+    {
+        Debug.Log("YOU DIED");
+        //SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex, LoadSceneMode.Single);
     }
 }

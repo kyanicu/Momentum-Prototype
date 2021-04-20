@@ -8,6 +8,30 @@ public class SimpleMovement : Movement, ISimpleCollidable
     SimpleCollision collision;
     PhysicsMover mover;
 
+    private Vector3 internalPositionAddition;
+    private Quaternion internalRotationMultiplication;
+
+    public override Vector3 position 
+    {
+        set
+        {
+            if (mover && mover.isActiveAndEnabled)
+                /*internalPositionAddition = value - position*/ mover.SetPosition(value);
+            else 
+                base.position = value;
+        } 
+    }
+    public override Quaternion rotation 
+    {
+        set 
+        { 
+            if (mover && mover.isActiveAndEnabled)
+                /*internalRotationMultiplication = value * Quaternion.Inverse(rotation)*/ mover.SetRotation(value);
+            else 
+                base.rotation = value; 
+        } 
+    }
+
     protected override void Awake()
     {
         base.Awake();
@@ -20,18 +44,32 @@ public class SimpleMovement : Movement, ISimpleCollidable
         if (velocity != Vector3.zero)
             position += velocity * Time.deltaTime;
         if (angularVelocity != Vector3.zero)
-            rotation = rotation = Quaternion.Euler(angularVelocity * Time.deltaTime) * rotation;
+            rotation = Quaternion.Euler(angularVelocity * Time.deltaTime) * rotation;
     }
 
-    public void UpdateMovement(out Vector3 goalPosition, out Quaternion goalRotation, float deltaTime)
+    public void UpdateMoveBy(out Vector3 moveBy, out Quaternion rotateBy, float deltaTime)
     {
-        throw new System.NotImplementedException();
+        moveBy = velocity * deltaTime; // + internalPositionAddition;
+        rotateBy = Quaternion.Euler(angularVelocity * deltaTime); // * internalRotationMultiplication;
+
+        //internalPositionAddition = Vector3.zero;
+        //internalRotationMultiplication = Quaternion.identity;
     }
+
+    public void HandleMovementCollision(Collider hitCollider, Vector3 hitNormal)
+    {
+        hitNormal = Vector3.ProjectOnPlane(hitNormal, forward).normalized;
+        velocity = Vector3.ProjectOnPlane(velocity, hitNormal);
+    }
+
+    public void HandleStaticCollision(Collider hitCollider, Vector3 hitNormal) { }
+
+    public void MoveDone(float deltaTime) { }
 
     // Update is called once per frame
     void Update()
     {
-        if(rigidbody == null)
+        if (!(collision && collision.isActiveAndEnabled) && rigidbody == null)
         {
             HandleVelocity();
         }
@@ -39,7 +77,7 @@ public class SimpleMovement : Movement, ISimpleCollidable
 
     void FixedUpdate()
     {
-        if(rigidbody != null)
+        if (!(collision && collision.isActiveAndEnabled) && rigidbody != null)
         {
             HandleVelocity();
         }

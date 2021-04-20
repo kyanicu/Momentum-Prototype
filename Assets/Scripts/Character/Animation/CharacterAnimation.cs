@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class CharacterAnimation : MonoBehaviour
+public class CharacterAnimation : MonoBehaviour
 {
     static protected Dictionary<string, int> animatorParameterNameToID = new Dictionary<string, int>()
     {
@@ -15,6 +15,7 @@ public abstract class CharacterAnimation : MonoBehaviour
         ["BackAerialAttack"] = Animator.StringToHash("BackAerialAttack"),
         ["DownAerialAttack"] = Animator.StringToHash("DownAerialAttack"),
         ["UpAerialAttack"] = Animator.StringToHash("UpAerialAttack"),
+
         ["Braking"] = Animator.StringToHash("Braking"),
         ["RunSpeed"] = Animator.StringToHash("RunSpeed"),
         ["Falling"] = Animator.StringToHash("Falling"),
@@ -25,24 +26,46 @@ public abstract class CharacterAnimation : MonoBehaviour
 
     };
 
-    [SerializeField, HideInInspector]
+    [SerializeField]
     protected GameObject root;
-    [SerializeField, HideInInspector]
+    [SerializeField]
     protected GameObject modelRoot;
-
-    [SerializeField, HideInInspector]
+    [SerializeField]
     protected Animator animator;
+
+    private Coroutine iFrameCoroutine;
+    [SerializeField]
+    private float iFrameBlinkRate = 0.1f;
+
 
     [SerializeField]
     private float turnSpeed = 360;
 
     private Coroutine rotationCoroutine;
 
+    [SerializeField]
+    float facingYRotation;
+
+    #region Sibling References
+    protected CharacterMovement movement;
+    protected CharacterCombat combat;
+    #endregion
+
     protected virtual void Awake()
+    {        
+        //root = transform.GetChild(0).gameObject;
+        //modelRoot = root.transform.GetChild(0).gameObject;
+        //animator = root.GetComponent<Animator>();
+
+        //facingRotation = root.transform.localRotation.eulerAngles.y;
+
+       // if (gameObject.name == "Unity-Chan")
+    }
+
+    protected virtual void Start()
     {
-        root = transform.GetChild(0).gameObject;
-        modelRoot = root.transform.GetChild(0).gameObject;
-        animator = root.GetComponent<Animator>();
+        combat = GetComponent<CharacterCombat>();
+        movement = GetComponent<CharacterMovement>();
     }
 
     private IEnumerator RotateSmoothlyCoroutine(Quaternion rotateBy, float speed)
@@ -68,9 +91,10 @@ public abstract class CharacterAnimation : MonoBehaviour
 
     static private readonly Quaternion flipUp = Quaternion.Euler(0,180,0); 
 
-    public void ChangeFacingDirection()
+    public void SetFacingDirection(float sign)
     {
-        root.transform.rotation *= flipUp;
+        Vector3 euler = root.transform.localRotation.eulerAngles;
+        root.transform.localRotation = Quaternion.Euler(euler.x, sign * facingYRotation, euler.z);
     }
     
     public void ChangeFacingDirection(float speed)
@@ -86,6 +110,47 @@ public abstract class CharacterAnimation : MonoBehaviour
     public void FaceTowards(Vector3 lookTo, float speed)
     {
         RotateSmoothly(Quaternion.FromToRotation(root.transform.right, transform.worldToLocalMatrix * lookTo), speed);
+    }
+
+    public void AnimateAttack(string attackTriggerName)
+    {
+        animator.SetTrigger(animatorParameterNameToID[attackTriggerName]);
+    }
+
+    public void AttackStateTransition(AttackAnimationState newState)
+    {
+        combat.AttackAnimationStateTransition(newState);
+    }
+
+    public void AnimateFlinch()
+    {
+        animator.SetTrigger(animatorParameterNameToID["Flinch"]);
+    }
+
+    public void StartIFrames()
+    {
+        if (iFrameCoroutine != null)
+            GameManager.Instance.StopCoroutine(iFrameCoroutine);
+        iFrameCoroutine = GameManager.Instance.StartCoroutine(IFrames());
+        // modelRenderer.material.color = Color.red - (Color.clear/2);
+    }
+
+    public void EndIFrames()
+    {
+        if (iFrameCoroutine != null)
+            GameManager.Instance.StopCoroutine(iFrameCoroutine);
+
+        modelRoot.SetActive(true);
+        // modelRenderer.material.color = Color.white
+    }
+
+    private IEnumerator IFrames()
+    {
+        while (true)
+        {
+            modelRoot.SetActive(!modelRoot.activeSelf);
+            yield return new WaitForSeconds(iFrameBlinkRate);
+        }
     }
 
 }

@@ -5,14 +5,9 @@ using UnityEngine;
 
 public class PlayerAnimation : CharacterAnimation
 {
-    private Coroutine iFrameCoroutine;
-    [SerializeField]
-    private float iFrameBlinkRate = 0.1f;
-    
+
     #region Sibling References
-    MomentumMovement movement;
-    PlayerCombat combat;
-    PlayerMovementAction movementAction;
+    MomentumMovementAction movementAction;
     #endregion
 
     protected override void Awake()
@@ -20,11 +15,10 @@ public class PlayerAnimation : CharacterAnimation
         base.Awake();
     }
 
-    void Start()
+    protected override void Start()
     {
-        combat = GetComponent<PlayerCombat>();
-        movement = GetComponent<MomentumMovement>();
-        movementAction = GetComponent<PlayerMovementAction>();
+        base.Start();
+        movementAction = GetComponent<MomentumMovementAction>();
     }
 
     ////public void ChangeCharacter(GameObject newRoot)
@@ -38,79 +32,6 @@ public class PlayerAnimation : CharacterAnimation
     ////    modelRoot = root.transform.GetChild(0).gameObject;
     ////    animator = root.GetComponent<Animator>();
     ////}
-
-    public void AttackStateTransition(AttackAnimationState newState)
-    {
-       combat.AttackAnimationStateTransition(newState);
-    }
-
-    public void AnimateNeutralAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["NeutralAttack"]);
-    }
-    public void AnimateDownAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["DownAttack"]);
-    }
-    public void AnimateUpAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["UpAttack"]);
-    }
-    public void AnimateRunningAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["RunningAttack"]);
-    }
-    public void AnimateBrakingAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["BrakingAttack"]);
-    }
-    public void AnimateNeutralAerialAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["NeutralAerialAttack"]);
-    }
-    public void AnimateBackAerialAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["BackAerialAttack"]);
-    }
-    public void AnimateDownAerialAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["DownAerialAttack"]);
-    }
-    public void AnimateUpAerialAttack()
-    {
-        animator.SetTrigger(animatorParameterNameToID["UpAerialAttack"]);
-    }
-
-    public void AnimateFlinch()
-    {
-        animator.SetTrigger(animatorParameterNameToID["Flinch"]);
-    }
-
-    public void StartIFrames()
-    {
-        if (iFrameCoroutine != null)
-            GameManager.Instance.StopCoroutine(iFrameCoroutine);
-        iFrameCoroutine = GameManager.Instance.StartCoroutine(IFrames());
-        // modelRenderer.material.color = Color.red - (Color.clear/2);
-    }
-
-    public void EndIFrames()
-    {
-        if (iFrameCoroutine != null)
-            GameManager.Instance.StopCoroutine(iFrameCoroutine);
-        
-        modelRoot.SetActive(true);
-        // modelRenderer.material.color = Color.white
-    }
-
-    private IEnumerator IFrames()
-    {
-        while (true)
-        {
-            modelRoot.SetActive(!modelRoot.activeSelf);
-            yield return new WaitForSeconds(iFrameBlinkRate);
-        }
-    }
 
     void Update()
     {

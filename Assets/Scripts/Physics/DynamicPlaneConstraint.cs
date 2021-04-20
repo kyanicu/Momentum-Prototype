@@ -36,6 +36,10 @@ public interface IDynamicPlaneConstrainable
 
     Vector3 position { get; set; }
     Vector3 velocity { get; set; }
+    Quaternion rotation { get; set; }
+    Vector3 angularVelocity { get; set; }
+
+    Vector3 forward { get; }
 
     bool usePlaneBreakers { get; }
     
@@ -101,6 +105,8 @@ public class DynamicPlaneConstraint : MonoBehaviour
                 EnterPlaneBreaker(col.GetComponent<PlaneBreaker>());
                 break;
         }
+
+
     } 
 
     /// <summary>
@@ -113,15 +119,21 @@ public class DynamicPlaneConstraint : MonoBehaviour
     {
         //If the plane is invalid or identical to the current plane
         if (plane.normal == Vector3.zero || (plane.normal == currentPlane.normal && plane.distance == currentPlane.distance))
-            return; 
+            return;
 
         // Set the currentPlane
         currentPlane = plane;
         // Move player to plane
         constrainable.position = plane.ClosestPointOnPlane(constrainable.position);
 
+        Quaternion rotation = Quaternion.FromToRotation(constrainable.forward, plane.normal);
+
         // Rotate Velocity along new plane without losing momentum
-        constrainable.velocity = Quaternion.FromToRotation(plane.normal, plane.normal) * constrainable.velocity;
+        constrainable.velocity = rotation * constrainable.velocity;
+
+        constrainable.rotation = rotation * constrainable.rotation;
+
+        constrainable.angularVelocity = rotation * constrainable.angularVelocity;
 
         // Trigger communication event on plane change
         planeChanged?.Invoke(new PlaneChangeArgs(plane.normal, breaker));
@@ -133,6 +145,9 @@ public class DynamicPlaneConstraint : MonoBehaviour
     {
         constrainable.velocity = Vector3.ProjectOnPlane(constrainable.velocity, currentPlane.normal);
         constrainable.position = currentPlane.ClosestPointOnPlane(constrainable.position);
+
+        constrainable.rotation = Quaternion.FromToRotation(constrainable.forward, currentPlane.normal) * constrainable.rotation;
+        constrainable.angularVelocity = Vector3.Project(constrainable.angularVelocity, currentPlane.normal);
     }
 
     /// <summary>
@@ -303,7 +318,6 @@ public class DynamicPlaneConstraint : MonoBehaviour
             SetCurrentPlane(settingPlane);
         else if (constrainable.reaffirmCurrentPlane)
             ReaffirmCurrentPlane();
-        
 
         // Reset stored plane
         settingPlane = new Plane(Vector3.zero, Vector3.zero);

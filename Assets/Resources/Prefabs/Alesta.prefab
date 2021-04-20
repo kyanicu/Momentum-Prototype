@@ -663,7 +663,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7332030372497221730
 MonoBehaviour:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 8
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -696,9 +696,16 @@ MonoBehaviour:
   RigidbodyInteractionType: 2
   PreserveAttachedRigidbodyMomentum: 1
   HasPlanarConstraint: 1
-  PlanarConstraintAxis: {x: 0, y: 0, z: 1}
+  PlanarConstraintAxis: {x: 0, y: 0, z: 0}
   _solveMovementCollisions: 1
   _solveGrounding: 1
+  MaxHitsBudget: 16
+  MaxCollisionBudget: 16
+  MaxGroundingSweepIterations: 2
+  MaxMovementSweepIterations: 8
+  MaxSteppingSweepIterations: 3
+  MaxRigidbodyOverlapsCount: 16
+  MaxDiscreteCollisionIterations: 3
 --- !u!136 &7332030372497221731
 CapsuleCollider:
   m_ObjectHideFlags: 8
@@ -715,7 +722,7 @@ CapsuleCollider:
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &7332030372497221728
 Rigidbody:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 8
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -723,7 +730,7 @@ Rigidbody:
   serializedVersion: 2
   m_Mass: 1
   m_Drag: 0
-  m_AngularDrag: 0.05
+  m_AngularDrag: 0
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
@@ -741,6 +748,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb14f717f57d64a61b95549cabce9142, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  runningAttackMinSpeed: 14
+  brakingAttackMinSpeed: 10
 --- !u!114 &836110293618344129
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -750,12 +759,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 7332030372497221729}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6713905339fb34b069b0f8663f78496a, type: 3}
+  m_Script: {fileID: 11500000, guid: 203e8d58881292b458ea45b87073eb2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  extraGroundProbingDistanceFactor: 0.012
-  extraMaxStableSlopeFactor: 0.005
-  groundingActionBuffer: 0.1
+  _capsuleRadius: 0.3
+  _capsuleHeight: 1.5
+  _capsuleYOffset: 0
+  _capsulePhysicsMaterial: {fileID: 0}
   overridableAttribute:
     _baseValues:
       maxSpeed: 125
@@ -764,6 +774,24 @@ MonoBehaviour:
       ungroundRotationFactor: 1.25
       ungroundRotationMinSpeed: 15
       ungroundRotationMaxSpeed: 1000
+  settingsPreset: 2
+  _characterControllerAccuracy: 2
+  _handleGrounding: 1
+  _groundLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  _maxSlopeAngle: 50
+  _ledgeAndDenivelationHandling: 1
+  _discreteCollisionEvents: 0
+  _solveMovementCollisions: 1
+  _rigidBodyInteraction: 2
+  _preserveAttachedRigidbodyMomentum: 1
+  _usePlanarConstraint: 1
+  _attachToSlope: 1
+  maxSlopeShiftsWithRotation: 1
+  slopeAngularMomentum: 1
+  extraGroundStability: 1
+  bufferGrounding: 1
 --- !u!114 &1317304906860948931
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -842,11 +870,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a196e1696b8443458b5f5d86cbc6d49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  root: {fileID: 0}
-  modelRoot: {fileID: 0}
-  animator: {fileID: 0}
-  turnSpeed: 360
+  root: {fileID: 7332030371940277920}
+  modelRoot: {fileID: 8082518201502364464}
+  animator: {fileID: 4455424055770280725}
   iFrameBlinkRate: 0.1
+  turnSpeed: 360
 --- !u!114 &5033737800540120297
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -862,7 +890,6 @@ MonoBehaviour:
   maxHealth: 0
   iFrameTime: 1
   maxVitality: 0
-  hurtboxes: {fileID: 0}
 --- !u!114 &7772330207423287715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -872,11 +899,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 7332030372497221729}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad04a8e7448a74d048324a9c0f8b1a5f, type: 3}
+  m_Script: {fileID: 11500000, guid: 78a2d2183ae3a3f44b46d2fdb2d8a35f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hitboxes: []
-  neutralAttackInitInfo:
+  attackInitInfo:
+  - attackName: NeutralAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -885,7 +912,7 @@ MonoBehaviour:
       nephuiAbilityOverrides: []
       cartiaAbilityOverrides: []
       ilphineAbilityOverrides: []
-  downAttackInitInfo:
+  - attackName: DownAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -894,7 +921,7 @@ MonoBehaviour:
       nephuiAbilityOverrides: []
       cartiaAbilityOverrides: []
       ilphineAbilityOverrides: []
-  upAttackInitInfo:
+  - attackName: UpAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -903,7 +930,7 @@ MonoBehaviour:
       nephuiAbilityOverrides: []
       cartiaAbilityOverrides: []
       ilphineAbilityOverrides: []
-  runningAttackInitInfo:
+  - attackName: RunningAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -912,8 +939,7 @@ MonoBehaviour:
       nephuiAbilityOverrides: []
       cartiaAbilityOverrides: []
       ilphineAbilityOverrides: []
-  runningAttackMinSpeed: 14
-  brakingAttackInitInfo:
+  - attackName: BrakingAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -922,8 +948,7 @@ MonoBehaviour:
       nephuiAbilityOverrides: []
       cartiaAbilityOverrides: []
       ilphineAbilityOverrides: []
-  brakingAttackMinSpeed: 10
-  neutralAerialAttackInitInfo:
+  - attackName: NeutralAerialAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -932,7 +957,7 @@ MonoBehaviour:
       nephuiAbilityOverrides: []
       cartiaAbilityOverrides: []
       ilphineAbilityOverrides: []
-  backAerialAttackInitInfo:
+  - attackName: BackAerialAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -941,7 +966,7 @@ MonoBehaviour:
       nephuiAbilityOverrides: []
       cartiaAbilityOverrides: []
       ilphineAbilityOverrides: []
-  downAerialAttackInitInfo:
+  - attackName: DownAerialAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -950,7 +975,7 @@ MonoBehaviour:
       nephuiAbilityOverrides: []
       cartiaAbilityOverrides: []
       ilphineAbilityOverrides: []
-  upAerialAttackInitInfo:
+  - attackName: UpAerialAttack
     movementOverride:
       movementOverrides: []
       physicsOverrides: []
@@ -3212,6 +3237,12 @@ PrefabInstance:
 --- !u!4 &8890404558344104330 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c75cae6d4643d4fd1bd099ff2f2db96b,
+    type: 3}
+  m_PrefabInstance: {fileID: 9001489125099982433}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8082518201502364464 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c75cae6d4643d4fd1bd099ff2f2db96b,
     type: 3}
   m_PrefabInstance: {fileID: 9001489125099982433}
   m_PrefabAsset: {fileID: 0}

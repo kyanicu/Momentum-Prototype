@@ -5,11 +5,12 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class MomentumRigidbody : Movement, IDamageable
 {
-    public override Vector3 position { get { return rigidbody.position; } set { rigidbody.position = value; } }
-    public override Quaternion rotation { get { return rigidbody.rotation; } set { rigidbody.rotation = value; } }
+    public override Vector3 position { get { return rigidbody.position; } set { rigidbody.MovePosition(value); } }
+    public override Quaternion rotation { get { return rigidbody.rotation; } set { rigidbody.MoveRotation(value); } }
     public override Vector3 velocity { get { return rigidbody.velocity; } set { rigidbody.velocity = value; } }
     public override Vector3 angularVelocity { get { return rigidbody.angularVelocity; } set { rigidbody.angularVelocity = value; } }
 
+    public override bool reaffirmCurrentPlane { get { return true; } }
     public override bool usePlaneBreakers { get { return true; } }
     [SerializeField]
     private float planeBreakThreshold = 5;

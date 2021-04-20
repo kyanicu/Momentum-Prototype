@@ -182,54 +182,6 @@ public class Hitbox : MonoBehaviour
 
     };
 
-    public static void HandleAttackInfo(AttackInfo info, IDamageable damageable, Transform hit, Transform hurt, bool recoil = false)
-    {
-        if(info.baseDamage != 0)
-            damageable.TakeDamage(info.baseDamage);
-
-        if (info.activateIFrames)
-            damageable.ActivateIFrames(info.iFrameTimeOverride);
-
-        if (info.flinch)
-            damageable.Flinch();
-        if (info.halt)
-            damageable.Halt();
-        if (info.forceUnground)
-            damageable.ForceUnground();
-        if (info.stunTime != 0)
-            damageable.Stun(info.stunTime);
-
-        if (info.knockbackType != KnockbackType.STATIC)
-        {
-            Vector3 calculatedKnockback = info.baseKnockbackDirection * info.baseKnockbackSpeed;
-            switch (info.knockbackDirectionCalculation)
-            {
-                case (KnockbackDirectionCalculation.LOCAL_HITBOX) :
-                    calculatedKnockback = hit.TransformDirection(calculatedKnockback);
-                    break;
-                case (KnockbackDirectionCalculation.LOCAL_HURTBOX) :
-                    calculatedKnockback = hurt.TransformDirection(calculatedKnockback);
-                    break;
-                case (KnockbackDirectionCalculation.RADIAL) :
-                    calculatedKnockback = Quaternion.FromToRotation(Vector3.right, (hurt.position - hit.transform.position).normalized) * calculatedKnockback;
-                    break;
-            }
-
-            switch (info.knockbackType)
-            {
-                case (KnockbackType.KINEMATIC) :
-                    damageable.TakeKinematicKnockback(calculatedKnockback, info.kinematicKnockbackTime);
-                    break;
-                case (KnockbackType.DYNAMIC) :
-                    damageable.TakeDynamicKnockback(calculatedKnockback);
-                    break;
-                case (KnockbackType.DYNAMIC_WITH_TORQUE) :
-                    damageable.TakeDynamicKnockbackWithTorque(calculatedKnockback, hurt.position);
-                    break;
-            }
-        }
-    }
-
     public AttackInfo attackInfo;
     public bool hasRecoilEffect = false;
     [SerializeField]
@@ -275,6 +227,54 @@ public class Hitbox : MonoBehaviour
         if(hasRecoilEffect && attacker != null && attacker.damageable != null)
         {
             HandleAttackInfo(recoilInfo, attacker.damageable, this.transform, hurtbox.transform);
+        }
+    }
+
+    public static void HandleAttackInfo(AttackInfo info, IDamageable damageable, Transform hit, Transform hurt, bool recoil = false)
+    {
+        if (info.baseDamage != 0)
+            damageable.TakeDamage(info.baseDamage);
+
+        if (info.activateIFrames)
+            damageable.ActivateIFrames(info.iFrameTimeOverride);
+
+        if (info.flinch)
+            damageable.Flinch();
+        if (info.halt)
+            damageable.Halt();
+        if (info.forceUnground)
+            damageable.ForceUnground();
+        if (info.stunTime != 0)
+            damageable.Stun(info.stunTime);
+
+        if (info.knockbackType != KnockbackType.STATIC)
+        {
+            Vector3 calculatedKnockback = info.baseKnockbackDirection * info.baseKnockbackSpeed;
+            switch (info.knockbackDirectionCalculation)
+            {
+                case (KnockbackDirectionCalculation.LOCAL_HITBOX):
+                    calculatedKnockback = hit.TransformDirection(calculatedKnockback);
+                    break;
+                case (KnockbackDirectionCalculation.LOCAL_HURTBOX):
+                    calculatedKnockback = hurt.TransformDirection(calculatedKnockback);
+                    break;
+                case (KnockbackDirectionCalculation.RADIAL):
+                    calculatedKnockback = Quaternion.FromToRotation(Vector3.right, (hurt.position - hit.transform.position).normalized) * calculatedKnockback;
+                    break;
+            }
+
+            switch (info.knockbackType)
+            {
+                case (KnockbackType.KINEMATIC):
+                    damageable.TakeKinematicKnockback(calculatedKnockback, info.kinematicKnockbackTime);
+                    break;
+                case (KnockbackType.DYNAMIC):
+                    damageable.TakeDynamicKnockback(calculatedKnockback);
+                    break;
+                case (KnockbackType.DYNAMIC_WITH_TORQUE):
+                    damageable.TakeDynamicKnockbackWithTorque(calculatedKnockback, hurt.position);
+                    break;
+            }
         }
     }
 

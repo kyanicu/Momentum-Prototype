@@ -6,6 +6,20 @@ using UnityEngine;
 public class GameManager : Singleton<GameManager>
 {
 
+    #region Helpers
+    /*
+    public static bool IsValid(GameObject obj)
+    {
+        return obj != null && obj.activeInHierarchy;
+    }
+
+    public static bool IsValid(Behaviour be, bool CheckGameObject = false)
+    {
+        return be != null && be.isActiveAndEnabled && CheckGameObject ? IsValid(be.gameObject) : true;
+    }
+    */
+    #endregion
+
     private int[] layerMasks = new int[32];
 
     private HashSet<CharacterDirector> controlledCharacters;
@@ -19,6 +33,7 @@ public class GameManager : Singleton<GameManager>
         SetLayerMasks();
     }
 
+   
     void Update()
     {
         foreach(CharacterDirector c in controlledCharacters)
@@ -36,16 +51,23 @@ public class GameManager : Singleton<GameManager>
             {
                 if (!Physics.GetIgnoreLayerCollision(i, j))
                 {
-                    layerMasks[i] = layerMasks[i] | 1 << i;
+                    layerMasks[i] = layerMasks[i] | 1 << j;
                 }
             }
         }
+
     }
 
     public int GetLayerMask(int layer)
     {
         return layerMasks[layer];
     }
+
+    public bool CheckLayerIsInMask(LayerMask layerMask, int layer)
+    {
+        return layerMask == (layerMask | (1 << layer));
+    }
+
     public void RegisterCharacterControl(CharacterDirector c)
     {
         if(!controlledCharacters.Contains(c))

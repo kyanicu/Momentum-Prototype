@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharacterStatus : MonoBehaviour, IDamageable
+public abstract class CharacterStatus : MonoBehaviour, IDamageable
 {
 
     [SerializeField]
     private float maxHealth;
 
     private float _health;
-    protected float health { get { return _health; } set { _health = (value > maxHealth) ? maxHealth : (value < 0) ? 0 : value; if( health == 0) Down(); } }
+    protected float health { get { return _health; } set { _health = (value > maxHealth) ? maxHealth : (value < 0) ? 0 : value; if (health == 0) Down(); } }
 
     [SerializeField]
     private float iFrameTime = 1f;
@@ -17,24 +17,32 @@ public class CharacterStatus : MonoBehaviour, IDamageable
     public bool iFramesActive { get { return _iFramesActive; } private set { _iFramesActive = value; } }
 
     #region Sibling References
-    new private PlayerAnimation animation;
-    private MomentumMovement movement;
-    private PlayerCharacterDirector director;
-    private PlayerCombat combat;
+    new private CharacterAnimation animation;
+    private CharacterMovement movement;
+    private CharacterDirector director;
+    private CharacterCombat combat;
     #endregion
+
+    private Hurtbox[] hurtboxes;
+
+    protected virtual void Awake()
+    {
+        hurtboxes = GetComponentsInChildren<Hurtbox>();
+        foreach (Hurtbox hb in hurtboxes)
+        {
+            hb.SetDamageable(this);
+        }
+    }
 
     protected virtual void Start()
     {
-        animation = GetComponent<PlayerAnimation>();
-        movement = GetComponent<MomentumMovement>();
-        director = GetComponent<PlayerCharacterDirector>();
-        combat = GetComponent<PlayerCombat>();
+        animation = GetComponent<CharacterAnimation>();
+        movement = GetComponent<CharacterMovement>();
+        director = GetComponent<CharacterDirector>();
+        combat = GetComponent<CharacterCombat>();
     }
 
-    protected virtual void Down()
-    {
-
-    }
+    protected abstract void Down();
 
     public virtual HitValidity ValidHit(Hitbox hitbox, Hurtbox hurtbox)
     {
@@ -74,31 +82,37 @@ public class CharacterStatus : MonoBehaviour, IDamageable
 
     public virtual void Halt()
     {
+        Debug.Log("Halted");
         movement.ZeroVelocity();
     }
 
     public virtual void ForceUnground()
     {
+        Debug.Log("Force Ungrounded");
         movement.ForceUnground();
     }
 
     public virtual void Stun(float stunTime)
     {
+        Debug.Log("Stunned for: " + stunTime + " seconds");
         director.TempLockControl(stunTime);
     }
 
     public virtual void TakeKinematicKnockback(Vector3 knockback, float time)
     {
+        Debug.Log("Took Kinematic Knockback");
         movement.SetKinematicPath(knockback, time);
     }
 
     public virtual void TakeDynamicKnockback(Vector3 knockback)
     {
+        Debug.Log("Took Dynamic Knockback");
         movement.AddImpulse(knockback);
     }
 
     public virtual void TakeDynamicKnockbackWithTorque(Vector3 knockback, Vector3 atPoint)
     {
+        Debug.Log("Took Dynamic Knockback With Torque");
         movement.AddImpulseAtPoint(knockback, atPoint);
     }
 

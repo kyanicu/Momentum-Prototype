@@ -426,13 +426,13 @@ public struct MutableTuple<i,j>
 public struct FullMovementOverride
 {
     [SerializeField]
-    public List<MutableTuple<PlayerMovementValues, PlayerOverrideType>> movementOverrides;
+    public List<MutableTuple<CharacterMovementValues, PlayerOverrideType>> movementOverrides;
 
     [SerializeField]
-    public List<MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType>> physicsOverrides;
+    public List<MutableTuple<MomentumMovementPhysicsValues, PlayerOverrideType>> physicsOverrides;
 
     [SerializeField]
-    public List<MutableTuple<PlayerMovementActionValues, PlayerOverrideType>> actionOverrides;
+    public List<MutableTuple<MomentumMovementActionValues, PlayerOverrideType>> actionOverrides;
 
 
     [SerializeField]
@@ -474,17 +474,17 @@ public class CharacterValueOverridability : MonoBehaviour, ICharacterValueOverri
 
     public void ApplyFullMovementOverride(FullMovementOverride overrides)
     {
-        foreach (MutableTuple<PlayerMovementValues, PlayerOverrideType> o in overrides.movementOverrides)
+        foreach (MutableTuple<CharacterMovementValues, PlayerOverrideType> o in overrides.movementOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType> o in overrides.physicsOverrides)
+        foreach (MutableTuple<MomentumMovementPhysicsValues, PlayerOverrideType> o in overrides.physicsOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<PlayerMovementActionValues, PlayerOverrideType> o in overrides.actionOverrides)
+        foreach (MutableTuple<MomentumMovementActionValues, PlayerOverrideType> o in overrides.actionOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
@@ -512,17 +512,17 @@ public class CharacterValueOverridability : MonoBehaviour, ICharacterValueOverri
 
     public void RemoveFullMovementOverride(FullMovementOverride overrides)
     {
-        foreach (MutableTuple<PlayerMovementValues, PlayerOverrideType> o in overrides.movementOverrides)
+        foreach (MutableTuple<CharacterMovementValues, PlayerOverrideType> o in overrides.movementOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<PlayerMovementPhysicsValues, PlayerOverrideType> o in overrides.physicsOverrides)
+        foreach (MutableTuple<MomentumMovementPhysicsValues, PlayerOverrideType> o in overrides.physicsOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<PlayerMovementActionValues, PlayerOverrideType> o in overrides.actionOverrides)
+        foreach (MutableTuple<MomentumMovementActionValues, PlayerOverrideType> o in overrides.actionOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }

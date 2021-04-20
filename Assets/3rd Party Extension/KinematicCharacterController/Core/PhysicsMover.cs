@@ -231,9 +231,6 @@ namespace KinematicCharacterController
             Rigidbody.angularVelocity = state.AngularVelocity;
         }
 
-        // Self Added
-        public virtual void PreVelocityUpdate(float deltaTime) { }
-
         /// <summary>
         /// Caches velocity values based on deltatime and target position/rotations
         /// </summary>
@@ -253,11 +250,7 @@ namespace KinematicCharacterController
             }
         }
 
-        // Self Added
-        public virtual void PreSetPositionAndRotation() { }
-
-        // Self Added
-        public virtual void PostSetPositionAndRotation() { }
+        public virtual void MoveDone(float deltaTime) { }
 
     }
 }
