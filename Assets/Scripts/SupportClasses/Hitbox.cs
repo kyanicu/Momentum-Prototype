@@ -161,6 +161,25 @@ public interface IAttacker
     IDamageable damageable { get; }
 }
 
+[System.Serializable]
+public struct HitboxInfo
+{
+    public AttackInfo attackInfo;
+    public bool hasRecoilEffect;
+    public AttackInfo recoilInfo;
+
+    /// <summary>
+    /// Are multiple entries allowed as extra hits, if not, new hits are only allowed after hitbox is disabled (end of attack)
+    /// </summary>
+    public bool deregisterOnExit;
+    /// <summary>
+    /// Group the hitbox belongs to, used to allow different hitboxes to register their own separate hits
+    /// Use only one group for all hitboxes to only allow one overlap at a time
+    /// Use multiple to allow separate hitboxes to be open at the same time with separate registrations
+    /// </summary>
+    public int hitboxGroup;
+}
+
 public class Hitbox : MonoBehaviour
 {
 
@@ -182,28 +201,12 @@ public class Hitbox : MonoBehaviour
 
     };
 
-    public AttackInfo attackInfo;
-    public bool hasRecoilEffect = false;
-    [SerializeField]
-    private AttackInfo recoilInfo;
+    public HitboxInfo hitboxInfo;
+
     private IAttacker _attacker;
     public IAttacker attacker { get { return _attacker; } private set { _attacker = value; } }
 
     private HitboxManager manager;
-
-    /// <summary>
-    /// Are multiple entries allowed as extra hits, if not, new hits are only allowed after hitbox is disabled (end of attack)
-    /// </summary>
-    [SerializeField]
-    private bool deregisterOnExit = false;
-    /// <summary>
-    /// Group the hitbox belongs to, used to allow different hitboxes to register their own separate hits
-    /// Use only one group for all hitboxes to only allow one overlap at a time
-    /// Use multiple to allow separate hitboxes to be open at the same time with separate registrations
-    /// </summary>
-    [SerializeField]
-    private int _hitboxGroup = 0;
-    public int hitboxGroup { get { return _hitboxGroup; } private set { _hitboxGroup = value; } }
 
     public void Awake()
     {
@@ -219,14 +222,14 @@ public class Hitbox : MonoBehaviour
 
     public void SetAttackInfo(AttackInfo _attackInfo)
     {
-        attackInfo = _attackInfo;
+        hitboxInfo.attackInfo = _attackInfo;
     }
 
     public void HandleOutgoingAttack(Hurtbox hurtbox)
     {
-        if(hasRecoilEffect && attacker != null && attacker.damageable != null)
+        if(hitboxInfo.hasRecoilEffect && attacker != null && attacker.damageable != null)
         {
-            HandleAttackInfo(recoilInfo, attacker.damageable, this.transform, hurtbox.transform);
+            HandleAttackInfo(hitboxInfo.recoilInfo, attacker.damageable, this.transform, hurtbox.transform);
         }
     }
 
@@ -249,7 +252,7 @@ public class Hitbox : MonoBehaviour
 
         if (info.knockbackType != KnockbackType.STATIC)
         {
-            Vector3 calculatedKnockback = info.baseKnockbackDirection * info.baseKnockbackSpeed;
+            Vector3 calculatedKnockback = info.baseKnockbackDirection.normalized * info.baseKnockbackSpeed;
             switch (info.knockbackDirectionCalculation)
             {
                 case (KnockbackDirectionCalculation.LOCAL_HITBOX):
@@ -291,7 +294,7 @@ public class Hitbox : MonoBehaviour
     }
     void OnTriggerExit(Collider col)
     {
-        if (deregisterOnExit && hitboxHurtboxCollision[(this.tag, col.tag)])
+        if (hitboxInfo.deregisterOnExit && hitboxHurtboxCollision[(this.tag, col.tag)])
         {
             Hurtbox hurtbox = col.GetComponent<Hurtbox>();
             if (hurtbox != null)
@@ -303,11 +306,11 @@ public class Hitbox : MonoBehaviour
 
     void OnDisable()
     {
-        if (!deregisterOnExit)
+        if (!hitboxInfo.deregisterOnExit)
             manager.DeregisterAllOverlaps(this);
-        attackInfo = new AttackInfo();
-        recoilInfo = new AttackInfo();
-        hasRecoilEffect = false;
+        hitboxInfo.attackInfo = new AttackInfo();
+        hitboxInfo.recoilInfo = new AttackInfo();
+        hitboxInfo.hasRecoilEffect = false;
     }
 }
 

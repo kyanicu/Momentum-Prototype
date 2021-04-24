@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum DamageArmor { None, Intangibility, Imovability, Invulnerability, }
+
 public abstract class CharacterStatus : MonoBehaviour, IDamageable
 {
 
@@ -10,6 +12,8 @@ public abstract class CharacterStatus : MonoBehaviour, IDamageable
 
     private float _health;
     protected float health { get { return _health; } set { _health = (value > maxHealth) ? maxHealth : (value < 0) ? 0 : value; if (health == 0) Down(); } }
+
+    public DamageArmor armor { get; set; }
 
     [SerializeField]
     private float iFrameTime = 1f;

@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Timeline;
+using UnityEngine.Playables;
 
 public class CharacterAnimation : MonoBehaviour
 {
@@ -26,12 +28,13 @@ public class CharacterAnimation : MonoBehaviour
 
     };
 
-    [SerializeField]
-    protected GameObject root;
+    protected Animator animator;
+
+    public GameObject animationRoot;
+
     [SerializeField]
     protected GameObject modelRoot;
-    [SerializeField]
-    protected Animator animator;
+    protected Animator modelAnimator;
 
     private Coroutine iFrameCoroutine;
     [SerializeField]
@@ -44,28 +47,96 @@ public class CharacterAnimation : MonoBehaviour
     private Coroutine rotationCoroutine;
 
     [SerializeField]
-    float facingYRotation;
+    Quaternion initialFacingRotation;
+    Vector3 initialAnimationRootPosition;
+    Quaternion animationRootRotation = Quaternion.identity;
+    public bool lockFacingDirection;
+
+    Quaternion prevRotation;
+    Vector3 prevPosition;
 
     #region Sibling References
     protected CharacterMovement movement;
-    protected CharacterCombat combat;
     #endregion
 
     protected virtual void Awake()
-    {        
-        //root = transform.GetChild(0).gameObject;
-        //modelRoot = root.transform.GetChild(0).gameObject;
-        //animator = root.GetComponent<Animator>();
+    {
+        movement = GetComponent<CharacterMovement>();
 
-        //facingRotation = root.transform.localRotation.eulerAngles.y;
-
-       // if (gameObject.name == "Unity-Chan")
+        animator = GetComponent<Animator>();
+        modelAnimator = modelRoot.GetComponent<Animator>();
+        initialAnimationRootPosition = animationRoot.transform.localPosition;
+        //initialFacingRotation = animationRoot.transform.localRotation;
     }
 
     protected virtual void Start()
     {
-        combat = GetComponent<CharacterCombat>();
-        movement = GetComponent<CharacterMovement>();
+
+    }
+
+    //Vector3 rotateDampVelocity;
+    //[SerializeField]
+    //float orientDampTime;
+    //[SerializeField]
+    //float orientDampMaxSpeed;
+    [SerializeField]
+    float rotationDifferenceScale;
+    [SerializeField]
+    float planeChangePositionDifferenceScale;
+    //[SerializeField]
+    //float angleFactor;
+    protected virtual void Update()
+    {
+        if (prevRotation != transform.rotation * initialFacingRotation * animationRootRotation)
+        {
+            //animationRoot.transform.rotation = prevRotation;
+            Quaternion toRotateTo = transform.rotation * initialFacingRotation * animationRootRotation;
+
+            float angle = Quaternion.Angle(prevRotation, toRotateTo);
+
+            //orientDampTime = angle / rotationDifferenceScale;
+            //orientDampMaxSpeed = angle * rotationDifferenceScale;
+
+            animationRoot.transform.rotation = Quaternion.Slerp(prevRotation, toRotateTo, angle / 360 * rotationDifferenceScale);//Quaternion.Euler(Vector3.SmoothDamp(prevRotation.eulerAngles, toRotateTo.eulerAngles, ref rotateDampVelocity, orientDampTime, orientDampMaxSpeed));
+
+        }
+        else if (animationRoot.transform.localPosition != initialAnimationRootPosition)
+        {
+            animationRoot.transform.position = Vector3.Lerp(prevPosition, transform.position + initialAnimationRootPosition, (prevPosition - (transform.position + initialAnimationRootPosition)).magnitude * planeChangePositionDifferenceScale);
+        }
+
+        prevRotation = animationRoot.transform.rotation;
+        prevPosition = animationRoot.transform.position;
+    }
+
+        /*s
+        #if UNITY_EDITOR
+            void OnDrawGizmosSelected()
+            {
+                if (!animator)
+                    animator = GetComponent<Animator>();
+
+                if (!Application.isPlaying && animator.deltaPosition != Vector3.zero && animator.deltaRotation != Quaternion.identity)
+                {
+                    Debug.Log(animationRoot.transform.rotation * animator.deltaPosition);
+                    animationRoot.transform.position += animator.deltaPosition;
+                    animationRoot.transform.rotation = transform.rotation * animationRoot.transform.rotation;
+                    animator = GetComponent<Animator>();
+                } 
+            }
+        #endif
+        */
+    void OnAnimatorMove()
+    {
+        if (animator.deltaPosition != Vector3.zero)
+        {   
+            //Debug.Log(animationRootRotation * animator.deltaPosition);
+            movement.MoveBy(animationRootRotation * animator.deltaPosition);
+        }
+        if (animator.deltaRotation != Quaternion.identity)
+        {
+            movement.RotateBy(animationRootRotation * animator.deltaRotation);
+        }
     }
 
     private IEnumerator RotateSmoothlyCoroutine(Quaternion rotateBy, float speed)
@@ -91,40 +162,47 @@ public class CharacterAnimation : MonoBehaviour
 
     static private readonly Quaternion flipUp = Quaternion.Euler(0,180,0); 
 
+    public Quaternion GetFacingDirectionRotation()
+    {
+        return animationRootRotation;
+    }
+
     public void SetFacingDirection(float sign)
     {
-        Vector3 euler = root.transform.localRotation.eulerAngles;
-        root.transform.localRotation = Quaternion.Euler(euler.x, sign * facingYRotation, euler.z);
+        if (lockFacingDirection)
+            return;
+
+        animationRootRotation = (sign > 0) ? Quaternion.identity : flipUp;
+        animationRoot.transform.localRotation = initialFacingRotation * ((sign > 0) ? Quaternion.identity : flipUp);
     }
     
     public void ChangeFacingDirection(float speed)
     {
-        root.transform.rotation *= flipUp;
+        if (lockFacingDirection)
+            return;
+
+        animationRoot.transform.rotation *= flipUp;
     }
     
     public void FaceTowards(Vector3 lookTo)
     {
-        RotateSmoothly(Quaternion.FromToRotation(root.transform.right, transform.worldToLocalMatrix * lookTo), turnSpeed);
+        if (lockFacingDirection)
+            return;
+
+        RotateSmoothly(Quaternion.FromToRotation(animationRoot.transform.right, transform.worldToLocalMatrix * lookTo), turnSpeed);
     }
     
     public void FaceTowards(Vector3 lookTo, float speed)
     {
-        RotateSmoothly(Quaternion.FromToRotation(root.transform.right, transform.worldToLocalMatrix * lookTo), speed);
-    }
+        if (lockFacingDirection)
+            return;
 
-    public void AnimateAttack(string attackTriggerName)
-    {
-        animator.SetTrigger(animatorParameterNameToID[attackTriggerName]);
-    }
-
-    public void AttackStateTransition(AttackAnimationState newState)
-    {
-        combat.AttackAnimationStateTransition(newState);
+        RotateSmoothly(Quaternion.FromToRotation(animationRoot.transform.right, transform.worldToLocalMatrix * lookTo), speed);
     }
 
     public void AnimateFlinch()
     {
-        animator.SetTrigger(animatorParameterNameToID["Flinch"]);
+        modelAnimator.SetTrigger(animatorParameterNameToID["Flinch"]);
     }
 
     public void StartIFrames()
@@ -152,5 +230,4 @@ public class CharacterAnimation : MonoBehaviour
             yield return new WaitForSeconds(iFrameBlinkRate);
         }
     }
-
 }

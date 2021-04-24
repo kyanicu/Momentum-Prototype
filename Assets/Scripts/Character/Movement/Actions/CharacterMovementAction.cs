@@ -29,9 +29,9 @@ public abstract class CharacterMovementAction : MonoBehaviour
         { 
             return _facingDirection; 
         } 
-        protected set
+        set
         {
-            if (value != _facingDirection)
+            if (value != _facingDirection && !animation.lockFacingDirection)
             {
                 _facingDirection = value;
                 animation?.SetFacingDirection(_facingDirection);
@@ -59,6 +59,16 @@ public abstract class CharacterMovementAction : MonoBehaviour
     protected virtual void Start()
     {
 
+    }
+
+    protected virtual void OnDisable()
+    {
+        control.Reset();
+    }
+
+    protected virtual void OnEnable()
+    {
+        control.Reset();
     }
 
     /// <summary>

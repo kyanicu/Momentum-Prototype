@@ -6,7 +6,7 @@ using UnityEngine;
 /// <summary>
 /// Determines how a value set modifies another when used as an override
 /// </summary>
-public enum PlayerOverrideType { Set, Addition, Multiplier }
+public enum ValueOverrideType { Set, Addition, Multiplier }
 
 /// <summary>
 /// Holds and hand handles overrideable values 
@@ -39,19 +39,19 @@ public abstract class CharacterOverridableValues
     /// Sets all values to their default based on override type
     /// </summary>
     /// <param name="overrideType"> The type of override </param>
-    public void SetDefaultValues(PlayerOverrideType overrideType)
+    public void SetDefaultValues(ValueOverrideType overrideType)
     {
         for (int i = 0; i < floatValuesCount; i++)
         {
             switch (overrideType)
             {
-                case PlayerOverrideType.Addition :
+                case ValueOverrideType.Addition :
                     tempFloatValues[i] = 0;
                     break;
-                case PlayerOverrideType.Multiplier :
+                case ValueOverrideType.Multiplier :
                     tempFloatValues[i] = 1;
                     break;
-                case PlayerOverrideType.Set :
+                case ValueOverrideType.Set :
                     tempFloatValues[i] = float.PositiveInfinity;
                     break;
                 default :
@@ -64,13 +64,13 @@ public abstract class CharacterOverridableValues
         {
             switch (overrideType)
             {
-                case PlayerOverrideType.Addition :
+                case ValueOverrideType.Addition :
                     tempIntValues[i] = 0;
                     break;
-                case PlayerOverrideType.Multiplier :
+                case ValueOverrideType.Multiplier :
                     tempIntValues[i] = 1;
                     break;
-                case PlayerOverrideType.Set :
+                case ValueOverrideType.Set :
                     tempIntValues[i] = int.MaxValue;
                     break;
                 default :
@@ -83,13 +83,13 @@ public abstract class CharacterOverridableValues
         {
             switch (overrideType)
             {
-                case PlayerOverrideType.Addition :
+                case ValueOverrideType.Addition :
                     tempVector3Values[i] = Vector3.zero;
                     break;
-                case PlayerOverrideType.Multiplier :
+                case ValueOverrideType.Multiplier :
                     tempVector3Values[i] = Vector3.one;
                     break;
-                case PlayerOverrideType.Set :
+                case ValueOverrideType.Set :
                     tempVector3Values[i] = Vector3.positiveInfinity;
                     break;
                 default :
@@ -315,10 +315,10 @@ public sealed class CharacterOverridableAttribute<Values> :ISerializationCallbac
         values = new Values();
 
         // Set Override values to default 
-        addedValues.SetDefaultValues(PlayerOverrideType.Addition);
-        multipliedValues.SetDefaultValues(PlayerOverrideType.Multiplier);
-        setValues[0].SetDefaultValues(PlayerOverrideType.Set);
-        values.SetDefaultValues(PlayerOverrideType.Addition);
+        addedValues.SetDefaultValues(ValueOverrideType.Addition);
+        multipliedValues.SetDefaultValues(ValueOverrideType.Multiplier);
+        setValues[0].SetDefaultValues(ValueOverrideType.Set);
+        values.SetDefaultValues(ValueOverrideType.Addition);
     }
 
     /// <summary>
@@ -327,13 +327,13 @@ public sealed class CharacterOverridableAttribute<Values> :ISerializationCallbac
     public void CalculateValues()
     {
         Values set = new Values();
-        set.SetDefaultValues(PlayerOverrideType.Set);
+        set.SetDefaultValues(ValueOverrideType.Set);
         foreach (Values s in setValues)
         {
             set.SetBy(s);
         }
 
-        values.SetDefaultValues(PlayerOverrideType.Addition);
+        values.SetDefaultValues(ValueOverrideType.Addition);
         values.AddBy(baseValues);
         values.SetBy(set);
         values.MultiplyBy(multipliedValues);
@@ -345,17 +345,17 @@ public sealed class CharacterOverridableAttribute<Values> :ISerializationCallbac
     /// </summary>
     /// <param name="overrideValues"> The value set to be applied</param>
     /// <param name="overrideType"> The override type to determine how the value set should be applied</param>
-    public void ApplyOverride(Values overrideValues, PlayerOverrideType overrideType)
+    public void ApplyOverride(Values overrideValues, ValueOverrideType overrideType)
     {
         switch (overrideType) 
         {
-            case (PlayerOverrideType.Addition) :
+            case (ValueOverrideType.Addition) :
                 addedValues.AddBy(overrideValues); 
                 break;
-            case (PlayerOverrideType.Multiplier) :
+            case (ValueOverrideType.Multiplier) :
                 multipliedValues.MultiplyBy(overrideValues); 
                 break;
-            case (PlayerOverrideType.Set) :
+            case (ValueOverrideType.Set) :
                 setValues.Add(overrideValues); 
                 break;
         }
@@ -367,17 +367,17 @@ public sealed class CharacterOverridableAttribute<Values> :ISerializationCallbac
     /// </summary>
     /// <param name="overrideValues"> The value set to be removed</param>
     /// <param name="overrideType"> The override type to determine how the value set should be removed</param>
-    public void RemoveOverride(Values overrideValues, PlayerOverrideType overrideType)
+    public void RemoveOverride(Values overrideValues, ValueOverrideType overrideType)
     {
         switch (overrideType) 
         {
-            case (PlayerOverrideType.Addition) :
+            case (ValueOverrideType.Addition) :
                addedValues.SubtractBy(overrideValues); 
                 break;
-            case (PlayerOverrideType.Multiplier) :
+            case (ValueOverrideType.Multiplier) :
                 multipliedValues.DivideBy(overrideValues); 
                 break;
-            case (PlayerOverrideType.Set) :
+            case (ValueOverrideType.Set) :
                 setValues.Remove(overrideValues); 
                 break;
         }
@@ -400,9 +400,9 @@ public interface ICharacterValueOverridabilityCommunication
 
     void DeregisterOverridability<Values>(CharacterOverridableAttribute<Values> attribute) where Values : CharacterOverridableValues, new();
 
-    void ApplyOverride<Values>(Values values, PlayerOverrideType type) where Values : CharacterOverridableValues, new();
+    void ApplyOverride<Values>(Values values, ValueOverrideType type) where Values : CharacterOverridableValues, new();
 
-    void RemoveOverride<Values>(Values values, PlayerOverrideType type) where Values : CharacterOverridableValues, new();
+    void RemoveOverride<Values>(Values values, ValueOverrideType type) where Values : CharacterOverridableValues, new();
 
     void ApplyFullMovementOverride(FullMovementOverride overrides);
 
@@ -426,26 +426,26 @@ public struct MutableTuple<i,j>
 public struct FullMovementOverride
 {
     [SerializeField]
-    public List<MutableTuple<CharacterMovementValues, PlayerOverrideType>> movementOverrides;
+    public List<MutableTuple<CharacterMovementValues, ValueOverrideType>> movementOverrides;
 
     [SerializeField]
-    public List<MutableTuple<MomentumMovementPhysicsValues, PlayerOverrideType>> physicsOverrides;
+    public List<MutableTuple<MomentumMovementPhysicsValues, ValueOverrideType>> physicsOverrides;
 
     [SerializeField]
-    public List<MutableTuple<MomentumMovementActionValues, PlayerOverrideType>> actionOverrides;
+    public List<MutableTuple<MomentumMovementActionValues, ValueOverrideType>> actionOverrides;
 
 
     [SerializeField]
-    public List<MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType>> alestaAbilityOverrides;
+    public List<MutableTuple<AlestaMovementAbilityValues, ValueOverrideType>> alestaAbilityOverrides;
 
     [SerializeField]
-    public List<MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType>> nephuiAbilityOverrides;
+    public List<MutableTuple<NephuiMovementAbilityValues, ValueOverrideType>> nephuiAbilityOverrides;
 
     [SerializeField]
-    public List<MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType>> cartiaAbilityOverrides;
+    public List<MutableTuple<CartiaMovementAbilityValues, ValueOverrideType>> cartiaAbilityOverrides;
 
     [SerializeField]
-    public List<MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType>> ilphineAbilityOverrides;
+    public List<MutableTuple<IlphineMovementAbilityValues, ValueOverrideType>> ilphineAbilityOverrides;
 }
 
 public class CharacterValueOverridability : MonoBehaviour, ICharacterValueOverridabilityCommunication
@@ -462,49 +462,49 @@ public class CharacterValueOverridability : MonoBehaviour, ICharacterValueOverri
         attributeByType.Remove(attribute.GetType());
     }
 
-    public void ApplyOverride<Values>(Values values, PlayerOverrideType type) where Values : CharacterOverridableValues, new() 
+    public void ApplyOverride<Values>(Values values, ValueOverrideType type) where Values : CharacterOverridableValues, new() 
     {
         (attributeByType[typeof(CharacterOverridableAttribute<Values>)] as CharacterOverridableAttribute<Values>)?.ApplyOverride(values, type);
     }
 
-    public void RemoveOverride<Values>(Values values, PlayerOverrideType type) where Values : CharacterOverridableValues, new() 
+    public void RemoveOverride<Values>(Values values, ValueOverrideType type) where Values : CharacterOverridableValues, new() 
     {
         (attributeByType[typeof(CharacterOverridableAttribute<Values>)] as CharacterOverridableAttribute<Values>)?.ApplyOverride(values, type);
     }
 
     public void ApplyFullMovementOverride(FullMovementOverride overrides)
     {
-        foreach (MutableTuple<CharacterMovementValues, PlayerOverrideType> o in overrides.movementOverrides)
+        foreach (MutableTuple<CharacterMovementValues, ValueOverrideType> o in overrides.movementOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<MomentumMovementPhysicsValues, PlayerOverrideType> o in overrides.physicsOverrides)
+        foreach (MutableTuple<MomentumMovementPhysicsValues, ValueOverrideType> o in overrides.physicsOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<MomentumMovementActionValues, PlayerOverrideType> o in overrides.actionOverrides)
+        foreach (MutableTuple<MomentumMovementActionValues, ValueOverrideType> o in overrides.actionOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType> o in overrides.alestaAbilityOverrides)
+        foreach (MutableTuple<AlestaMovementAbilityValues, ValueOverrideType> o in overrides.alestaAbilityOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType> o in overrides.nephuiAbilityOverrides)
+        foreach (MutableTuple<NephuiMovementAbilityValues, ValueOverrideType> o in overrides.nephuiAbilityOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType> o in overrides.cartiaAbilityOverrides)
+        foreach (MutableTuple<CartiaMovementAbilityValues, ValueOverrideType> o in overrides.cartiaAbilityOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType> o in overrides.ilphineAbilityOverrides)
+        foreach (MutableTuple<IlphineMovementAbilityValues, ValueOverrideType> o in overrides.ilphineAbilityOverrides)
         {
             ApplyOverride(o.item1, o.item2);
         }
@@ -512,37 +512,37 @@ public class CharacterValueOverridability : MonoBehaviour, ICharacterValueOverri
 
     public void RemoveFullMovementOverride(FullMovementOverride overrides)
     {
-        foreach (MutableTuple<CharacterMovementValues, PlayerOverrideType> o in overrides.movementOverrides)
+        foreach (MutableTuple<CharacterMovementValues, ValueOverrideType> o in overrides.movementOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<MomentumMovementPhysicsValues, PlayerOverrideType> o in overrides.physicsOverrides)
+        foreach (MutableTuple<MomentumMovementPhysicsValues, ValueOverrideType> o in overrides.physicsOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<MomentumMovementActionValues, PlayerOverrideType> o in overrides.actionOverrides)
+        foreach (MutableTuple<MomentumMovementActionValues, ValueOverrideType> o in overrides.actionOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<AlestaMovementAbilityValues, PlayerOverrideType> o in overrides.alestaAbilityOverrides)
+        foreach (MutableTuple<AlestaMovementAbilityValues, ValueOverrideType> o in overrides.alestaAbilityOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<NephuiMovementAbilityValues, PlayerOverrideType> o in overrides.nephuiAbilityOverrides)
+        foreach (MutableTuple<NephuiMovementAbilityValues, ValueOverrideType> o in overrides.nephuiAbilityOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<CartiaMovementAbilityValues, PlayerOverrideType> o in overrides.cartiaAbilityOverrides)
+        foreach (MutableTuple<CartiaMovementAbilityValues, ValueOverrideType> o in overrides.cartiaAbilityOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }
         
-        foreach (MutableTuple<IlphineMovementAbilityValues, PlayerOverrideType> o in overrides.ilphineAbilityOverrides)
+        foreach (MutableTuple<IlphineMovementAbilityValues, ValueOverrideType> o in overrides.ilphineAbilityOverrides)
         {
             RemoveOverride(o.item1, o.item2);
         }

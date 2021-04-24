@@ -13,12 +13,12 @@ public class PlayerAnimation : CharacterAnimation
     protected override void Awake()
     {
         base.Awake();
+        movementAction = GetComponent<MomentumMovementAction>();
     }
 
     protected override void Start()
     {
         base.Start();
-        movementAction = GetComponent<MomentumMovementAction>();
     }
 
     ////public void ChangeCharacter(GameObject newRoot)
@@ -33,11 +33,20 @@ public class PlayerAnimation : CharacterAnimation
     ////    animator = root.GetComponent<Animator>();
     ////}
 
-    void Update()
+    /*
+    protected override void FixedUpdate()
     {
-        animator.SetBool(animatorParameterNameToID["Braking"], movementAction.isBraking && movement.isGroundedThisUpdate);
-        animator.SetBool(animatorParameterNameToID["Falling"], !movement.isGroundedThisUpdate);
+        base.FixedUpdate();
+    }
+    */
 
-        animator.SetFloat(animatorParameterNameToID["RunSpeed"], (movement.isGroundedThisUpdate) ? movement.velocity.magnitude : 0);
+    protected override void Update()
+    {
+        base.Update();
+
+        modelAnimator.SetBool(animatorParameterNameToID["Braking"], movementAction.isBraking && movement.isGroundedThisUpdate);
+        modelAnimator.SetBool(animatorParameterNameToID["Falling"], !movement.isGroundedThisUpdate);
+
+        modelAnimator.SetFloat(animatorParameterNameToID["RunSpeed"], (movement.isGroundedThisUpdate) ? movement.velocity.magnitude : 0);
     }
 }

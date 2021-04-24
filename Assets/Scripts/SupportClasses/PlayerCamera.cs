@@ -143,6 +143,8 @@ public class PlayerCamera : MonoBehaviour
     /// The player's current gravity direction
     /// </summary>
     private Vector3 playerGravityDirection;
+    [SerializeField]
+    private Vector3 positionOffset;
 #endregion
 
 #region External References
@@ -192,7 +194,7 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     void Start()
     {
-        targetTiltPoint = playerTransform.position;
+        
     }
 
     /// <summary>
@@ -238,6 +240,8 @@ public class PlayerCamera : MonoBehaviour
         else
             zoomExtraDistance = Mathf.SmoothDamp(zoomExtraDistance, 0, ref zoomDampVel, zoomDampTime, zoomDampMaxSpeed);
         transform.position -= transform.forward * zoomExtraDistance;
+
+        transform.position += positionOffset.x * Vector3.Cross(playerPlaneNormal, playerGravityDirection) + positionOffset.y * -playerGravityDirection + positionOffset.z * playerPlaneNormal;
     }
 #endregion
 
@@ -252,6 +256,9 @@ public class PlayerCamera : MonoBehaviour
     {
         playerTransform = _playerTransform;
         movement = _movement;
+
+        targetTiltPoint = playerTransform.position;
+
         DynamicPlaneConstraint dpc = movement.GetComponent<DynamicPlaneConstraint>();
         if(dpc != null)
             dpc.planeChanged += HandlePlayerPlaneChanged;

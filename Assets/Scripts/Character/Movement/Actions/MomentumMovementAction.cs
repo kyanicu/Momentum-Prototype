@@ -256,6 +256,16 @@ public class MomentumMovementAction : CharacterMovementAction
         GetComponent<CharacterValueOverridability>()?.RegisterOverridability(overridableAttribute);
     }
 
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+    }
+
     /// <summary>
     /// Adds appropriate run acceleration to the player 
     /// </summary>

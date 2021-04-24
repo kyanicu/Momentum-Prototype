@@ -104,7 +104,7 @@ public class PlayerCharacterDirector : CharacterDirector
         EnableControl();
 
         camera = Camera.main.transform.parent.GetComponent<PlayerCamera>();
-        camera.SetReadOnlyReferences(new ReadOnlyTransform(transform), GetComponent<CharacterMovement>());
+        camera.SetReadOnlyReferences(new ReadOnlyTransform(animation.animationRoot.transform), GetComponent<CharacterMovement>());
 
         ///animation.ChangeCharacter(currentCharacterModelRoot);
     }

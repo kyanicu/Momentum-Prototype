@@ -8,6 +8,7 @@ public abstract class CharacterMovementPhysics : MonoBehaviour
     /// <summary>
     /// Contains information on potential update specific negations to physics values/mechanics
     /// </summary>
+    [System.Serializable]
     public struct PhysicsNegations
     {
         /// <summary>
@@ -50,6 +51,11 @@ public abstract class CharacterMovementPhysics : MonoBehaviour
     {
         movement = GetComponent<CharacterMovement>();
         negations = new PhysicsNegations();
+    }
+
+    protected virtual void OnDisable()
+    {
+        negations.Reset();
     }
 
     /// <summary>

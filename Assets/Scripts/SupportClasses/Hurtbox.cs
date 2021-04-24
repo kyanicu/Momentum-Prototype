@@ -46,6 +46,6 @@ public class Hurtbox : MonoBehaviour
 
     public void HandleIncommingAttack(Hitbox hitbox)
     {
-        Hitbox.HandleAttackInfo(hitbox.attackInfo, damageable, hitbox.transform, this.transform);
+        Hitbox.HandleAttackInfo(hitbox.hitboxInfo.attackInfo, damageable, hitbox.transform, this.transform);
     }
 }

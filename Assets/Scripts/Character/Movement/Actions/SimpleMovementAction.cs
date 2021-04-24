@@ -278,6 +278,16 @@ public class SimpleMovementAction : CharacterMovementAction
         GetComponent<CharacterValueOverridability>()?.RegisterOverridability(overridableAttribute);
     }
 
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+    }
+
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+    }
+
     /// <summary>
     /// Adds appropriate run acceleration to the player 
     /// </summary>

@@ -230,6 +230,11 @@ public class MomentumMovementPhysics : CharacterMovementPhysics
         base.Awake();
     }
 
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+    }
+
     void Start()
     {
         GetComponent<ICharacterValueOverridabilityCommunication>()?.RegisterOverridability(overridableAttribute);

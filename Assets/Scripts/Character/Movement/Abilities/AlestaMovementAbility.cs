@@ -77,13 +77,13 @@ public class AlestaMovementAbility : PlayerMovementAbility
     {
         base.Awake();
         currentPermeationOverride = new FullMovementOverride();
-        currentPermeationOverride.movementOverrides = new List<MutableTuple<CharacterMovementValues, PlayerOverrideType>>();
+        currentPermeationOverride.movementOverrides = new List<MutableTuple<CharacterMovementValues, ValueOverrideType>>();
         CharacterMovementValues moveOverrides = new CharacterMovementValues();
-        moveOverrides.SetDefaultValues(PlayerOverrideType.Addition);
+        moveOverrides.SetDefaultValues(ValueOverrideType.Addition);
         //moveOverrides.negateAction = 1;
         //moveOverrides.negatePhysics = 1;
         Debug.Assert(currentPermeationOverride.movementOverrides != null);
-        currentPermeationOverride.movementOverrides.Add(new MutableTuple<CharacterMovementValues, PlayerOverrideType>(moveOverrides, PlayerOverrideType.Addition));
+        currentPermeationOverride.movementOverrides.Add(new MutableTuple<CharacterMovementValues, ValueOverrideType>(moveOverrides, ValueOverrideType.Addition));
         
         control = new AlestaMovementAbilityControl();
         controlInterface = control;

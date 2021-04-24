@@ -12,22 +12,22 @@ public class TownsPersonAnimation : CharacterAnimation
 
     public void StartWalking() 
     {
-        animator.SetBool(animatorParameterNameToID["Walking"], true);
+        modelAnimator.SetBool(animatorParameterNameToID["Walking"], true);
     }
 
     public void StopWalking() 
     {
-        animator.SetBool(animatorParameterNameToID["Walking"], false);
+        modelAnimator.SetBool(animatorParameterNameToID["Walking"], false);
     }
 
     public void StartTalking() 
     {
-        animator.SetBool(animatorParameterNameToID["Talking"], true);
+        modelAnimator.SetBool(animatorParameterNameToID["Talking"], true);
     }
 
     public void StopTalking() 
     {
-        animator.SetBool(animatorParameterNameToID["Talking"], false);
+        modelAnimator.SetBool(animatorParameterNameToID["Talking"], false);
     }
 
 }

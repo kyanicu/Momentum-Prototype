@@ -8,4 +8,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Resources/Scenes/Prototypes/Movement Prototype.unity
     guid: 294de746a41ee44b1bcd4d7752e913b8
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: 2445ddbd692cca749b04f2b22569f4c2,
+      type: 2}

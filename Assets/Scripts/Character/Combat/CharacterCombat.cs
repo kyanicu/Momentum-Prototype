@@ -1,10 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Timeline;
 using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
-public enum AttackAnimationState { FINISHED, STARTUP, CONTACT, RECOVERY, BUFFER }
+public enum AttackState { FINISHED, STARTUP, COMMITAL, BUFFERABLE }
 
 public struct CharacterCombatControl
 {
@@ -47,16 +46,20 @@ public class CharacterCombat : MonoBehaviour, IAttacker
 
     private Hitbox[] hitboxes;
 
-    AttackAnimationState attackAnimationState = AttackAnimationState.FINISHED;
+    private string currentAttack = "";
+    private AttackState attackState = AttackState.FINISHED;
 
-    private bool attackBuffered;
+    private bool attackBuffered = false;
+    private string bufferedAttack = "";
 
     new protected CharacterAnimation animation;
     protected CharacterMovement movement;
     protected CharacterMovementAction movementAction;
+    protected CharacterMovementPhysics movementPhysics;
+    protected PlayerMovementAbility movementAbility;
     protected CharacterValueOverridability overridability;
 
-    protected virtual void Awake()
+    void Awake()
     {
         hitboxes = GetComponentsInChildren<Hitbox>();
         foreach (Hitbox hb in hitboxes)
@@ -68,6 +71,15 @@ public class CharacterCombat : MonoBehaviour, IAttacker
         {
             attackInitMap.Add(initInfo.attackName, initInfo);
         }
+
+        GetComponent<PlayableDirector>().stopped += CharacterCombat_stopped;
+    }
+
+    private void CharacterCombat_stopped(PlayableDirector obj)
+    {
+        //Debug.Log("Aaaa?");
+        if (attackState != AttackState.FINISHED)
+            AttackStateTransition(AttackState.FINISHED);
     }
 
     protected virtual void Start()
@@ -75,48 +87,98 @@ public class CharacterCombat : MonoBehaviour, IAttacker
         animation = GetComponent<CharacterAnimation>();
         movement = GetComponent<CharacterMovement>();
         movementAction = GetComponent<CharacterMovementAction>();
+        movementPhysics = GetComponent<CharacterMovementPhysics>();
+        movementAbility = GetComponent<PlayerMovementAbility>();
         overridability = GetComponent<CharacterValueOverridability>();
 
         damageable = GetComponent<IDamageable>();
     }
 
-    protected virtual void Update()
+    void Update()
     {
-        if (control.attackSet && !attackBuffered &&
-    (attackAnimationState == AttackAnimationState.FINISHED || (attackBuffered = (attackAnimationState == AttackAnimationState.BUFFER))))
+        if (control.attackSet)
         {
-            HandleAttack(control.attackName);
-            control.Reset();
+            switch (attackState)
+            {
+                case (AttackState.STARTUP):
+                    if (currentAttack == "" || control.attackName != currentAttack)
+                        attackBuffered = true;
+                        bufferedAttack = control.attackName;
+                        AttackStateTransition(AttackState.FINISHED);
+                    break;
+                case (AttackState.BUFFERABLE):
+                    attackBuffered = true;
+                    bufferedAttack = control.attackName;
+                    break;
+                case (AttackState.FINISHED):
+                    HandleAttack(control.attackName);
+                    break;
+            }
         }
+
+        control.Reset();
     }
 
     private void HandleAttack(string name)
     {
-        //animation.AnimateAttack(name);
-        GetComponent<PlayableDirector>().Play(attackInitMap[name].attackTimeline);
+        currentAttack = name;
+        AttackStateTransition(AttackState.STARTUP);
     }
 
-    public void AttackAnimationStateTransition(AttackAnimationState newState)
+    public void AttackAnimationCommitalSignalHandler()
     {
-        attackAnimationState = newState;
+        AttackStateTransition(AttackState.COMMITAL);
+    }
 
-        if (newState == AttackAnimationState.STARTUP)
-        {
-            attackBuffered = false;
-        }
-        else if (newState == AttackAnimationState.FINISHED)
-        {
+    public void AttackAnimationBufferableSignalHandler()
+    {
+        AttackStateTransition(AttackState.BUFFERABLE);
+    }
 
+    public void AttackAnimationFinishedSignalHandler()
+    {
+        AttackStateTransition(AttackState.FINISHED);
+    }
+
+    private void AttackStateTransition(AttackState newState)
+    {
+        attackState = newState;
+
+        switch (newState)
+        {
+            case (AttackState.STARTUP):
+                
+                attackBuffered = false;
+                bufferedAttack = "";
+                GetComponent<PlayableDirector>().Play(attackInitMap[currentAttack].attackTimeline);
+                break;
+            case (AttackState.COMMITAL):
+                break;
+            case (AttackState.BUFFERABLE):
+
+                break;
+            case (AttackState.FINISHED):
+                if (attackBuffered)
+                {
+                    HandleAttack(bufferedAttack);
+                }
+                else
+                    currentAttack = "";
+                break;
         }
     }
 
     public void Flinch()
     {
-        if (attackAnimationState != AttackAnimationState.FINISHED)
-            AttackAnimationStateTransition(AttackAnimationState.FINISHED);
-        attackBuffered = false;
-        foreach (Hitbox hb in hitboxes)
-            hb.enabled = false;
+        if (attackState != AttackState.FINISHED)
+        {
+            attackBuffered = false;
+            bufferedAttack = "";
+            AttackStateTransition(AttackState.FINISHED);
+            
+            foreach (Hitbox hb in hitboxes)
+                hb.enabled = false;
+        }
     }
 
     public AttackerInfo GetAttackerInfo()

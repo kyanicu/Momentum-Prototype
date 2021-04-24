@@ -345,7 +345,8 @@ public class CharacterMovement : Movement, ICharacterController
     /// <summary>
     /// Info on the non floor surfaces hit each physics tick
     /// </summary>
-    public WallHits wallHits { get; protected set; }
+    private WallHits _wallHits;
+    public WallHits wallHits { get { return _wallHits; } private set { _wallHits = value; } }
 
     /// <summary>
     /// The list of tracked slopes for calculating rotational momentum
@@ -368,6 +369,11 @@ public class CharacterMovement : Movement, ICharacterController
     /// </summary>
     /// <value></value>
     public Vector3 externalVelocity { private get; set; }
+    /// <summary>
+    /// Hold all accumulated MoveBy() calls in order to handle movement on the next update
+    /// Velocity from move by is added to the velocity for the next update, and then removes it for the update after
+    /// </summary>
+    private Quaternion externalRotateBy;
     #region flags
     //// private int velocityLocked = 0;
     //// private Vector3 preLockedVel;
@@ -719,8 +725,10 @@ public class CharacterMovement : Movement, ICharacterController
 
     public void Flinch()
     {
-        action?.Flinch();
-        ability?.Flinch();
+        if (action && isActiveAndEnabled)
+            action.Flinch();
+        if (ability && ability.isActiveAndEnabled)
+            ability.Flinch();
     }
 
     ////public override void AddImpulse(Vector3 impulse)
@@ -739,18 +747,52 @@ public class CharacterMovement : Movement, ICharacterController
         AddImpulse(impulse);
         internalAngularVelocity += Vector3.Cross(point - motor.TransientPosition, impulse);
     }
+
+    public void AddImpulseAlongPlane(Vector2 planarVelocity)
+    {
+        AddImpulse(GetVelocityFromPlanarVelocity(planarVelocity));
+
+    }
+
+    public void AddAngularImpulseAlongPlane(float angularPlanarVelocity)
+    {
+        angularVelocity += angularPlanarVelocity * currentPlane.normal;
+    }
+
+    public void MoveBy(Vector3 moveBy)
+    {
+        if (isGroundedThisUpdate)
+            moveBy = Vector3.ProjectOnPlane(moveBy, groundNormal);
+
+        motor.MoveCharacter(position + moveBy);
+    }
+
+    public void MoveByAlongGroundOrHorizon(float moveBy)
+    {
+        Vector3 moveByVector = Quaternion.FromToRotation(Vector3.up, isGroundedThisUpdate ? groundNormal : upWorldOrientation) * (Vector3.right * moveBy);
+
+        motor.MoveCharacter(position + moveByVector);
+    }
+
+    public Vector3 GetVelocityFromPlanarVelocity(Vector2 planarVelocity)
+    {
+        return planarVelocity.x * (Quaternion.FromToRotation(Vector3.forward, currentPlane.normal) * Vector3.right) + planarVelocity.y * upWorldOrientation;
+    }
+
+    public void RotateBy(Quaternion rotateBy)
+    {
+        externalRotateBy = rotateBy * externalRotateBy;
+    }
     #endregion
 
     protected void RegisterWallHits(Vector3 hitNormal)
     {
-        WallHits walls = wallHits;
         if (Vector3.Dot(-upWorldOrientation, hitNormal) >= 0.5)
-            walls.hitCeiling = hitNormal;
+            _wallHits.hitCeiling = hitNormal;
         else if (Vector3.Dot(right, hitNormal) < 0)
-            walls.hitRightWall = hitNormal;
+            _wallHits.hitRightWall = hitNormal;
         else
-            walls.hitLeftWall = hitNormal;
-        wallHits = walls;
+            _wallHits.hitLeftWall = hitNormal;
     }
 
     #region CharacterControllerInterface
@@ -814,13 +856,16 @@ public class CharacterMovement : Movement, ICharacterController
         }
 
         // Handle Action related rotation updates, if active
-        action?.UpdateRotation(ref currentRotation, ref internalAngularVelocity, deltaTime);
+        if (action && action.isActiveAndEnabled)
+            action.UpdateRotation(ref currentRotation, ref internalAngularVelocity, deltaTime);
 
         // Handle Ability related rotation updates
-        ability?.UpdateRotation(ref currentRotation, ref internalAngularVelocity, deltaTime);
+        if (ability && ability.isActiveAndEnabled)
+            ability.UpdateRotation(ref currentRotation, ref internalAngularVelocity, deltaTime);
 
         // Handle Physics related rotation updates, if active
-        physics?.UpdateRotation(ref currentRotation, ref internalAngularVelocity, deltaTime);
+        if (physics && physics.isActiveAndEnabled)
+            physics.UpdateRotation(ref currentRotation, ref internalAngularVelocity, deltaTime);
 
         // Handle angular momentum 
         if (internalAngularVelocity != Vector3.zero)
@@ -833,6 +878,8 @@ public class CharacterMovement : Movement, ICharacterController
             currentRotation = Quaternion.Euler(internalAngularVelocity * deltaTime) * currentRotation;
         }
 
+        currentRotation = externalRotateBy * currentRotation;
+
         // If rotated along the ground, rotate along the bottom sphere of the capsule instead of it's center so that the player doesn't rotate off the point on the ground they are currently on 
         if (motor.IsGroundedThisUpdate)
         {
@@ -840,8 +887,11 @@ public class CharacterMovement : Movement, ICharacterController
 
             motor.SetTransientPosition((initialCharacterBottomHemiCenter - newCharacterBottomHemiCenter) + motor.TransientPosition);
         }
-
+        
         //setOrientationAlongPlane = false;
+        
+        externalRotateBy = Quaternion.identity;
+
     }
 
     /// <summary>
@@ -855,11 +905,33 @@ public class CharacterMovement : Movement, ICharacterController
     /// <param name="deltaTime"> Motor update time </param>
     public void UpdateVelocity(ref Vector3 currentVelocity, float deltaTime)
     {
-
         if (zeroingVel)
         {
             currentVelocity = Vector3.zero;
             zeroingVel = false;
+        }
+
+
+
+        // Add external velocity and reset back to zero
+        currentVelocity += (!isGroundedThisUpdate) ? externalVelocity : Vector3.ProjectOnPlane(externalVelocity, motor.GetEffectiveGroundNormal()); ;
+        externalVelocity = Vector3.zero;
+
+        if (kinematicPath == null)
+        {
+            if (bufferGrounding && bufferedUngroundedNormal != Vector3.zero)
+            {
+                if (action && action.isActiveAndEnabled)
+                action.BufferUngroundedNormal(bufferedUngroundedNormal);
+                bufferedUngroundedNormal = Vector3.zero;
+            }
+
+            if (action && action.isActiveAndEnabled)
+                action.UpdateVelocity(ref currentVelocity, deltaTime);
+            if (ability && ability.isActiveAndEnabled)
+                ability.UpdateVelocity(ref currentVelocity, deltaTime);
+            if (physics && physics.isActiveAndEnabled)
+                physics.UpdateVelocity(ref currentVelocity, deltaTime);
         }
 
         // Handle velocity projection on a surface if grounded
@@ -889,23 +961,6 @@ public class CharacterMovement : Movement, ICharacterController
             ////}
         }
 
-        // Add external velocity and reset back to zero
-        currentVelocity += externalVelocity;
-        externalVelocity = Vector3.zero;
-
-        if (kinematicPath == null)
-        {
-            if (bufferGrounding && bufferedUngroundedNormal != Vector3.zero)
-            {
-                action?.BufferUngroundedNormal(bufferedUngroundedNormal);
-                bufferedUngroundedNormal = Vector3.zero;
-            }
-
-            action?.UpdateVelocity(ref currentVelocity, deltaTime);
-            ability?.UpdateVelocity(ref currentVelocity, deltaTime);
-            physics?.UpdateVelocity(ref currentVelocity, deltaTime);
-        }
-
         // Ensure velocity is locked to current 2.5D plane
         currentVelocity = Vector3.ProjectOnPlane(currentVelocity, motor.PlanarConstraintAxis);
 
@@ -930,7 +985,8 @@ public class CharacterMovement : Movement, ICharacterController
             motor.MaxStableDenivelationAngle = currentMaxStableSlopeAngle;
         }
         // Reset wall hit info since current info is no longer in use
-        wallHits.Reset();
+        _wallHits.Reset();
+
     }
 
     /// <summary>
@@ -947,7 +1003,8 @@ public class CharacterMovement : Movement, ICharacterController
         //}
 
         // Handle extra Ability update setup
-        ability?.BeforeCharacterUpdate(deltaTime);
+        if (ability && ability.isActiveAndEnabled)
+            ability.BeforeCharacterUpdate(deltaTime);
     }
 
     /// <summary>
@@ -1017,7 +1074,8 @@ public class CharacterMovement : Movement, ICharacterController
         }
 
         // Handle extra grounding update based Ability mechanics/info
-        ability?.PostGroundingUpdate(deltaTime);
+        if (ability && ability.isActiveAndEnabled)
+            ability.PostGroundingUpdate(deltaTime);
     }
 
     /// <summary>
@@ -1027,11 +1085,16 @@ public class CharacterMovement : Movement, ICharacterController
     /// <param name="deltaTime"> Motor update time </param>
     public void AfterCharacterUpdate(float deltaTime)
     {
-        ability?.AfterCharacterUpdate(deltaTime);
+        if (ability && ability.isActiveAndEnabled)
+        {
+            ability.AfterCharacterUpdate(deltaTime);
 
-        // Reset Ability and Action Input
-        ability?.controlInterface.Reset();
-        action?.control.Reset();
+            // Reset Ability and Action Input
+            ability.controlInterface.Reset();
+        }
+
+        if (action && action.isActiveAndEnabled)
+            action.control.Reset();
     }
 
     /// <summary>
@@ -1042,7 +1105,7 @@ public class CharacterMovement : Movement, ICharacterController
     public bool IsColliderValidForCollisions(Collider coll)
     {
         // See if an Ability mechanic overrides a collision
-        return (ability) ? ability.IsColliderValidForCollisions(coll) : true;
+        return (ability && ability.isActiveAndEnabled) ? ability.IsColliderValidForCollisions(coll) : true;
     }
 
     /// <summary>
@@ -1057,7 +1120,8 @@ public class CharacterMovement : Movement, ICharacterController
     public void OnGroundHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
     {
         // Handles extra Ability handling and modififcation of grounding hit info 
-        ability?.OnGroundHit(hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
+        if (ability && ability.isActiveAndEnabled)
+            ability.OnGroundHit(hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
     }
 
     /// <summary>
@@ -1085,7 +1149,8 @@ public class CharacterMovement : Movement, ICharacterController
         }
 
         // Handle extra movement hit handling/modification based on Ability
-        ability?.OnMovementHit(hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
+        if (ability && ability.isActiveAndEnabled)
+            ability.OnMovementHit(hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
     }
 
     /// <summary>
@@ -1135,7 +1200,8 @@ public class CharacterMovement : Movement, ICharacterController
         }
 
         // Handles extra Ability mechanics that can modify or use hit stability info
-        ability?.ProcessHitStabilityReport(hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref hitStabilityReport);
+        if (ability && ability.isActiveAndEnabled)
+            ability.ProcessHitStabilityReport(hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref hitStabilityReport);
     }
 
     /// <summary>
@@ -1146,7 +1212,8 @@ public class CharacterMovement : Movement, ICharacterController
     public void OnDiscreteCollisionDetected(Collider hitCollider)
     {
         // Extra discrete collision handling by Ability
-        ability?.OnDiscreteCollisionDetected(hitCollider);
+        if (ability && ability.isActiveAndEnabled)
+            ability.OnDiscreteCollisionDetected(hitCollider);
     }
     #endregion
 
@@ -1172,7 +1239,8 @@ public class CharacterMovement : Movement, ICharacterController
     private void EndUngroundedBuffering()
     {
         bufferedUngroundedNormal = Vector3.zero;
-        action?.ClearUngroundedBuffer();
+        if (action.isActiveAndEnabled)
+            action.ClearUngroundedBuffer();
     }
     #endregion
 

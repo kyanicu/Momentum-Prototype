@@ -13,12 +13,12 @@ public class HitboxManager : MonoBehaviour
     
     void HandleAttack(Hitbox hitbox, Hurtbox hurtbox)
     {      
-        Debug.Log("Attack Handled");
+        //Debug.Log("Attack Handled");
 
-        if (waitingAttacks.ContainsKey((hitbox.hitboxGroup, hurtbox.damageable)))
+        if (waitingAttacks.ContainsKey((hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable)))
         {
-            StopCoroutine(waitingAttacks[(hitbox.hitboxGroup, hurtbox.damageable)]);
-            waitingAttacks.Remove((hitbox.hitboxGroup, hurtbox.damageable));
+            StopCoroutine(waitingAttacks[(hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable)]);
+            waitingAttacks.Remove((hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable));
         }
         
         switch (hurtbox.damageable.ValidHit(hitbox, hurtbox))
@@ -26,14 +26,14 @@ public class HitboxManager : MonoBehaviour
             case (HitValidity.VALID):
                 hitbox.HandleOutgoingAttack(hurtbox);
                 hurtbox.HandleIncommingAttack(hitbox);
-                if (hitbox.attackInfo.continousDamageRate != 0)
-                    waitingAttacks.Add((hitbox.hitboxGroup, hurtbox.damageable), StartCoroutine(AttackAfterTime(hitbox, hurtbox, hitbox.attackInfo.continousDamageRate)));
-                else if (hitbox.attackInfo.allowHitAfterIFrames)
-                    waitingAttacks.Add((hitbox.hitboxGroup, hurtbox.damageable), StartCoroutine(AttackAfterIFrames(hitbox, hurtbox)));
+                if (hitbox.hitboxInfo.attackInfo.continousDamageRate != 0)
+                    waitingAttacks.Add((hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable), StartCoroutine(AttackAfterTime(hitbox, hurtbox, hitbox.hitboxInfo.attackInfo.continousDamageRate)));
+                else if (hitbox.hitboxInfo.attackInfo.allowHitAfterIFrames)
+                    waitingAttacks.Add((hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable), StartCoroutine(AttackAfterIFrames(hitbox, hurtbox)));
                 break;
             case (HitValidity.IFRAME):
-                if (hitbox.attackInfo.allowHitAfterIFrames)
-                    waitingAttacks.Add((hitbox.hitboxGroup, hurtbox.damageable), StartCoroutine(AttackAfterIFrames(hitbox, hurtbox)));
+                if (hitbox.hitboxInfo.attackInfo.allowHitAfterIFrames)
+                    waitingAttacks.Add((hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable), StartCoroutine(AttackAfterIFrames(hitbox, hurtbox)));
                 break;
             ////case (HitValidity.BLOCK):
             ////    break;
@@ -69,38 +69,38 @@ public class HitboxManager : MonoBehaviour
         else
             return;
 
-        Debug.Log("Overlap Registered " + hitbox);
+        //Debug.Log("Overlap Registered " + hitbox);
 
-        if (!hitboxGroupOverlaps.ContainsKey(hitbox.hitboxGroup))
-            hitboxGroupOverlaps.Add(hitbox.hitboxGroup, new Dictionary<IDamageable, HashSet<(Hitbox, Hurtbox)>>());
+        if (!hitboxGroupOverlaps.ContainsKey(hitbox.hitboxInfo.hitboxGroup))
+            hitboxGroupOverlaps.Add(hitbox.hitboxInfo.hitboxGroup, new Dictionary<IDamageable, HashSet<(Hitbox, Hurtbox)>>());
 
-        if (!hitboxGroupOverlaps[hitbox.hitboxGroup].ContainsKey(hurtbox.damageable))
+        if (!hitboxGroupOverlaps[hitbox.hitboxInfo.hitboxGroup].ContainsKey(hurtbox.damageable))
         {
-            hitboxGroupOverlaps[hitbox.hitboxGroup].Add(hurtbox.damageable, new HashSet<(Hitbox, Hurtbox)> { (hitbox, hurtbox) });
+            hitboxGroupOverlaps[hitbox.hitboxInfo.hitboxGroup].Add(hurtbox.damageable, new HashSet<(Hitbox, Hurtbox)> { (hitbox, hurtbox) });
         
             HandleAttack(hitbox, hurtbox);
         }
         else
-            hitboxGroupOverlaps[hitbox.hitboxGroup][hurtbox.damageable].Add((hitbox, hurtbox));
+            hitboxGroupOverlaps[hitbox.hitboxInfo.hitboxGroup][hurtbox.damageable].Add((hitbox, hurtbox));
     }
 
     public void DeregisterOverlap(Hitbox hitbox, Hurtbox hurtbox)
     {
-        Debug.Log("Overlap Deregistered " + hitbox);
+        //Debug.Log("Overlap Deregistered " + hitbox);
 
-        hitboxGroupOverlaps[hitbox.hitboxGroup][hurtbox.damageable].Remove((hitbox,hurtbox));
-        if (hitboxGroupOverlaps[hitbox.hitboxGroup][hurtbox.damageable].Count == 0)
+        hitboxGroupOverlaps[hitbox.hitboxInfo.hitboxGroup][hurtbox.damageable].Remove((hitbox,hurtbox));
+        if (hitboxGroupOverlaps[hitbox.hitboxInfo.hitboxGroup][hurtbox.damageable].Count == 0)
         {
-            hitboxGroupOverlaps[hitbox.hitboxGroup].Remove(hurtbox.damageable);
+            hitboxGroupOverlaps[hitbox.hitboxInfo.hitboxGroup].Remove(hurtbox.damageable);
 
-            if(waitingAttacks.ContainsKey((hitbox.hitboxGroup, hurtbox.damageable)))
+            if(waitingAttacks.ContainsKey((hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable)))
             {
-                StopCoroutine(waitingAttacks[(hitbox.hitboxGroup, hurtbox.damageable)]);
-                waitingAttacks.Remove((hitbox.hitboxGroup, hurtbox.damageable));
+                StopCoroutine(waitingAttacks[(hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable)]);
+                waitingAttacks.Remove((hitbox.hitboxInfo.hitboxGroup, hurtbox.damageable));
             }
 
-            if (hitboxGroupOverlaps[hitbox.hitboxGroup].Count == 0)
-                hitboxGroupOverlaps.Remove(hitbox.hitboxGroup);
+            if (hitboxGroupOverlaps[hitbox.hitboxInfo.hitboxGroup].Count == 0)
+                hitboxGroupOverlaps.Remove(hitbox.hitboxInfo.hitboxGroup);
         }
 
         hitboxOverlaps[hitbox].Remove(hurtbox);
@@ -112,7 +112,7 @@ public class HitboxManager : MonoBehaviour
     {
         if (hitboxOverlaps.ContainsKey(hitbox))
         {
-            Debug.Log("Deregistering All Overlaps " + hitbox);
+            //Debug.Log("Deregistering All Overlaps " + hitbox);
 
             List<Hurtbox> hurtboxes = hitboxOverlaps[hitbox];
             int len = hurtboxes.Count;
