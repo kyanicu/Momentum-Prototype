@@ -304,9 +304,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 772c5501a6842429086b9d7fc4163036, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraDistance: 8
-  orientDampTime: 0.1
-  orientDampMaxSpeed: 150
+  cameraDistance: 5
+  orientDampTime: 0.5
+  orientDampMaxSpeed: 360
   maxPlayerSpeedToResetFollow: 0
   tiltThreshold: 10
   tiltScale: 0.4
@@ -317,6 +317,7 @@ MonoBehaviour:
   zoomDampTime: 0.2
   zoomDampMaxSpeed: 150
   manualTiltingSpeed: 75
+  positionOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &954129658378158994
 GameObject:
   m_ObjectHideFlags: 0

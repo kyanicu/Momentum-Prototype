@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using KinematicCharacterController;
 using System;
+using UnityEngine.Timeline;
+using UnityEngine.Playables;
 
 [System.Serializable]
 public class MomentumMovementActionValues : CharacterOverridableValues
@@ -217,6 +219,31 @@ public class MomentumMovementAction : CharacterMovementAction
 
     public new MomentumMovementActionControl control;
 
+    [SerializeField]
+    TimelineStatePlayable walkPlayable;
+    [SerializeField]
+    float walkMaxSpeed;
+    [SerializeField]
+    float walkPlayableSpeedFactor;
+
+    [SerializeField]
+    TimelineStatePlayable runPlayable;
+    [SerializeField]
+    float runPlayableSpeedFactor;
+    [SerializeField]
+
+    TimelineStatePlayable brakingPlayable;
+    [SerializeField]
+    float brakeMinSpeed;
+
+    [SerializeField]
+    TimelineStatePlayable fallingPlayable;
+
+    [SerializeField]
+    TimelineAsset jumpPlayable;
+    [SerializeField]
+    TimelineAsset landingPlayable;
+
     private void Reset()
     {
         // Set default values
@@ -254,6 +281,27 @@ public class MomentumMovementAction : CharacterMovementAction
         base.Start();
 
         GetComponent<CharacterValueOverridability>()?.RegisterOverridability(overridableAttribute);
+
+        TimelineState walkState = new TimelineState(walkPlayable);
+        TimelineState runState = new TimelineState(runPlayable);
+        TimelineState fallingState = new TimelineState(fallingPlayable);
+        TimelineState brakingState = new TimelineState(brakingPlayable);
+
+        walkState.OnStateUpdate += () => animation.stateMachine.playableDirector.playableGraph.GetRootPlayable(0).SetSpeed(movement.velocity.magnitude * walkPlayableSpeedFactor) ;
+        runState.OnStateUpdate += () => animation.stateMachine.playableDirector.playableGraph.GetRootPlayable(0).SetSpeed(movement.velocity.magnitude * runPlayableSpeedFactor);
+
+        walkState.transitions.Add(new TimelineTransition(runState, () => movement.velocity.magnitude > walkMaxSpeed));
+        animation.stateMachine.idleState.transitions.Add(new TimelineTransition(walkState, () => movement.velocity.magnitude > 0));
+
+        runState.transitions.Add(new TimelineTransition(walkState, () => movement.velocity.magnitude <= walkMaxSpeed));
+
+        brakingState.transitions.Add(new TimelineTransition(runState, () => movement.velocity.magnitude < brakeMinSpeed || !isBraking));
+        animation.stateMachine.anyStateTransitions.Add(new TimelineTransition(brakingState, () => isBraking && movement.velocity.magnitude >= brakeMinSpeed));
+
+        fallingState.transitions.Add(new TimelineTransition(animation.stateMachine.idleState, () => movement.isGroundedThisUpdate));
+
+        animation.stateMachine.anyStateTransitions.Add(new TimelineTransition(animation.stateMachine.idleState, () => movement.velocity.magnitude == 0 && movement.isGroundedThisUpdate));
+        animation.stateMachine.anyStateTransitions.Add(new TimelineTransition(fallingState, () => !movement.isGroundedThisUpdate));
     }
 
     protected override void OnEnable()
@@ -402,6 +450,8 @@ public class MomentumMovementAction : CharacterMovementAction
         // Unground the motor
         movement.ForceUnground();
 
+        animation.PlayTimelinePlayable(jumpPlayable);
+
         isJumping = true;
     }
 
@@ -470,8 +520,11 @@ public class MomentumMovementAction : CharacterMovementAction
     /// <param name="deltaTime"> Motor update time</param>
     public override void UpdateVelocity(ref Vector3 currentVelocity, float deltaTime)
     {
+        if(!movement.wasGroundedLastUpdate && movement.isGroundedThisUpdate)
+            animation.PlayTimelinePlayable(landingPlayable);
+
         // If the player is jumping
-        if(isJumping && CheckIsStillJumping(ref currentVelocity))
+        if (isJumping && CheckIsStillJumping(ref currentVelocity))
         {
             // If the player is trying to jump cancel
             if(control.jumpCancel || waitingToJumpCancel)

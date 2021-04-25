@@ -4,31 +4,177 @@ using UnityEngine;
 using UnityEngine.Timeline;
 using UnityEngine.Playables;
 
+public class TimelineTransition
+{
+    public TimelineState toState;
+
+    public System.Func<bool> condition;
+
+    public TimelineTransition(TimelineState to, System.Func<bool> cond)
+    {
+        toState = to;
+        condition = cond;
+    }
+}
+
+[System.Serializable]
+public struct TimelineStatePlayable
+{
+    public TimelineAsset timelinePlayable;
+
+    public AnimationClip modelDefaultAnimation;
+
+    public TimelineStatePlayable(TimelineAsset playable, AnimationClip modelDefaultAnim)
+    {
+        timelinePlayable = playable;
+        modelDefaultAnimation = modelDefaultAnim;
+    }
+}
+
+public class TimelineState
+{
+    public List<TimelineTransition> transitions = new List<TimelineTransition>();
+
+    public TimelineStatePlayable statePlayable;
+
+    public System.Action OnStateEnter;
+
+    public System.Action OnStateUpdate;
+
+    public System.Action OnStateExit;
+
+    public System.Action OnStatePause;
+
+    public TimelineState(TimelineStatePlayable playable)
+    {
+        statePlayable = playable;
+    }
+}
+
+public class TimelineStateMachine
+{
+
+    public bool oneOffPlaying;
+    public bool oneOffInterrubtable;
+
+    public bool isStopped;
+
+    public TimelineState currentState;
+
+    public TimelineState idleState;
+
+    public List<TimelineTransition> anyStateTransitions = new List<TimelineTransition>();
+
+    public PlayableDirector playableDirector;
+    public Animator modelAnimator;
+
+    public TimelineStateMachine(PlayableDirector playDir, TimelineState initialState, Animator modelAnim)
+    {
+        playableDirector = playDir;
+        idleState = initialState;
+        modelAnimator = modelAnim;
+        EnterState(idleState);
+    }
+
+    public void Restart()
+    {
+        Stop();
+        Play();
+    }
+
+    public void Stop()
+    {
+        currentState.OnStateExit?.Invoke();
+        currentState = idleState;
+        oneOffPlaying = true;
+        isStopped = true;
+    }
+
+    public void Pause()
+    {
+        oneOffPlaying = true;
+        currentState.OnStatePause?.Invoke();
+    }
+
+    public void FinishInterruptedPlayable(PlayableDirector obj)
+    {
+        if(!isStopped)
+            Play();
+    }
+
+    public void Play()
+    {
+        oneOffPlaying = false;
+        oneOffInterrubtable = false;
+        if (isStopped)
+        {
+            EnterState(idleState);
+        }
+        else
+        {
+            ContinueState();
+        }
+    }
+
+    public void TransitionTo(TimelineState toState)
+    {
+        currentState.OnStateExit?.Invoke();
+        EnterState(toState);
+    }
+
+    private void EnterState(TimelineState toState)
+    {
+        currentState = toState;
+        currentState.OnStateEnter?.Invoke();
+        
+        AnimatorOverrideController aoc = new AnimatorOverrideController(modelAnimator.runtimeAnimatorController);
+        aoc.ApplyOverrides(new List<KeyValuePair<AnimationClip, AnimationClip>> { new KeyValuePair<AnimationClip, AnimationClip>(aoc.animationClips[0], currentState.statePlayable.modelDefaultAnimation) });
+        modelAnimator.runtimeAnimatorController = aoc;
+
+        if (!oneOffPlaying || oneOffInterrubtable)
+            ContinueState();
+    }
+
+    private void ContinueState()
+    {
+
+        playableDirector.Play(currentState.statePlayable.timelinePlayable, DirectorWrapMode.Loop);
+        playableDirector.playableGraph.GetRootPlayable(0).SetSpeed(1);
+    }
+
+    public void Update()
+    {
+        foreach (TimelineTransition transition in anyStateTransitions)
+        {
+            if (transition.toState == currentState)
+                continue;
+
+            if (transition.condition.Invoke())
+            {
+                TransitionTo(transition.toState);
+                return;
+            }
+        }
+
+        foreach (TimelineTransition transition in currentState.transitions)
+        {
+            if (transition.condition.Invoke())
+            {
+                TransitionTo(transition.toState);
+                return;
+            }
+        }
+
+        if (!oneOffPlaying)
+            currentState.OnStateUpdate?.Invoke();
+    }
+}
+
 public class CharacterAnimation : MonoBehaviour
 {
-    static protected Dictionary<string, int> animatorParameterNameToID = new Dictionary<string, int>()
-    {
-        ["NeutralAttack"] = Animator.StringToHash("NeutralAttack"),
-        ["DownAttack"] = Animator.StringToHash("DownAttack"),
-        ["UpAttack"] = Animator.StringToHash("UpAttack"),
-        ["RunningAttack"] = Animator.StringToHash("RunningAttack"),
-        ["BrakingAttack"] = Animator.StringToHash("BrakingAttack"),
-        ["NeutralAerialAttack"] = Animator.StringToHash("NeutralAerialAttack"),
-        ["BackAerialAttack"] = Animator.StringToHash("BackAerialAttack"),
-        ["DownAerialAttack"] = Animator.StringToHash("DownAerialAttack"),
-        ["UpAerialAttack"] = Animator.StringToHash("UpAerialAttack"),
-
-        ["Braking"] = Animator.StringToHash("Braking"),
-        ["RunSpeed"] = Animator.StringToHash("RunSpeed"),
-        ["Falling"] = Animator.StringToHash("Falling"),
-        ["Flinch"] = Animator.StringToHash("Flinch"),
-
-        ["Walking"] = Animator.StringToHash("Walking"),
-        ["Talking"] = Animator.StringToHash("Talking"),
-
-    };
 
     protected Animator animator;
+    protected PlayableDirector playableDirector;
 
     public GameObject animationRoot;
 
@@ -39,21 +185,36 @@ public class CharacterAnimation : MonoBehaviour
     private Coroutine iFrameCoroutine;
     [SerializeField]
     private float iFrameBlinkRate = 0.1f;
-
-
+    /*
     [SerializeField]
     private float turnSpeed = 360;
 
     private Coroutine rotationCoroutine;
+    */
 
-    [SerializeField]
-    Quaternion initialFacingRotation;
-    Vector3 initialAnimationRootPosition;
     Quaternion animationRootRotation = Quaternion.identity;
     public bool lockFacingDirection;
 
     Quaternion prevRotation;
     Vector3 prevPosition;
+
+    [SerializeField]
+    float rotationDifferenceScale;
+    [SerializeField]
+    float planeChangePositionDifferenceScale;
+
+    static private readonly Quaternion flipUp = Quaternion.Euler(0, 180, 0);
+
+    public TimelineStateMachine stateMachine;
+
+    [SerializeField]
+    TimelineStatePlayable idlePlayable;
+
+    [SerializeField]
+    TimelineAsset[] boredPlayables;
+    [SerializeField]
+    private float boredRate;
+    private float boredTimer;
 
     #region Sibling References
     protected CharacterMovement movement;
@@ -65,8 +226,19 @@ public class CharacterAnimation : MonoBehaviour
 
         animator = GetComponent<Animator>();
         modelAnimator = modelRoot.GetComponent<Animator>();
-        initialAnimationRootPosition = animationRoot.transform.localPosition;
         //initialFacingRotation = animationRoot.transform.localRotation;
+
+        playableDirector = GetComponent<PlayableDirector>();
+
+        stateMachine = new TimelineStateMachine(playableDirector, new TimelineState(idlePlayable), modelAnimator);
+
+        stateMachine.idleState.OnStateEnter += () => boredTimer = 0;
+        stateMachine.idleState.OnStatePause += () => boredTimer = 0;
+        stateMachine.idleState.OnStateExit += () => boredTimer = 0;
+
+        stateMachine.idleState.OnStateUpdate += () => { boredTimer += Time.deltaTime; if (boredTimer >= boredRate) { boredTimer = 0; PlayBoredFidget(); } };
+
+        playableDirector.stopped += stateMachine.FinishInterruptedPlayable;
     }
 
     protected virtual void Start()
@@ -74,58 +246,28 @@ public class CharacterAnimation : MonoBehaviour
 
     }
 
-    //Vector3 rotateDampVelocity;
-    //[SerializeField]
-    //float orientDampTime;
-    //[SerializeField]
-    //float orientDampMaxSpeed;
-    [SerializeField]
-    float rotationDifferenceScale;
-    [SerializeField]
-    float planeChangePositionDifferenceScale;
-    //[SerializeField]
-    //float angleFactor;
     protected virtual void Update()
     {
-        if (prevRotation != transform.rotation * initialFacingRotation * animationRootRotation)
+        stateMachine.Update();
+
+        if (prevRotation != transform.rotation * animationRootRotation)
         {
-            //animationRoot.transform.rotation = prevRotation;
-            Quaternion toRotateTo = transform.rotation * initialFacingRotation * animationRootRotation;
+            Quaternion toRotateTo = transform.rotation * animationRootRotation;
 
             float angle = Quaternion.Angle(prevRotation, toRotateTo);
-
-            //orientDampTime = angle / rotationDifferenceScale;
-            //orientDampMaxSpeed = angle * rotationDifferenceScale;
 
             animationRoot.transform.rotation = Quaternion.Slerp(prevRotation, toRotateTo, angle / 360 * rotationDifferenceScale);//Quaternion.Euler(Vector3.SmoothDamp(prevRotation.eulerAngles, toRotateTo.eulerAngles, ref rotateDampVelocity, orientDampTime, orientDampMaxSpeed));
 
         }
-        else if (animationRoot.transform.localPosition != initialAnimationRootPosition)
+        else if (animationRoot.transform.localPosition != Vector3.zero)
         {
-            animationRoot.transform.position = Vector3.Lerp(prevPosition, transform.position + initialAnimationRootPosition, (prevPosition - (transform.position + initialAnimationRootPosition)).magnitude * planeChangePositionDifferenceScale);
+            animationRoot.transform.position = Vector3.Lerp(prevPosition, transform.position, (prevPosition - transform.position).magnitude * planeChangePositionDifferenceScale);
         }
 
         prevRotation = animationRoot.transform.rotation;
         prevPosition = animationRoot.transform.position;
     }
 
-        /*s
-        #if UNITY_EDITOR
-            void OnDrawGizmosSelected()
-            {
-                if (!animator)
-                    animator = GetComponent<Animator>();
-
-                if (!Application.isPlaying && animator.deltaPosition != Vector3.zero && animator.deltaRotation != Quaternion.identity)
-                {
-                    Debug.Log(animationRoot.transform.rotation * animator.deltaPosition);
-                    animationRoot.transform.position += animator.deltaPosition;
-                    animationRoot.transform.rotation = transform.rotation * animationRoot.transform.rotation;
-                    animator = GetComponent<Animator>();
-                } 
-            }
-        #endif
-        */
     void OnAnimatorMove()
     {
         if (animator.deltaPosition != Vector3.zero)
@@ -139,6 +281,39 @@ public class CharacterAnimation : MonoBehaviour
         }
     }
 
+    private void PlayBoredFidget()
+    {
+        if(boredPlayables.Length != 0)
+            PlayTimelinePlayable(boredPlayables[Random.Range(0, boredPlayables.Length)], true);
+
+        boredTimer = 0;
+    }
+
+    public void PlayTimelinePlayable(TimelineAsset playable, bool interruptableByStateTransition = false)
+    {
+        if (interruptableByStateTransition)
+            stateMachine.oneOffInterrubtable = true;
+
+        stateMachine.Pause();
+
+        playableDirector.Play(playable, DirectorWrapMode.None);
+    }
+
+    public Quaternion GetFacingDirectionRotation()
+    {
+        return animationRootRotation;
+    }
+
+    public void SetFacingDirection(float sign)
+    {
+        if (lockFacingDirection)
+            return;
+
+        animationRootRotation = (sign > 0) ? Quaternion.identity : flipUp;
+        animationRoot.transform.localRotation = (sign > 0) ? Quaternion.identity : flipUp;
+    }
+
+    /*
     private IEnumerator RotateSmoothlyCoroutine(Quaternion rotateBy, float speed)
     {
         Quaternion endRotation = transform.rotation * rotateBy;
@@ -158,22 +333,6 @@ public class CharacterAnimation : MonoBehaviour
 
         rotationCoroutine = StartCoroutine(RotateSmoothlyCoroutine(rotateBy, speed));
 
-    }
-
-    static private readonly Quaternion flipUp = Quaternion.Euler(0,180,0); 
-
-    public Quaternion GetFacingDirectionRotation()
-    {
-        return animationRootRotation;
-    }
-
-    public void SetFacingDirection(float sign)
-    {
-        if (lockFacingDirection)
-            return;
-
-        animationRootRotation = (sign > 0) ? Quaternion.identity : flipUp;
-        animationRoot.transform.localRotation = initialFacingRotation * ((sign > 0) ? Quaternion.identity : flipUp);
     }
     
     public void ChangeFacingDirection(float speed)
@@ -199,11 +358,7 @@ public class CharacterAnimation : MonoBehaviour
 
         RotateSmoothly(Quaternion.FromToRotation(animationRoot.transform.right, transform.worldToLocalMatrix * lookTo), speed);
     }
-
-    public void AnimateFlinch()
-    {
-        modelAnimator.SetTrigger(animatorParameterNameToID["Flinch"]);
-    }
+    */
 
     public void StartIFrames()
     {

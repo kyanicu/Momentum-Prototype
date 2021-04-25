@@ -23,7 +23,6 @@ public struct CharacterCombatControl
     }
 }
 
-
 [System.Serializable]
 public struct AttackInitInfo
 {
@@ -150,7 +149,7 @@ public class CharacterCombat : MonoBehaviour, IAttacker
                 
                 attackBuffered = false;
                 bufferedAttack = "";
-                GetComponent<PlayableDirector>().Play(attackInitMap[currentAttack].attackTimeline);
+                animation.PlayTimelinePlayable(attackInitMap[currentAttack].attackTimeline);
                 break;
             case (AttackState.COMMITAL):
                 break;

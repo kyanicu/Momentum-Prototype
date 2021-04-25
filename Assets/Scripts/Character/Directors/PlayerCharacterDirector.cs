@@ -30,7 +30,7 @@ public class PlayerCharacterDirector : CharacterDirector
     /// </summary>
     private CharacterCombat combat;
 
-    new private PlayerAnimation animation;
+    new private CharacterAnimation animation;
 
     private AlestaMovementAbility alestaAbility;
     ////private CartiaMovementAbility cartiaAbility;
@@ -69,7 +69,7 @@ public class PlayerCharacterDirector : CharacterDirector
 
         combat = GetComponent<CharacterCombat>();
         movementAction = GetComponent<MomentumMovementAction>();
-        animation = GetComponent<PlayerAnimation>();
+        animation = GetComponent<CharacterAnimation>();
 
         alestaAbility = GetComponent<AlestaMovementAbility>();
         ////cartiaAbility = GetComponent<CartiaMovementAbility>();

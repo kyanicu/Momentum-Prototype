@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 public enum DamageArmor { None, Intangibility, Imovability, Invulnerability, }
 
@@ -19,6 +20,9 @@ public abstract class CharacterStatus : MonoBehaviour, IDamageable
     private float iFrameTime = 1f;
     private bool _iFramesActive;
     public bool iFramesActive { get { return _iFramesActive; } private set { _iFramesActive = value; } }
+
+    [SerializeField]
+    TimelineAsset flinchPlayable;
 
     #region Sibling References
     new private CharacterAnimation animation;
@@ -81,7 +85,7 @@ public abstract class CharacterStatus : MonoBehaviour, IDamageable
         Debug.Log("Flinched");
         movement.Flinch();
         combat.Flinch();
-        animation.AnimateFlinch();
+        animation.PlayTimelinePlayable(flinchPlayable);
     }
 
     public virtual void Halt()
