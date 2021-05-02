@@ -128,6 +128,7 @@ public class TimelineStateMachine
         currentState.OnStateEnter?.Invoke();
         
         AnimatorOverrideController aoc = new AnimatorOverrideController(modelAnimator.runtimeAnimatorController);
+        
         aoc.ApplyOverrides(new List<KeyValuePair<AnimationClip, AnimationClip>> { new KeyValuePair<AnimationClip, AnimationClip>(aoc.animationClips[0], currentState.statePlayable.modelDefaultAnimation) });
         modelAnimator.runtimeAnimatorController = aoc;
 
@@ -291,6 +292,11 @@ public class CharacterAnimation : MonoBehaviour
 
     public void PlayTimelinePlayable(TimelineAsset playable, bool interruptableByStateTransition = false)
     {
+        if (stateMachine.oneOffInterrubtable)
+        {
+            stateMachine.Play();
+        }
+
         if (interruptableByStateTransition)
             stateMachine.oneOffInterrubtable = true;
 

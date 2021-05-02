@@ -63,6 +63,76 @@ public abstract class CharacterDirector : MonoBehaviour
 
     protected CharacterMovement movement;
 
+#if UNITY_EDITOR
+    public enum InspectorMode { All, Director, Movement, Animation, Combat }
+
+    [SerializeField]
+    private InspectorMode inspectorMode;
+
+    protected virtual void OnValidate()
+    {
+        Component[] components = GetComponents<Component>();
+        
+        if(inspectorMode != InspectorMode.All)
+        {
+            foreach (Component component in components)
+            {
+                if (component == this)
+                    continue;
+
+                component.hideFlags = HideFlags.HideInInspector;
+            }
+        }
+        else
+        {
+            foreach (Component component in components)
+            {
+                if (component == this)
+                    continue;
+
+                component.hideFlags = HideFlags.None;
+                component.SendMessage("OnValidate");
+            }
+            return;
+        }
+
+        List<Component> shownComponents = new List<Component>();
+        switch (inspectorMode)
+        {
+            case InspectorMode.Director:
+                shownComponents.Add(GetComponent<Bolt.Variables>());
+                break;
+            case InspectorMode.Movement:
+                shownComponents.Add(GetComponent<CharacterMovement>());
+                shownComponents.Add(GetComponent<CharacterMovementAction>());
+                shownComponents.Add(GetComponent<CharacterMovementPhysics>());
+                shownComponents.Add(GetComponent<DynamicPlaneConstraint>());
+                shownComponents.Add(GetComponent<CharacterValueOverridability>());
+                shownComponents.Add(GetComponent<PlayerMovementAbility>());
+                break;
+            case InspectorMode.Animation:
+                shownComponents.Add(GetComponent<CharacterAnimation>());
+                shownComponents.Add(GetComponent<UnityEngine.Playables.PlayableDirector>());
+                shownComponents.Add(GetComponent<Animator>());
+                shownComponents.Add(GetComponent<AudioSource>());
+                break;
+            case InspectorMode.Combat:
+                shownComponents.Add(GetComponent<CharacterCombat>());
+                shownComponents.Add(GetComponent<CharacterStatus>());
+                break;
+        }
+
+        foreach (Component component in shownComponents)
+        {
+            if (component == null)
+                continue;
+
+            component.hideFlags = HideFlags.None;
+            component.SendMessage("OnValidate");
+        }
+    }
+#endif
+
     protected virtual void Awake()
     {
         movement = GetComponent<CharacterMovement>();

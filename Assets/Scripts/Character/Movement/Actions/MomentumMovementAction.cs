@@ -314,6 +314,11 @@ public class MomentumMovementAction : CharacterMovementAction
         base.OnDisable();
     }
 
+    void OnValidate()
+    {
+        overridableAttribute.CalculateValues();
+    }
+
     /// <summary>
     /// Adds appropriate run acceleration to the player 
     /// </summary>

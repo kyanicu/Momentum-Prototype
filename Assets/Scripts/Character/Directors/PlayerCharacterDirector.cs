@@ -52,6 +52,14 @@ public class PlayerCharacterDirector : CharacterDirector
     float brakingAttackMinSpeed = 10;
 
     #region Unity MonoBehaviour Messages
+
+#if UNITY_EDITOR
+    protected override void OnValidate()
+    {
+        base.OnValidate();
+    }
+#endif
+
     /// <summary>
     /// Handles class initialization
     /// </summary>
@@ -184,22 +192,22 @@ public class PlayerCharacterDirector : CharacterDirector
                     combat.control.SetAttack("BrakingAttack");
                 else if (sqrSpeed >= runningAttackMinSpeed * runningAttackMinSpeed && direction.x == movementAction.facingDirection)
                     combat.control.SetAttack("RunningAttack");
-                else if (direction.y == +1)
+                /*else if (direction.y == +1)
                     combat.control.SetAttack("UpAttack");
                 else if (direction.y == -1)
                     combat.control.SetAttack("DownAttack");
-                else
+                */else
                     combat.control.SetAttack("NeutralAttack");
             }
             else
             {
-                if (direction.y == +1)
+                /*if (direction.y == +1)
                     combat.control.SetAttack("UpAerialAttack");
                 else if (direction.y == -1)
                     combat.control.SetAttack("DownAerialAttack");
                 else if (direction.x == -movementAction.facingDirection)
                     combat.control.SetAttack("BackAerialAttack");
-                else
+                else*/
                     combat.control.SetAttack("NeutralAerialAttack");
             }
         }

@@ -219,6 +219,7 @@ public class MomentumMovementPhysics : CharacterMovementPhysics
 
     private void OnValidate()
     {
+        overridableAttribute.CalculateValues();
         overridableAttribute.baseValues.gravityDirection = overridableAttribute.baseValues.gravityDirection.normalized;
     }
 

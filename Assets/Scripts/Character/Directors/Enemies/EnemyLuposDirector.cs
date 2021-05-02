@@ -22,6 +22,13 @@ public class EnemyLuposDirector : CharacterDirector
 
     private SimpleMovementActionControl actionControl;
 
+#if UNITY_EDITOR
+    protected override void OnValidate()
+    {
+        base.OnValidate();
+    }
+#endif
+
     protected override void Awake()
     {
         base.Awake();

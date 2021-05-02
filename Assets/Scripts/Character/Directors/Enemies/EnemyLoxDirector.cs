@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(SimpleMovementAction))]
-public class EnemyLoxDirector : CharacterDirector
+public class EnemyLoxDirector : AICharacterDirector
 {
 
     [SerializeField]
@@ -15,6 +15,13 @@ public class EnemyLoxDirector : CharacterDirector
     private Vector3 currentDirection;
 
     private SimpleMovementActionControl actionControl;
+
+#if UNITY_EDITOR
+    protected override void OnValidate()
+    {
+        base.OnValidate();
+    }
+#endif
 
     protected override void Awake()
     {

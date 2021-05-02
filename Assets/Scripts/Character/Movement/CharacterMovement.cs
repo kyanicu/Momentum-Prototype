@@ -669,6 +669,8 @@ public class CharacterMovement : Movement, ICharacterController
 #endif
         }
 
+        overridableAttribute.CalculateValues();
+
         motor.ValidateData();
 
 #if UNITY_EDITOR

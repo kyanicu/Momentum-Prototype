@@ -473,7 +473,7 @@ MonoBehaviour:
   _capsulePhysicsMaterial: {fileID: 0}
   overridableAttribute:
     _baseValues:
-      maxSpeed: 125
+      maxSpeed: 75
       attachThreshold: 8
       maxSlopeTrackTime: 0.5
       ungroundRotationFactor: 1.25
@@ -511,29 +511,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   overridableAttribute:
     _baseValues:
-      runAccel: 15
-      runKickOffSpeed: 15
+      runAccel: 10
+      runKickOffSpeed: 10
       autoRunKickOffSpeed: 2
       autoRunKickOffSlopeThreshold: 14
-      runMaxSpeed: 18
-      brakeDecel: 30
+      runMaxSpeed: 14
+      brakeDecel: 20
       looseAirMoveAccel: 10
-      looseAirMoveBrakeDecel: 15
-      preciseAirMoveAccel: 30
-      preciseAirMoveBrakeDecel: 70
-      airSpeedThreshold: 12
-      airMoveMaxSpeed: 18
-      jumpSpeed: 22
+      looseAirMoveBrakeDecel: 20
+      preciseAirMoveAccel: 20
+      preciseAirMoveBrakeDecel: 30
+      airSpeedThreshold: 14
+      airMoveMaxSpeed: 14
+      jumpSpeed: 15
       jumpRotationFactor: 2
       jumpCancelSpeed: 4
-      jumpCancelThreshold: 20
+      jumpCancelThreshold: 13
       invertRight: 0
   walkPlayable:
     timelinePlayable: {fileID: 11400000, guid: dda5a2e2e25e5a74fae9edd88b3053ab, type: 2}
     modelDefaultAnimation: {fileID: 7400000, guid: e52be2fa48716194ea1d9d76686005f8,
       type: 3}
   walkMaxSpeed: 4
-  walkPlayableSpeedFactor: 0.5
+  walkPlayableSpeedFactor: 0.75
   runPlayable:
     timelinePlayable: {fileID: 11400000, guid: bb4aaba71e7085a4cac79816455cf05a, type: 2}
     modelDefaultAnimation: {fileID: 7400000, guid: 26055e26f15260e4e8e0e51f50c41926,
@@ -572,21 +572,21 @@ MonoBehaviour:
       staticFrictionMaxSlope: 30
       staticFrictionVelThreshold: 0.5
       extraKineticFriction: 3
-      extraKineticFrictionSpeedThreshold: 18
+      extraKineticFrictionSpeedThreshold: 14
       upsideDownExtraKineticFrictionFactor: 0.75
       upsideDownExtraKineticFrictionTimeThreshold: 0.75
       upsideDownAttachSpeed: 25
       sidewaysExtraKineticFrictionFactor: 0.75
       sidewaysExtraKineticFrictionTimeThreshold: 0.75
-      sidewaysAttachSpeed: 25
-      slopeConstantDown: 1.2
-      slopeConstantUp: 0.7
-      airDrag: 3
-      extraAirDrag: 2
-      extraAirDragSpeedThreshold: 18
-      terminalVelocity: 125
-      terminalVelocityDeceleration: 50
-      gravityAccel: 50
+      sidewaysAttachSpeed: 15
+      slopeConstantDown: 1
+      slopeConstantUp: 1
+      airDrag: 5
+      extraAirDrag: 3
+      extraAirDragSpeedThreshold: 14
+      terminalVelocity: 75
+      terminalVelocityDeceleration: 40
+      gravityAccel: 30
       gravityDirection: {x: 0, y: -1, z: 0}
       constantAcceleration: {x: 0, y: 0, z: 0}
 --- !u!114 &4334204881905032105
@@ -619,7 +619,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackInitInfo:
   - attackName: NeutralAttack
-    attackTimeline: {fileID: 11400000, guid: 5791d376580be83438bee8acd17df2c7, type: 2}
+    attackTimeline: {fileID: 11400000, guid: f4fa2a53c79898242a9e1f9c06cf34c8, type: 2}
   - attackName: DownAttack
     attackTimeline: {fileID: 0}
   - attackName: UpAttack
@@ -629,7 +629,7 @@ MonoBehaviour:
   - attackName: BrakingAttack
     attackTimeline: {fileID: 11400000, guid: 962aaaf75c3fe3e42bceeb58d3e7d4f5, type: 2}
   - attackName: NeutralAerialAttack
-    attackTimeline: {fileID: 0}
+    attackTimeline: {fileID: 11400000, guid: f4fa2a53c79898242a9e1f9c06cf34c8, type: 2}
   - attackName: BackAerialAttack
     attackTimeline: {fileID: 0}
   - attackName: DownAerialAttack
@@ -652,7 +652,7 @@ MonoBehaviour:
   modelRoot: {fileID: 7278496900103588498}
   iFrameBlinkRate: 0.1
   lockFacingDirection: 0
-  rotationDifferenceScale: 1
+  rotationDifferenceScale: 2
   planeChangePositionDifferenceScale: 2
   idlePlayable:
     timelinePlayable: {fileID: 11400000, guid: f5f984f5d5cb62543a4a1094dc443782, type: 2}
@@ -662,7 +662,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6dae19ce042e0a448b6782dde439085d, type: 2}
   - {fileID: 11400000, guid: 415a8e2944a9d1642af991ba7a7d1dbd, type: 2}
   - {fileID: 11400000, guid: fff45f88c65a8944583fa6195adc960e, type: 2}
-  boredRate: 5
+  boredRate: 15
 --- !u!114 &5143403481329520284
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -714,7 +714,7 @@ PlayableDirector:
   m_GameObject: {fileID: 2035001936109016865}
   m_Enabled: 1
   serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: bb4aaba71e7085a4cac79816455cf05a, type: 2}
+  m_PlayableAsset: {fileID: 11400000, guid: 5791d376580be83438bee8acd17df2c7, type: 2}
   m_InitialState: 0
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
@@ -798,25 +798,38 @@ PlayableDirector:
     value: {fileID: 7278496900110989312}
   - key: {fileID: 3629253402578625585, guid: fff45f88c65a8944583fa6195adc960e, type: 2}
     value: {fileID: 2035001936109016870}
+  - key: {fileID: -8762878678250568989, guid: f4fa2a53c79898242a9e1f9c06cf34c8, type: 2}
+    value: {fileID: 7278496900110989312}
+  - key: {fileID: 8162598982697520082, guid: f4fa2a53c79898242a9e1f9c06cf34c8, type: 2}
+    value: {fileID: 2035001936109016870}
+  - key: {fileID: 40706295564865599, guid: f4fa2a53c79898242a9e1f9c06cf34c8, type: 2}
+    value: {fileID: 613107081164337525}
+  - key: {fileID: -1623527787079590706, guid: f4fa2a53c79898242a9e1f9c06cf34c8, type: 2}
+    value: {fileID: 2035001936109016869}
+  - key: {fileID: 1759060725423142799, guid: f4fa2a53c79898242a9e1f9c06cf34c8, type: 2}
+    value: {fileID: 2035001936109016871}
+  - key: {fileID: 6339000857042357953, guid: f4fa2a53c79898242a9e1f9c06cf34c8, type: 2}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References:
     - 08794af8e4690cf4db2850013b653bfe: {fileID: 8790285110322308487}
-    - d90b7c0970b527848a73bf237f753c2f: {fileID: 0}
+    - d90b7c0970b527848a73bf237f753c2f: {fileID: 2908366487775751533}
     - b8374d3ea768da3429d3d701d6694a5b: {fileID: 8790285110322308487}
-    - a80b8e51bb9cab541b2edac063edf3cc: {fileID: 0}
+    - a80b8e51bb9cab541b2edac063edf3cc: {fileID: 2908366487775751533}
     - 10af8a43da7c5284cb4825688c459992: {fileID: 8790285110322308487}
     - b755560d7f182f04eaebe203735e4deb: {fileID: 8790285110322308487}
-    - ff72492bbc13bb8488d4a3a496289956: {fileID: 0}
+    - ff72492bbc13bb8488d4a3a496289956: {fileID: 2908366487775751533}
     - 807ed2d0205cbdd4b8e8e7b3e45cbf22: {fileID: 8790285110322308487}
+    - 737fbf481d386f4419121187c2a6f218: {fileID: 2908366487775751533}
     - a8704f5c91ece5c4e927a5868a64d264: {fileID: 0}
     - 596eaf3f5ccadec4ab9169e09d879cfe: {fileID: 8790285110322308487}
     - 469cf7d0611893b49980f214939d4777: {fileID: 0}
     - 92b2b149d80a83d4180be2fd94487f2a: {fileID: 2035001936109016865}
     - 9c58de33c993cb8478e8c210212ecda3: {fileID: 0}
-    - 2eacb9e238112144aab038ce97986f95: {fileID: 0}
-    - 58a94fb9c218e6044a4507f538bae4b4: {fileID: 0}
+    - 2eacb9e238112144aab038ce97986f95: {fileID: 2908366487775751533}
+    - 58a94fb9c218e6044a4507f538bae4b4: {fileID: 2908366487775751533}
     - 7ec9b63ee70f0154db007442be59764d: {fileID: 2035001936109016865}
-    - d3188b127b1f7654391d7c5b53e42cab: {fileID: 0}
+    - d3188b127b1f7654391d7c5b53e42cab: {fileID: 2908366487775751533}
     - 26240a1e9a3c17d4884a8198572c42f3: {fileID: 8790285110322308487}
     - e2b000a3e4db09240b6975607f329d35: {fileID: 8243602025510322049}
     - c78f4b1e7bfea3f49b921d6304b85be9: {fileID: 8243602025510322049}
@@ -826,6 +839,7 @@ PlayableDirector:
     - 38d67926b4c7f144b97066abdc97c30a: {fileID: 8243602025510322049}
     - dfe02f7e047cea346a117839e6ce1b72: {fileID: 1306466759763570403}
     - f85615d3117fb4d4d93fc79a545dd7a8: {fileID: 8243602025510322049}
+    - 0ab0f406d642aa44fa9aeff4f6f64b20: {fileID: 8790285110322308487}
 --- !u!82 &2035001936109016870
 AudioSource:
   m_ObjectHideFlags: 0
@@ -838,7 +852,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 514dfaed2534942e8a5c5f7f253ed89b, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.5
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -8874,7 +8888,14 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: b55f4b3238b930c448f27882de84f0d4, type: 2}
     - target: {fileID: 9500000, guid: 49f2055d53eeb4e5a92af590a44bddee, type: 3}
       propertyPath: m_WarningMessage
-      value: 
+      value: "\nBinding warning: Some generic clip(s) animate transforms that are
+        already bound by a Humanoid avatar. These transforms can only be changed
+        by Humanoid clips.\n\tTransform 'Character1_RightFoot'\n\tTransform 'Character1_LeftHandThumb3'\n\tTransform
+        'Character1_RightToeBase'\n\tTransform 'Character1_LeftFoot'\n\tTransform
+        'Character1_RightHandThumb1'\n\tTransform 'Character1_LeftHandIndex1'\n\tTransform
+        'Character1_LeftHandRing3'\n\tTransform 'Character1_RightHandRing2'\n\tTransform
+        'Character1_RightHandPinky3'\n\tTransform 'Character1_RightHand'\n\tand more
+        ..."
       objectReference: {fileID: 0}
     - target: {fileID: 11400040, guid: 49f2055d53eeb4e5a92af590a44bddee, type: 3}
       propertyPath: m_Enabled
