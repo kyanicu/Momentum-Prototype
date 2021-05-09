@@ -148,7 +148,7 @@ public class MomentumMovementActionValues : CharacterOverridableValues
 /// Struct that holds information on player input
 /// Ensures any value found on Monobehavior.Update() will be handled when appropriate for the motor without being overwritten by a zeroed value
 /// </summary>
-public class MomentumMovementActionControl : MovementActionControl
+public class MomentumMovementActionControl : CharacterMovementActionControl
 {
     // Properties encapsulate their respective variable to prevent overwriting by a zeroed value
 
@@ -185,7 +185,7 @@ public class MomentumMovementActionControl : MovementActionControl
     /// <summary>
     /// Reset to default values
     /// </summary>
-    public void Reset()
+    public override void Reset()
     {
         resetRun = true;
         _jump = false;

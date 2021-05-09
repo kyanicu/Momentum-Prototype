@@ -61,7 +61,7 @@ public abstract class CharacterDirector : MonoBehaviour
     Coroutine inputLockTimer;
     #endregion
 
-    protected CharacterMovement movement;
+    //public CharacterMovement movement { get;  private set; }
 
 #if UNITY_EDITOR
     public enum InspectorMode { All, Director, Movement, Animation, Combat }
@@ -77,7 +77,7 @@ public abstract class CharacterDirector : MonoBehaviour
         {
             foreach (Component component in components)
             {
-                if (component == this)
+                if (component == this || component == transform)
                     continue;
 
                 component.hideFlags = HideFlags.HideInInspector;
@@ -87,12 +87,16 @@ public abstract class CharacterDirector : MonoBehaviour
         {
             foreach (Component component in components)
             {
-                if (component == this)
+                if (component == this || component == transform)
                     continue;
 
                 component.hideFlags = HideFlags.None;
-                component.SendMessage("OnValidate");
             }
+
+            CharacterMovement charMove = GetComponent<CharacterMovement>();
+            if (charMove)
+                charMove.ValidateData();
+
             return;
         }
 
@@ -101,9 +105,14 @@ public abstract class CharacterDirector : MonoBehaviour
         {
             case InspectorMode.Director:
                 shownComponents.Add(GetComponent<Bolt.Variables>());
+                shownComponents.Add(GetComponent<Bolt.FlowMachine>());
+                shownComponents.Add(GetComponent<Bolt.StateMachine>());
                 break;
             case InspectorMode.Movement:
-                shownComponents.Add(GetComponent<CharacterMovement>());
+                CharacterMovement charMove;
+                shownComponents.Add(charMove = GetComponent<CharacterMovement>());
+                charMove.ValidateData();
+
                 shownComponents.Add(GetComponent<CharacterMovementAction>());
                 shownComponents.Add(GetComponent<CharacterMovementPhysics>());
                 shownComponents.Add(GetComponent<DynamicPlaneConstraint>());
@@ -113,6 +122,7 @@ public abstract class CharacterDirector : MonoBehaviour
             case InspectorMode.Animation:
                 shownComponents.Add(GetComponent<CharacterAnimation>());
                 shownComponents.Add(GetComponent<UnityEngine.Playables.PlayableDirector>());
+                shownComponents.Add(GetComponent<UnityEngine.Timeline.SignalReceiver>());
                 shownComponents.Add(GetComponent<Animator>());
                 shownComponents.Add(GetComponent<AudioSource>());
                 break;
@@ -128,15 +138,9 @@ public abstract class CharacterDirector : MonoBehaviour
                 continue;
 
             component.hideFlags = HideFlags.None;
-            component.SendMessage("OnValidate");
         }
     }
 #endif
-
-    protected virtual void Awake()
-    {
-        movement = GetComponent<CharacterMovement>();
-    }
 
     public void EnableControl()
     {

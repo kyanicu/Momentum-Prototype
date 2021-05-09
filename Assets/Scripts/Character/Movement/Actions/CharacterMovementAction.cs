@@ -6,12 +6,12 @@ using UnityEngine;
 /// Struct that holds information on player input
 /// Ensures any value found on Monobehavior.Update() will be handled when appropriate for the motor without being overwritten by a zeroed value
 /// </summary>
-public interface MovementActionControl
+public abstract class CharacterMovementActionControl
 {
     /// <summary>
     /// Reset to default values
     /// </summary>
-    void Reset();
+    public abstract void Reset();
 }
 
 public abstract class CharacterMovementAction : MonoBehaviour
@@ -20,7 +20,7 @@ public abstract class CharacterMovementAction : MonoBehaviour
     /// <summary>
     /// Holds and maintains input info
     /// </summary>
-    public MovementActionControl control;
+    public CharacterMovementActionControl control;
 
     private float _facingDirection;
     public float facingDirection

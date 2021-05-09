@@ -21,6 +21,7 @@ public class PlayerCharacterDirector : CharacterDirector
 #endregion
 
 #region Components 
+    private CharacterMovement movement;
     /// <summary>
     /// Handles character movement
     /// </summary>
@@ -63,9 +64,8 @@ public class PlayerCharacterDirector : CharacterDirector
     /// <summary>
     /// Handles class initialization
     /// </summary>
-    protected override void Awake()
+    void Awake()
     {
-        base.Awake();
 
         playerController = new PlayerController();
         playerController.Enable();
@@ -75,6 +75,7 @@ public class PlayerCharacterDirector : CharacterDirector
         ////nephuiModelRoot = transform.GetChild(2).gameObject;
         ////ilphineModelRoot = transform.GetChild(3).gameObject;
 
+        movement = GetComponent<CharacterMovement>();
         combat = GetComponent<CharacterCombat>();
         movementAction = GetComponent<MomentumMovementAction>();
         animation = GetComponent<CharacterAnimation>();

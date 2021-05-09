@@ -138,7 +138,6 @@ public class TimelineStateMachine
 
     private void ContinueState()
     {
-
         playableDirector.Play(currentState.statePlayable.timelinePlayable, DirectorWrapMode.Loop);
         playableDirector.playableGraph.GetRootPlayable(0).SetSpeed(1);
     }
@@ -180,6 +179,7 @@ public class CharacterAnimation : MonoBehaviour
     public GameObject animationRoot;
 
     [SerializeField]
+    protected GameObject modelWrapper;
     protected GameObject modelRoot;
     protected Animator modelAnimator;
 
@@ -226,6 +226,8 @@ public class CharacterAnimation : MonoBehaviour
         movement = GetComponent<CharacterMovement>();
 
         animator = GetComponent<Animator>();
+
+        modelRoot = modelWrapper.transform.GetChild(0).gameObject;
         modelAnimator = modelRoot.GetComponent<Animator>();
         //initialFacingRotation = animationRoot.transform.localRotation;
 
@@ -237,7 +239,8 @@ public class CharacterAnimation : MonoBehaviour
         stateMachine.idleState.OnStatePause += () => boredTimer = 0;
         stateMachine.idleState.OnStateExit += () => boredTimer = 0;
 
-        stateMachine.idleState.OnStateUpdate += () => { boredTimer += Time.deltaTime; if (boredTimer >= boredRate) { boredTimer = 0; PlayBoredFidget(); } };
+        if (boredRate > 0 && boredPlayables.Length > 0)
+            stateMachine.idleState.OnStateUpdate += () => { boredTimer += Time.deltaTime; if (boredTimer >= boredRate) { boredTimer = 0; PlayBoredFidget(); } };
 
         playableDirector.stopped += stateMachine.FinishInterruptedPlayable;
     }
@@ -273,7 +276,6 @@ public class CharacterAnimation : MonoBehaviour
     {
         if (animator.deltaPosition != Vector3.zero)
         {   
-            //Debug.Log(animationRootRotation * animator.deltaPosition);
             movement.MoveBy(animationRootRotation * animator.deltaPosition);
         }
         if (animator.deltaRotation != Quaternion.identity)

@@ -344,7 +344,7 @@ public class @PlayerController : IInputActionCollection, IDisposable
                     ""id"": ""23c2a2dd-ef08-402d-8a28-87f663405e43"",
                     ""path"": ""<Gamepad>/rightStick"",
                     ""interactions"": """",
-                    ""processors"": ""StickDeadzone"",
+                    ""processors"": ""StickDeadzone(min=0.3)"",
                     ""groups"": ""Gamepad"",
                     ""action"": ""CameraManualTilt"",
                     ""isComposite"": false,

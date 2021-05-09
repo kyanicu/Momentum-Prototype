@@ -94,16 +94,18 @@ public class CharacterCombat : MonoBehaviour, IAttacker
     }
 
     void Update()
-    {
+    { 
         if (control.attackSet)
         {
             switch (attackState)
             {
                 case (AttackState.STARTUP):
-                    if (currentAttack == "" || control.attackName != currentAttack)
+                    if (control.attackName != currentAttack)
+                    {
                         attackBuffered = true;
                         bufferedAttack = control.attackName;
                         AttackStateTransition(AttackState.FINISHED);
+                    }
                     break;
                 case (AttackState.BUFFERABLE):
                     attackBuffered = true;

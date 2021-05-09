@@ -557,7 +557,7 @@ public class CharacterMovement : Movement, ICharacterController
     }
     #endregion
 
-    protected void ValidateData()
+    public void ValidateData()
     {
         SetComponentReferences();
 

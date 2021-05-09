@@ -1,0 +1,206 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &230345350693460674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9011254191542155859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff08a007a93edec449f2b87da12a931d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  overridableAttribute:
+    _baseValues:
+      groundAccel: 0
+      groundDecel: 0
+      groundMaxSpeed: 0
+      airAccel: 0
+      airDecel: 0
+      airMaxSpeed: 0
+      jumpSpeed: 0
+      dynamicDashSpeed: 0
+      kinematicDashSpeed: 0
+      kinematicDashTime: 0
+      rawAccel: 0
+      rawMaxSpeed: 0
+      invertRight: 0
+  jumpPerpendicularToSlope: 0
+  haltIfNoInput: 0
+  turnWithDeceleration: 0
+  turnWithVelocity: 0
+  turnWithAcceleration: 0
+  turnInAir: 0
+--- !u!114 &9140355337980700959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9011254191542155859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aec2110293157994983bf027d9c98ce6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  negations:
+    kineticAndStaticFrictionNegated: 0
+    airDragNegated: 0
+    gravityNegated: 0
+  overridableAttribute:
+    _baseValues:
+      kineticFriction: 15
+      staticFrictionMaxSlope: 30
+      staticFrictionVelThreshold: 0.5
+      slopeConstantDown: 1.2
+      slopeConstantUp: 0.7
+      airDrag: 3
+      gravityAccel: 50
+      gravityDirection: {x: 0, y: -1, z: 0}
+--- !u!1001 &3877889149382217209
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 983391441732866946, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_TagString
+      value: EnemyHurtbox
+      objectReference: {fileID: 0}
+    - target: {fileID: 1495361860665626193, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_TagString
+      value: EnemyHurtbox
+      objectReference: {fileID: 0}
+    - target: {fileID: 2775782474257751818, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: settingsPreset
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2775782474257751818, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: _characterControllerAccuracy
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.0000002533197
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028119, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028137, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: MaxHitsBudget
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028137, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: MaxCollisionBudget
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028137, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: MaxGroundingSweepIterations
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028137, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: MaxMovementSweepIterations
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028137, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: MaxSteppingSweepIterations
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028137, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: MaxRigidbodyOverlapsCount
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028137, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: MaxDiscreteCollisionIterations
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028138, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_Name
+      value: Enemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 5251021600687028138, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_Layer
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 5846178160459188645, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_TagString
+      value: EnemyHitbox
+      objectReference: {fileID: 0}
+    - target: {fileID: 6656485785510564350, guid: 9f83adf28faec37459bf4470c40fbe04,
+        type: 3}
+      propertyPath: m_TagString
+      value: EnemyHitbox
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9f83adf28faec37459bf4470c40fbe04, type: 3}
+--- !u!1 &9011254191542155859 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5251021600687028138, guid: 9f83adf28faec37459bf4470c40fbe04,
+    type: 3}
+  m_PrefabInstance: {fileID: 3877889149382217209}
+  m_PrefabAsset: {fileID: 0}
