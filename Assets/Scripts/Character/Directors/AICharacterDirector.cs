@@ -33,15 +33,19 @@ public abstract class AICharacterDirector : CharacterDirector
     {
         base.OnValidate();
     }
-//#endif
+    //#endif
 
     protected virtual void Awake()
     {
         movement = GetComponent<CharacterMovement>();
-        movementActionControl = GetComponent<CharacterMovementAction>()?.control;
 
         combat = GetComponent<CharacterCombat>();
         status = GetComponent<CharacterStatus>();
+    }
+
+    protected virtual void Start()
+    {
+        movementActionControl = GetComponent<CharacterMovementAction>()?.control;
     }
 
     protected virtual void OnEnable()
