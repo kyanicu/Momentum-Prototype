@@ -63,7 +63,7 @@ public abstract class CharacterDirector : MonoBehaviour
 
     //public CharacterMovement movement { get;  private set; }
 
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
     public enum InspectorMode { All, Director, Movement, Animation, Combat }
 
     [SerializeField]
@@ -87,7 +87,7 @@ public abstract class CharacterDirector : MonoBehaviour
         {
             foreach (Component component in components)
             {
-                if (component == this || component == transform)
+                if (component == this || component == transform || !component)
                     continue;
 
                 component.hideFlags = HideFlags.None;
@@ -140,7 +140,7 @@ public abstract class CharacterDirector : MonoBehaviour
             component.hideFlags = HideFlags.None;
         }
     }
-#endif
+//#endif
 
     public void EnableControl()
     {

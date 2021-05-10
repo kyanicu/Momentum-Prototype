@@ -28,12 +28,12 @@ public abstract class AICharacterDirector : CharacterDirector
     public CharacterCombat combat { get; private set; }
     public CharacterStatus status { get; private set; }
 
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
     protected override void OnValidate()
     {
         base.OnValidate();
     }
-#endif
+//#endif
 
     protected virtual void Awake()
     {

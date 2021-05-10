@@ -105,10 +105,10 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
     */
     public override void OnBehaviourPlay(Playable playable, FrameData info)
     {
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         if (!Application.isPlaying)
             return;
-#endif
+//#endif
 
         animation = characterAnimation.Resolve(playable.GetGraph().GetResolver());
         status = animation.GetComponent<CharacterStatus>();
@@ -141,10 +141,10 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
 
     public override void OnBehaviourPause(Playable playable, FrameData info)
     {
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         if (!Application.isPlaying)
             return;
-#endif
+//#endif
         if (!animation)
             return;
         
@@ -172,10 +172,11 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData)
     {
-#if UNITY_EDITOR
+
+//#if UNITY_EDITOR
         if (!Application.isPlaying)
             return;
-#endif
+//#endif
 
         int len = _hitboxes.Length;
         for (int i = 0; i < len; i++)

@@ -54,12 +54,12 @@ public class PlayerCharacterDirector : CharacterDirector
 
     #region Unity MonoBehaviour Messages
 
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
     protected override void OnValidate()
     {
         base.OnValidate();
     }
-#endif
+//#endif
 
     /// <summary>
     /// Handles class initialization

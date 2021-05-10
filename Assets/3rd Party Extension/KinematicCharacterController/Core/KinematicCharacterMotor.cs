@@ -612,6 +612,7 @@ namespace KinematicCharacterController
 
             transform.localScale = Vector3.one;
 
+
 #if UNITY_EDITOR
             Capsule.hideFlags = HideFlags.NotEditable;
             if (!Mathf.Approximately(transform.lossyScale.x, 1f) || !Mathf.Approximately(transform.lossyScale.y, 1f) || !Mathf.Approximately(transform.lossyScale.z, 1f))

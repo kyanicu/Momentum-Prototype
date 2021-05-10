@@ -360,6 +360,7 @@ public class CharacterMovement : Movement, ICharacterController
 
     private bool isAttached;
 
+    private Vector3 accumMoveBy;
     /// <summary>
     /// The internally calculated angular velocity
     /// </summary>
@@ -369,10 +370,6 @@ public class CharacterMovement : Movement, ICharacterController
     /// </summary>
     /// <value></value>
     public Vector3 externalVelocity { private get; set; }
-    /// <summary>
-    /// Hold all accumulated MoveBy() calls in order to handle movement on the next update
-    /// Velocity from move by is added to the velocity for the next update, and then removes it for the update after
-    /// </summary>
     private Quaternion externalRotateBy;
     #region flags
     //// private int velocityLocked = 0;
@@ -664,18 +661,18 @@ public class CharacterMovement : Movement, ICharacterController
             rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
             rigidbody.constraints = RigidbodyConstraints.None;
 
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
             rigidbody.hideFlags = HideFlags.NotEditable;
-#endif
+//#endif
         }
 
         overridableAttribute.CalculateValues();
 
         motor.ValidateData();
 
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         motor.hideFlags = HideFlags.NotEditable;
-#endif
+//#endif
     }
 
     protected override void SetComponentReferences()
@@ -766,7 +763,7 @@ public class CharacterMovement : Movement, ICharacterController
         if (isGroundedThisUpdate)
             moveBy = Vector3.ProjectOnPlane(moveBy, groundNormal);
 
-        motor.MoveCharacter(position + moveBy);
+        accumMoveBy += moveBy;
     }
 
     public void MoveByAlongGroundOrHorizon(float moveBy)
@@ -1007,6 +1004,9 @@ public class CharacterMovement : Movement, ICharacterController
         // Handle extra Ability update setup
         if (ability && ability.isActiveAndEnabled)
             ability.BeforeCharacterUpdate(deltaTime);
+
+        motor.MoveCharacter(position + accumMoveBy);
+        accumMoveBy = Vector3.zero;
     }
 
     /// <summary>

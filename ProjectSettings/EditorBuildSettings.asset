@@ -5,9 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Resources/Scenes/Prototypes/Movement Prototype.unity
     guid: 294de746a41ee44b1bcd4d7752e913b8
+  - enabled: 1
+    path: Assets/Resources/Scenes/Prototypes/Combat Prototype.unity
+    guid: bb627604a5a264ccba05cd099d58161b
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 2445ddbd692cca749b04f2b22569f4c2,
       type: 2}

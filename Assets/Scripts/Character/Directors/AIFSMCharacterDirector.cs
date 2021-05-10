@@ -20,12 +20,12 @@ public class AIFSMCharacterDirector : AICharacterDirector
         base.OnDisable();
     }
 
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
     protected override void OnValidate()
     {
         base.OnValidate();
     }
-#endif
+//#endif
 
     protected override void RegisterControl()
     {
