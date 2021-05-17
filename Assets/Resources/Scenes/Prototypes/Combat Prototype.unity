@@ -3687,7 +3687,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh42344
+  m_Name: pb_Mesh20394
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -7093,8 +7093,44 @@ PrefabInstance:
     - target: {fileID: 4107901188412053138, guid: 9676e6f40f8f4c34eb407bf7351a2635,
         type: 3}
       propertyPath: maxReflectAngleOffset
-      value: 5
+      value: 25
       objectReference: {fileID: 0}
+    - target: {fileID: 4107901188412053138, guid: 9676e6f40f8f4c34eb407bf7351a2635,
+        type: 3}
+      propertyPath: inspectorMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4107901188412053138, guid: 9676e6f40f8f4c34eb407bf7351a2635,
+        type: 3}
+      propertyPath: searchRadius
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4890345406953478801, guid: 9676e6f40f8f4c34eb407bf7351a2635,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5664584542778196682, guid: 9676e6f40f8f4c34eb407bf7351a2635,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6070593491035299164, guid: 9676e6f40f8f4c34eb407bf7351a2635,
+        type: 3}
+      propertyPath: attackInitInfo.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6070593491035299164, guid: 9676e6f40f8f4c34eb407bf7351a2635,
+        type: 3}
+      propertyPath: attackInitInfo.Array.data[0].attackName
+      value: LoxSwoop
+      objectReference: {fileID: 0}
+    - target: {fileID: 6070593491035299164, guid: 9676e6f40f8f4c34eb407bf7351a2635,
+        type: 3}
+      propertyPath: attackInitInfo.Array.data[0].attackTimeline
+      value: 
+      objectReference: {fileID: 11400000, guid: 9d30a21f02d317e42880f1682a34cfaf,
+        type: 2}
     - target: {fileID: 6495126896440222878, guid: 9676e6f40f8f4c34eb407bf7351a2635,
         type: 3}
       propertyPath: m_Name
@@ -7118,7 +7154,7 @@ PrefabInstance:
     - target: {fileID: 6495126896440222883, guid: 9676e6f40f8f4c34eb407bf7351a2635,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6495126896440222883, guid: 9676e6f40f8f4c34eb407bf7351a2635,
         type: 3}
@@ -7128,7 +7164,7 @@ PrefabInstance:
     - target: {fileID: 6495126896440222883, guid: 9676e6f40f8f4c34eb407bf7351a2635,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6495126896440222883, guid: 9676e6f40f8f4c34eb407bf7351a2635,
         type: 3}

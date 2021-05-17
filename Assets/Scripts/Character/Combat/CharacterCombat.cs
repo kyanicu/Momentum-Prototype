@@ -46,7 +46,7 @@ public class CharacterCombat : MonoBehaviour, IAttacker
     private Hitbox[] hitboxes;
 
     private string currentAttack = "";
-    private AttackState attackState = AttackState.FINISHED;
+    public AttackState attackState { get; private set; }
 
     private bool attackBuffered = false;
     private string bufferedAttack = "";

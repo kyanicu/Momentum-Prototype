@@ -12,6 +12,8 @@ public class LoxAIDirector : AICharacterDirector
     private float radius;
     [SerializeField]
     private float maxReflectAngleOffset;
+    [SerializeField]
+    private float searchRadius;
 
     protected override void Awake()
     {
@@ -45,19 +47,37 @@ public class LoxAIDirector : AICharacterDirector
 
     protected override void RegisterControl()
     {
-        Wander();
-        //TODO: MAKE ATTACK DUMDUM
-        //combat.control.SetAttack("LoxSwoop");
+        if(combat.attackState == AttackState.FINISHED)
+        {
+            if((transform.position-center).sqrMagnitude <= radius * radius)
+            {
+                Collider[] hits = Physics.OverlapSphere(transform.position, searchRadius, LayerMask.GetMask("Player"), QueryTriggerInteraction.Ignore);
+                if( hits.Length > 0)
+                {
+                    GetComponent<CharacterAnimation>().animationRootRotation = Quaternion.FromToRotation(movement.right, Vector3.ProjectOnPlane(hits[0].transform.position - this.transform.position, movement.forward).normalized);
+                    combat.control.SetAttack("LoxSwoop");
+                }
+                else
+                {
+                    Wander();
+                }
+            }
+            else
+            {
+                GoHome();
+            }
+        }
     }
 
     private void Wander()
     {
-        if((transform.position-center).sqrMagnitude > radius * radius)
-        {
-            transform.position -= (0.25f + (transform.position - center).magnitude - radius) * direction;
-            direction = Quaternion.Euler(movement.forward * Random.Range(-maxReflectAngleOffset, +maxReflectAngleOffset)) * (Vector3.Reflect(direction, (center-transform.position).normalized));
-        }
-        (movementActionControl as SimpleMovementActionControl).rawMaxMove = direction;
+        (movementActionControl as SimpleMovementActionControl).rawMaxMove = direction;   
+    }
+
+    private void GoHome()
+    {
+        (movementActionControl as SimpleMovementActionControl).rawMaxMove = (center - transform.position).normalized;
+        direction = Quaternion.Euler(movement.forward * Random.Range(-maxReflectAngleOffset, +maxReflectAngleOffset)) * ((center - transform.position).normalized);
     }
 
     private void OnDrawGizmosSelected()

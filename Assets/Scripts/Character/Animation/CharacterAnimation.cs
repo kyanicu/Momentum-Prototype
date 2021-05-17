@@ -193,7 +193,7 @@ public class CharacterAnimation : MonoBehaviour
     private Coroutine rotationCoroutine;
     */
 
-    Quaternion animationRootRotation = Quaternion.identity;
+    public Quaternion animationRootRotation = Quaternion.identity;
     public bool lockFacingDirection;
 
     Quaternion prevRotation;
