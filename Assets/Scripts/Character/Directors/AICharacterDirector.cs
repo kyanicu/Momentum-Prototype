@@ -27,8 +27,9 @@ public abstract class AICharacterDirector : CharacterDirector
 
     public CharacterCombat combat { get; private set; }
     public CharacterStatus status { get; private set; }
+    public CharacterAnimation animation { get; private set; }
 
-//#if UNITY_EDITOR
+    //#if UNITY_EDITOR
     protected override void OnValidate()
     {
         base.OnValidate();
@@ -38,9 +39,9 @@ public abstract class AICharacterDirector : CharacterDirector
     protected virtual void Awake()
     {
         movement = GetComponent<CharacterMovement>();
-
         combat = GetComponent<CharacterCombat>();
         status = GetComponent<CharacterStatus>();
+        animation = GetComponent<CharacterAnimation>();
     }
 
     protected virtual void Start()

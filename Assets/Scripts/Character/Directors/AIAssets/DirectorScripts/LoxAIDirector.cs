@@ -15,6 +15,8 @@ public class LoxAIDirector : AICharacterDirector
     [SerializeField]
     private float searchRadius;
 
+    private bool wandering;
+
     protected override void Awake()
     {
         base.Awake();
@@ -26,6 +28,13 @@ public class LoxAIDirector : AICharacterDirector
         base.Start();
         Vector2 randomPlanarDirection = Random.insideUnitCircle.normalized;
         direction = movement.GetVelocityFromPlanarVelocity(randomPlanarDirection);
+
+        combat.AttackFinished += () =>
+        {
+            if (combat.currentAttack == "LoxSwoop")
+                GetComponent<CharacterAnimation>().animationRootRotation = Quaternion.FromToRotation(transform.right, Vector3.ProjectOnPlane(direction, movement.upWorldOrientation).normalized);
+
+        };
     }
 
     protected override void OnEnable()
@@ -54,8 +63,13 @@ public class LoxAIDirector : AICharacterDirector
                 Collider[] hits = Physics.OverlapSphere(transform.position, searchRadius, LayerMask.GetMask("Player"), QueryTriggerInteraction.Ignore);
                 if( hits.Length > 0)
                 {
-                    GetComponent<CharacterAnimation>().animationRootRotation = Quaternion.FromToRotation(movement.right, Vector3.ProjectOnPlane(hits[0].transform.position - this.transform.position, movement.forward).normalized);
+                    animation.animationRootRotation = Quaternion.FromToRotation(movement.right, Vector3.ProjectOnPlane(hits[0].transform.position - this.transform.position, movement.forward).normalized);
+                    if ((animation.animationRootRotation * Vector3.forward).y < 0)
+                        animation.animationRootRotation = Quaternion.FromToRotation(Vector3.down, Vector3.up) * animation.animationRootRotation;
+
                     combat.control.SetAttack("LoxSwoop");
+
+                    wandering = false;
                 }
                 else
                 {
@@ -71,13 +85,27 @@ public class LoxAIDirector : AICharacterDirector
 
     private void Wander()
     {
-        (movementActionControl as SimpleMovementActionControl).rawMaxMove = direction;   
+        wandering = true;
+
+        (movementActionControl as SimpleMovementActionControl).rawMaxMove = direction;
+        animation.animationRootRotation = Quaternion.FromToRotation(movement.right, direction.x * movement.right);
     }
 
     private void GoHome()
     {
-        (movementActionControl as SimpleMovementActionControl).rawMaxMove = (center - transform.position).normalized;
-        direction = Quaternion.Euler(movement.forward * Random.Range(-maxReflectAngleOffset, +maxReflectAngleOffset)) * ((center - transform.position).normalized);
+        Vector3 pointOffradius = center + (transform.position - center).normalized * radius;
+        if (wandering && (transform.position - pointOffradius).sqrMagnitude > 1)
+        {
+            movement.position = pointOffradius;
+            direction = Quaternion.Euler(movement.forward * Random.Range(-maxReflectAngleOffset, +maxReflectAngleOffset)) * ((center - transform.position).normalized);
+        }
+        else
+            direction = (center - transform.position).normalized;
+
+        wandering = false;
+        
+        (movementActionControl as SimpleMovementActionControl).rawMaxMove = direction;
+        animation.animationRootRotation = Quaternion.FromToRotation(movement.right, direction.x * movement.right);
     }
 
     private void OnDrawGizmosSelected()

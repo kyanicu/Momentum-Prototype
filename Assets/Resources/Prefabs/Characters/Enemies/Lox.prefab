@@ -34,6 +34,7 @@ MonoBehaviour:
   inspectorMode: 0
   radius: 3
   maxReflectAngleOffset: 20
+  searchRadius: 0
 --- !u!1001 &724119801921406238
 PrefabInstance:
   m_ObjectHideFlags: 0

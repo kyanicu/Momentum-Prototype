@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -45,11 +46,13 @@ public class CharacterCombat : MonoBehaviour, IAttacker
 
     private Hitbox[] hitboxes;
 
-    private string currentAttack = "";
+    public string currentAttack { get; private set; }
     public AttackState attackState { get; private set; }
 
     private bool attackBuffered = false;
     private string bufferedAttack = "";
+
+    public event Action AttackFinished;
 
     new protected CharacterAnimation animation;
     protected CharacterMovement movement;
@@ -156,9 +159,10 @@ public class CharacterCombat : MonoBehaviour, IAttacker
             case (AttackState.COMMITAL):
                 break;
             case (AttackState.BUFFERABLE):
-
+                
                 break;
             case (AttackState.FINISHED):
+                AttackFinished?.Invoke();
                 if (attackBuffered)
                 {
                     HandleAttack(bufferedAttack);
