@@ -1,11 +1,13 @@
 ﻿
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class LoxAIDirector : AICharacterDirector
 {
-
+    private enum State {wander, goingHome, attacking };
+    private State state;
     private Vector3 center;
     private Vector3 direction;
     [SerializeField]
@@ -15,7 +17,6 @@ public class LoxAIDirector : AICharacterDirector
     [SerializeField]
     private float searchRadius;
 
-    private bool wandering;
 
     protected override void Awake()
     {
@@ -26,7 +27,7 @@ public class LoxAIDirector : AICharacterDirector
     protected override void Start()
     {
         base.Start();
-        Vector2 randomPlanarDirection = Random.insideUnitCircle.normalized;
+        Vector2 randomPlanarDirection = UnityEngine.Random.insideUnitCircle.normalized;
         direction = movement.GetVelocityFromPlanarVelocity(randomPlanarDirection);
 
         combat.AttackFinished += () =>
@@ -56,53 +57,74 @@ public class LoxAIDirector : AICharacterDirector
 
     protected override void RegisterControl()
     {
-        if(combat.attackState == AttackState.FINISHED)
+        switch (state)
         {
-            if((transform.position-center).sqrMagnitude <= radius * radius)
-            {
-                Collider[] hits = Physics.OverlapSphere(transform.position, searchRadius, LayerMask.GetMask("Player"), QueryTriggerInteraction.Ignore);
-                if( hits.Length > 0)
-                {
-                    animation.animationRootRotation = Quaternion.FromToRotation(movement.right, Vector3.ProjectOnPlane(hits[0].transform.position - this.transform.position, movement.forward).normalized);
-                    if ((animation.animationRootRotation * Vector3.forward).y < 0)
-                        animation.animationRootRotation = Quaternion.FromToRotation(Vector3.down, Vector3.up) * animation.animationRootRotation;
-
-                    combat.control.SetAttack("LoxSwoop");
-
-                    wandering = false;
-                }
-                else
-                {
-                    Wander();
-                }
-            }
-            else
-            {
+            case State.wander:
+                Wander();
+                break;
+            case State.goingHome:
                 GoHome();
-            }
+                break;
+            case State.attacking:
+                Attacking();
+                break;
+        }
+
+    }
+
+    private void Attacking()
+    {
+        if (combat.attackState == AttackState.FINISHED)
+        {
+            GoHome();
+            state = State.goingHome;
         }
     }
 
     private void Wander()
     {
-        wandering = true;
+        Vector3 pointOffradius = center + (transform.position - center).normalized * radius;
+        if ((transform.position - center).sqrMagnitude >= radius*radius)
+        {
+            if ((transform.position - center).sqrMagnitude >= (radius+1)*(radius+1))
+            {
+                state = State.goingHome;
+                Debug.Log("I'm gonna go home and say the N Word.");
+                return;
+            }
 
+            movement.position = pointOffradius;
+            direction = Quaternion.Euler(movement.forward * UnityEngine.Random.Range(-maxReflectAngleOffset, +maxReflectAngleOffset))
+                * ((center - transform.position).normalized);
+        }
+        
+        Collider[] hits = Physics.OverlapSphere(transform.position, searchRadius, LayerMask.GetMask("Player"), QueryTriggerInteraction.Ignore);
+        if (hits.Length > 0)
+        {
+            animation.animationRootRotation = Quaternion.FromToRotation(movement.right, Vector3.ProjectOnPlane(hits[0].transform.position - this.transform.position, movement.forward).normalized);
+            if ((animation.animationRootRotation * Vector3.forward).y < 0)
+                animation.animationRootRotation = Quaternion.FromToRotation(Vector3.down, Vector3.up) * animation.animationRootRotation;
+
+            combat.control.SetAttack("LoxSwoop");
+            Attacking();
+            state = State.attacking;
+            return;
+        }
+        
         (movementActionControl as SimpleMovementActionControl).rawMaxMove = direction;
         animation.animationRootRotation = Quaternion.FromToRotation(movement.right, direction.x * movement.right);
+    
     }
 
     private void GoHome()
     {
-        Vector3 pointOffradius = center + (transform.position - center).normalized * radius;
-        if (wandering && (transform.position - pointOffradius).sqrMagnitude > 1)
+        if((transform.position - center).sqrMagnitude <= 1)
         {
-            movement.position = pointOffradius;
-            direction = Quaternion.Euler(movement.forward * Random.Range(-maxReflectAngleOffset, +maxReflectAngleOffset)) * ((center - transform.position).normalized);
+            state = State.wander;
+            return;
         }
-        else
-            direction = (center - transform.position).normalized;
-
-        wandering = false;
+        
+        direction = (center - transform.position).normalized;
         
         (movementActionControl as SimpleMovementActionControl).rawMaxMove = direction;
         animation.animationRootRotation = Quaternion.FromToRotation(movement.right, direction.x * movement.right);
