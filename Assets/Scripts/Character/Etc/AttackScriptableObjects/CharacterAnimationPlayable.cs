@@ -49,7 +49,6 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
     private Hitbox[] _hitboxes;
     public HitboxInfo[] hitboxInfo;
 
-
     [Space]
     [Header("Movement Mechanics Overriding")]
     public bool forceUnground = false;
@@ -90,7 +89,7 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
     private float slopedOrHorizontalDeceleration;
     private float FallingOrRisingDeceleration;
     private float angularDeceleration;
-    
+
     [Space]
     public bool restorePreviousDataOnPlayableEnd;
 
@@ -105,10 +104,10 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
     */
     public override void OnBehaviourPlay(Playable playable, FrameData info)
     {
-//#if UNITY_EDITOR
+        #if UNITY_EDITOR
         if (!Application.isPlaying)
             return;
-//#endif
+        #endif
 
         animation = characterAnimation.Resolve(playable.GetGraph().GetResolver());
         status = animation.GetComponent<CharacterStatus>();
@@ -141,13 +140,13 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
 
     public override void OnBehaviourPause(Playable playable, FrameData info)
     {
-//#if UNITY_EDITOR
+        #if UNITY_EDITOR
         if (!Application.isPlaying)
             return;
-//#endif
+        #endif
         if (!animation)
             return;
-        
+
         if (restorePreviousDataOnPlayableEnd)
         {
             int len = _hitboxes.Length;
@@ -157,7 +156,7 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
             }
         }
 
-        if(movementAction)
+        if (movementAction)
             movementAction.enabled = true;
         if (movementPhysics)
             movementPhysics.enabled = true;
@@ -173,10 +172,10 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
     public override void ProcessFrame(Playable playable, FrameData info, object playerData)
     {
 
-//#if UNITY_EDITOR
+        #if UNITY_EDITOR
         if (!Application.isPlaying)
             return;
-//#endif
+        #endif
 
         int len = _hitboxes.Length;
         for (int i = 0; i < len; i++)
@@ -218,23 +217,23 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
         else
         {
         */
-            Vector2 velocityToSet = new Vector2(settingSlopedOrHorizontalVelocity ? planarVelocity.x : 0, settingFallingOrRisingVelocity ? planarVelocity.y : 0);
+        Vector2 velocityToSet = new Vector2(settingSlopedOrHorizontalVelocity ? planarVelocity.x : 0, settingFallingOrRisingVelocity ? planarVelocity.y : 0);
 
-            if (velocityToSet != Vector2.zero)
+        if (velocityToSet != Vector2.zero)
+        {
+            switch (velocitySetting)
             {
-                switch (velocitySetting)
-                {
-                    case ValueOverrideType.Set:
-                        movement.velocity = (setVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.GetVelocityFromPlanarVelocity(velocityToSet);
-                        break;
-                    case ValueOverrideType.Addition:
-                        movement.velocity += (setVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.GetVelocityFromPlanarVelocity(velocityToSet);
-                        break;
-                    case ValueOverrideType.Multiplier:
-                        movement.velocity = Vector3.Scale(movement.velocity, (setVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.GetVelocityFromPlanarVelocity(velocityToSet));
-                        break;
-                }
+                case ValueOverrideType.Set:
+                    movement.velocity = (setVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.GetVelocityFromPlanarVelocity(velocityToSet);
+                    break;
+                case ValueOverrideType.Addition:
+                    movement.velocity += (setVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.GetVelocityFromPlanarVelocity(velocityToSet);
+                    break;
+                case ValueOverrideType.Multiplier:
+                    movement.velocity = Vector3.Scale(movement.velocity, (setVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.GetVelocityFromPlanarVelocity(velocityToSet));
+                    break;
             }
+        }
         //}
 
         /*
@@ -245,21 +244,21 @@ public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
         }
         else
         {*/
-            if (settingAngularVelocity)
+        if (settingAngularVelocity)
+        {
+            switch (angularVelocitySetting)
             {
-                switch (angularVelocitySetting)
-                {
-                    case ValueOverrideType.Set:
-                        movement.angularVelocity = (setAngularVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.currentPlane.normal * angularVelocity;
-                        break;
-                    case ValueOverrideType.Addition:
-                        movement.angularVelocity += (setAngularVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.currentPlane.normal * angularVelocity;
-                        break;
-                    case ValueOverrideType.Multiplier:
-                        movement.angularVelocity = Vector3.Scale(movement.angularVelocity, (setAngularVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.currentPlane.normal * angularVelocity);
-                        break;
-                }
+                case ValueOverrideType.Set:
+                    movement.angularVelocity = (setAngularVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.currentPlane.normal * angularVelocity;
+                    break;
+                case ValueOverrideType.Addition:
+                    movement.angularVelocity += (setAngularVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.currentPlane.normal * angularVelocity;
+                    break;
+                case ValueOverrideType.Multiplier:
+                    movement.angularVelocity = Vector3.Scale(movement.angularVelocity, (setAngularVelocityWithFacingDirection ? animation.GetFacingDirectionRotation() : Quaternion.identity) * movement.currentPlane.normal * angularVelocity);
+                    break;
             }
+        }
         //}
     }
 

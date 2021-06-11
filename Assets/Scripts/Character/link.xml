@@ -1,0 +1,9 @@
+<linker>
+    <assembly fullname="UnityEngine.Timeline" preserve="all"/>
+    <assembly fullname="Unity.Timeline" preserve="all"/
+    <assembly fullname="UnityEngine">
+      <namespace fullname="UnityEngine.Playables" preserve="all"/>
+      <type fullname="UnityEngine.Timeline.dll" preserve="all"/>
+      <type fullname="UnityEngine.Playables.dll" preserve="all"/>
+    </assembly>
+</linker>

@@ -12,7 +12,6 @@ public enum HitValidity
     CLANK,
     TEMPORARY_IMMUNITY,
     PERMANENT_IMMUNITY,
-
 }
 
 public interface IDamageable
