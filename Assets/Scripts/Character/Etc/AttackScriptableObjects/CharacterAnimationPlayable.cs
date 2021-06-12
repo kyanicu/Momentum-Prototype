@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using UnityEngine.Scripting;
+
+[assembly: Preserve]
 
 public class CharacterAnimationPlayable : PlayableAsset
 {
@@ -32,7 +35,6 @@ public class HitboxReferenceWrapper
 [System.Serializable]
 public class CharacterAnimationPlayableBehaviour : PlayableBehaviour
 {
-
     public ExposedReference<CharacterAnimation> characterAnimation;
 
     CharacterCombat combat = null;

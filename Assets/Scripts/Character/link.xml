@@ -6,4 +6,7 @@
       <type fullname="UnityEngine.Timeline.dll" preserve="all"/>
       <type fullname="UnityEngine.Playables.dll" preserve="all"/>
     </assembly>
+    <assembly fullname="Assembly-CSharp">
+	<type fullname="CharacterAnimationPlayable" preserve="all"/>
+    </assembly>
 </linker>
