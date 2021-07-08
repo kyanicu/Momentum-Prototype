@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
-using UnityEngine.Scripting;
-
-[assembly: Preserve]
 
 public class CharacterAnimationPlayable : PlayableAsset
 {
