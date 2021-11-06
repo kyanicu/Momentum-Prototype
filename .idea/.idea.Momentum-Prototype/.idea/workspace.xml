@@ -2,14 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="21197138-2d1e-4834-94b1-98c732eb44ad" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Assets/3rd Party Extension/KinematicCharacterController/Core/KinematicCharacterSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/3rd Party Extension/KinematicCharacterController/Core/KinematicCharacterSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/3rd Party Extension/KinematicCharacterController/Core/PhysicsMover.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/3rd Party Extension/KinematicCharacterController/Core/PhysicsMover.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Resources/Scenes/Prototypes/Movement Prototype.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Scenes/Prototypes/Movement Prototype.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/GameManager/GameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/GameManager/GameManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Physics/SimpleCollision.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Physics/SimpleCollision.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Physics/SimpleMovement.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Physics/SimpleMovement.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/DynamicsManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/DynamicsManager.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/Packages/com.unity.polybrush/Settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/Packages/com.unity.polybrush/Settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Scenes/Prototypes/Combat Prototype.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Scenes/Prototypes/Combat Prototype.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ProjectSettings/Packages/com.unity.probuilder/Settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/Packages/com.unity.probuilder/Settings.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -37,6 +32,7 @@
       <option name="presentableId" value="Default" />
       <updated>1616592898012</updated>
       <workItem from="1616592905580" duration="6000" />
+      <workItem from="1627657840348" duration="13000" />
     </task>
     <servers />
   </component>

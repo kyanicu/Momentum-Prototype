@@ -910,8 +910,6 @@ public class CharacterMovement : Movement, ICharacterController
             zeroingVel = false;
         }
 
-
-
         // Add external velocity and reset back to zero
         currentVelocity += (!isGroundedThisUpdate) ? externalVelocity : Vector3.ProjectOnPlane(externalVelocity, motor.GetEffectiveGroundNormal()); ;
         externalVelocity = Vector3.zero;
