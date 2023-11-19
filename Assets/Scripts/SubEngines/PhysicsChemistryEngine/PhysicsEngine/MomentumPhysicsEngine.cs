@@ -5,7 +5,7 @@ using UnityEngine;
 public class MaterialForce
 {
     private float _magnitude;
-    public float magnitude { get { return _magnitude; } set { _magnitude = value; _force = value * direction; } }
+    public float magnitude { get { return _magnitude; } set { _magnitude = value; _force = _direction * value; } }
 
     private Vector3 _direction;
     public Vector3 direction { get { return _direction; } set { _direction = value; _force = _magnitude * value; } }
@@ -43,6 +43,11 @@ public class MaterialForce
 
 public class MomentumPhysicsEngine : MonoBehaviour
 {
+    HashSet<MaterialForce> Tactum;
+    HashSet<MaterialForce> Gravitum;
+    HashSet<MaterialForce> Magnetum;
+    HashSet<MaterialForce> Electrum;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -50,7 +55,7 @@ public class MomentumPhysicsEngine : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         
     }
